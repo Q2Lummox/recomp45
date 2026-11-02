@@ -1,0 +1,7 @@
+# Novedades
+
+## v1.0.0 · 2026-11-02
+- Primera versión: plan de 12 semanas, menú diario con control de calorías y rutina de 5 días adaptada a los codos
+- Seguimiento de peso, cintura, sueño y revisión semanal con reglas de ajuste
+- Coach con IA (Gemini): preguntas sobre tus datos y fotos de platos o etiquetas
+- Copia de seguridad, restaurar e informe en PDF
