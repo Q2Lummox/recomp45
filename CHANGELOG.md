@@ -1,5 +1,10 @@
 # Novedades
 
+## v1.6.0 · 2026-11-03
+- El plan de 12 semanas empieza el lunes 9 de noviembre
+- Menú › Ajustes › Empezar de cero: borra los datos de prueba y conserva objetivos y claves
+- Sin peso ni cintura inventados: el punto de partida lo apuntas el primer lunes
+
 ## v1.5.1 · 2026-11-03
 - Zepp: el Atajo puede enviar también la hora, para que la app se entere de cada actualización aunque los números no cambien (reglas y guía actualizadas)
 

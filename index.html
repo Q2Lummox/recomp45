@@ -342,8 +342,8 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.5.1';
-const START='2026-11-02';
+const APP_VERSION='1.6.0';
+const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
 
@@ -556,12 +556,7 @@ function startData(){
 function maybeSeed(){
   if(!COLS.every(c=>firstLoad[c]))return;
   applyZeppSync();processZeppInbox();
-  if(seeded)return;
-  seeded=true;
-  if(!Object.keys(S.days).length&&!Object.keys(S.checkins).length){
-    saveDoc('days',START,{meals:{},extras:[],weight:BASE.peso});
-    saveDoc('checkins',START,{waist:BASE.cintura,note:'Punto de partida: 80 kg, 96 cm, ~21% grasa'});
-  }
+  seeded=true;   /* sin datos inventados: el punto de partida lo apuntas tú el primer lunes */
 }
 
 /* ===== Zepp (vía Salud de Apple y el Atajo «Recomp Zepp») =====
@@ -1081,7 +1076,7 @@ function viewPlan(){
 function render(){
   if($('#app').hidden)return;
   const d=st.date,w=weekOf(d);
-  $('#sub').textContent=`Semana ${Math.min(w,12)}/12 · ${phase(w).n} · v${APP_VERSION}`;
+  $('#sub').textContent=d<START?`Semana de prueba · empieza el ${shortDate(START)} · v${APP_VERSION}`:`Semana ${Math.min(w,12)}/12 · ${phase(w).n} · v${APP_VERSION}`;
   $('#datelbl').textContent=d===todayISO()?`Hoy · ${longDate(d)}`:longDate(d);
   $('#gotoday').hidden=d===todayISO();
   $('#datenav').hidden=!['hoy','comida','entreno'].includes(st.tab);
@@ -1342,7 +1337,11 @@ function openSettings(msg){
       <p class="small muted" id="g-model">${model?'Modelo: '+esc(model):'Modelo: se elige solo al guardar'}</p>
       <div class="row"><button type="button" class="btn pri" id="g-save">Probar y guardar</button>${key?'<button type="button" class="btn" id="g-del">Borrar clave</button>':''}</div>
     </div>
-    <div class="card"><h2>Cuenta</h2><p class="small">${u?'Conectado como <b>'+esc(u.email||u.displayName||'')+'</b>':'Sin sesión'}</p><button type="button" class="btn" id="logout">Cerrar sesión</button></div>`);
+    <div class="card"><h2>Cuenta</h2><p class="small">${u?'Conectado como <b>'+esc(u.email||u.displayName||'')+'</b>':'Sin sesión'}</p><button type="button" class="btn" id="logout">Cerrar sesión</button></div>
+    <div class="card"><h2>Empezar de cero</h2>
+      <p class="small">Borra todos los datos de prueba: comidas, entrenos, pesos, pasos, revisiones, datos de Zepp y la conversación con el coach. Se quedan tus objetivos del reloj, la clave del Atajo y la de Gemini.</p>
+      <div id="reset-box"><button type="button" class="btn" id="reset-1">Empezar de cero</button></div>
+    </div>`);
   $('#g-save').onclick=async()=>{
     const k=$('#g-key').value.trim();if(!k){$('#g-key').focus();return}
     $('#g-save').disabled=true;$('#g-model').textContent='Comprobando la clave…';
@@ -1352,6 +1351,25 @@ function openSettings(msg){
   };
   const del=$('#g-del');if(del)del.onclick=()=>{lsSet(GKEY,'');lsSet(GMODEL,'');closeSheet();toast('Clave borrada')};
   $('#logout').onclick=async()=>{closeSheet();await window.FB.signOut()};
+  $('#reset-1').onclick=()=>{
+    const n=COLS.reduce((a,c)=>a+Object.keys(S[c]).length,0)+zeppIn.length;
+    $('#reset-box').innerHTML=`<p class="note elbow small">Se borrarán <b>${n}</b> registros y no se pueden recuperar. ¿Seguro?</p>
+      <div class="row"><button type="button" class="btn pri" id="reset-2">Sí, borrar todo</button><button type="button" class="btn" id="reset-no">Cancelar</button></div>`;
+    $('#reset-no').onclick=()=>openSettings();
+    $('#reset-2').onclick=resetAll;
+  };
+}
+async function resetAll(){
+  const b=$('#reset-2');if(b){b.disabled=true;b.textContent='Borrando…'}
+  for(const k of Object.keys(timers))clearTimeout(timers[k]);
+  for(const k of Object.keys(dirty))delete dirty[k];
+  let i=0;
+  const items=[...COLS.flatMap(c=>Object.keys(S[c]).map(id=>[c,id])),...zeppIn.map(d=>['zepp',d.id])];
+  for(const [c,id] of items){window.FB.db.del(path(c),id);if(++i%40===0)await sleep(300)}
+  for(const c of COLS)S[c]={};
+  zeppIn=[];chat=[];lsSet(CHATK,[]);lsSet(ZKEY,null);
+  closeSheet();st.date=todayISO();render();
+  toast(`Datos borrados (${items.length}). Todo listo para empezar el ${longDate(START)}.`);
 }
 async function openAbout(){
   let v=null;try{v=await (await fetch('version.json',{cache:'no-cache'})).json()}catch(e){}
@@ -1397,7 +1415,7 @@ async function exportPdf(){
     doc.setFillColor(243,154,30);doc.rect(0,0,W,4,'F');
     const t=todayISO(),cw=Math.min(weekOf(t),12);
     line('Recomp 45 · Informe de progreso',18,true);gap(1);
-    line(`Generado el ${new Date().toLocaleDateString('es-ES')} · Semana ${cw} de 12 (${phase(cw).n}) · Inicio 2 nov 2026`,9,false,[90,90,90]);gap(4);
+    line(`Generado el ${new Date().toLocaleDateString('es-ES')} · Semana ${cw} de 12 (${phase(cw).n}) · Inicio ${shortDate(START)} ${START.slice(0,4)}`,9,false,[90,90,90]);gap(4);
     line('Punto de partida y objetivo',13,true);gap(1);
     line(`Hombre, 45 años, 175 cm. Inicio: ${BASE.peso} kg, ~${BASE.grasa}% grasa, cintura ${BASE.cintura} cm.`,10);
     line(`Objetivo diario: ${TARGET.kcal} kcal · proteína ${TARGET.p} g · carbohidratos ${TARGET.c} g · grasas ${TARGET.f} g.`,10);gap(4);
