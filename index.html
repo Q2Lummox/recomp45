@@ -110,6 +110,7 @@ a{color:var(--accent)}
 @media (max-width:360px){.energy{grid-template-columns:1fr;justify-items:center}.bars{width:100%}}
 
 
+.ss{display:inline-grid;place-items:center;min-width:30px;height:24px;padding:0 6px;margin-right:8px;border-radius:3px;background:var(--accent);color:var(--accent-ink);font-family:var(--f-display);font-weight:700;font-size:.9rem;letter-spacing:.04em;vertical-align:2px}
 /* tarjeta del reloj */
 .watch{border:1px solid #23282e;background:#101215;border-radius:4px;padding:12px;display:grid;gap:12px;min-width:0}
 .watch-head{display:flex;align-items:center;gap:8px}
@@ -341,7 +342,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.4.2';
+const APP_VERSION='1.5.0';
 const START='2026-11-02';
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -414,51 +415,63 @@ const MEALS=[
     C:{t:'Merluza con arroz',items:[['merluza',200],['arroz',70],['verdura',200],['aove',10]]}}},
 ];
 
+/* Rutina de 5 días con los ejercicios que hace en su gimnasio (v1.5.0).
+   ss: superserie (A1 y A2 seguidas, descanso al terminar la pareja) · kg: peso de referencia · e: vigilar el codo · low: tren inferior (+5 kg) */
 const SESS={
-  pecho:{n:'Pecho + Tríceps',sub:'Empuje · pecho y tríceps',ex:[
-    {id:'t1',n:'Press banca con mancuernas, agarre neutro',s:4,lo:6,hi:8,r:150,e:1,note:'Agarre neutro o semineutro: carga mucho menos el codo que la barra. Baja en 2-3 s y no bloquees arriba.'},
-    {id:'e1',n:'Press inclinado con mancuernas, agarre neutro',s:3,lo:8,hi:10,r:120,e:1,note:'Banco a 30°. Codos a unos 45° del cuerpo.'},
-    {id:'e2',n:'Press de pecho en máquina convergente',s:3,lo:10,hi:12,r:90,note:'Empuja sin bloquear del todo.'},
-    {id:'e5',n:'Aperturas en polea o contractora',s:3,lo:12,hi:15,r:75,note:'Codos un poco flexionados y fijos durante todo el recorrido.'},
-    {id:'e6',n:'Extensión de tríceps en polea con cuerda',s:3,lo:12,hi:15,r:60,e:1,note:'Nada de press francés ni extensiones por encima de la cabeza. Para 2-3 cm antes del bloqueo si molesta.'},
-    {id:'p6',n:'Patada de tríceps en polea a una mano',s:2,lo:12,hi:15,r:60,u:'/brazo',e:1,note:'Sin agarre: usa la tobillera o el cable sin maneral si puedes. Peso ligero y sin bloquear el codo.'}]},
-  pierna:{n:'Piernas + Glúteos',sub:'Cuádriceps, isquios, glúteo y gemelo',ex:[
-    {id:'a1',n:'Sentadilla hack o péndulo',s:4,lo:6,hi:8,r:150,e:1,low:1,note:'Sustituye a la sentadilla con barra: sujetar la barra fuerza la muñeca y el codo. Rodillas en línea con los pies.'},
-    {id:'a2',n:'Peso muerto rumano con barra',s:3,lo:8,hi:10,r:120,e:1,low:1,note:'Straps siempre: apretar el agarre irrita el epicóndilo. Espalda neutra, cadera atrás.'},
-    {id:'b1',n:'Hip thrust con barra o máquina',s:3,lo:8,hi:10,r:120,low:1,note:'Pausa 1 s arriba apretando glúteo. Barbilla al pecho.'},
-    {id:'a3',n:'Prensa de piernas',s:3,lo:10,hi:12,r:120,low:1,note:'Pies a la anchura de hombros. La zona lumbar no se despega del respaldo.'},
-    {id:'a4',n:'Curl femoral sentado',s:3,lo:10,hi:12,r:90,low:1,note:'Sube rápido, baja en 3 s.'},
-    {id:'a5',n:'Gemelo de pie en máquina',s:4,lo:12,hi:15,r:60,low:1,note:'Estira 2 s abajo en cada repetición.'}]},
-  espalda:{n:'Espalda + Bíceps',sub:'Tirón · espalda, bíceps y codos',ex:[
-    {id:'r1',n:'Jalón con agarre neutro o máquina',s:4,lo:8,hi:10,r:120,e:1,note:'Con straps. Pecho fuera, codos hacia los bolsillos y sube en 2 s.'},
-    {id:'t2',n:'Remo en máquina con pecho apoyado',s:4,lo:6,hi:8,r:120,e:1,note:'Agarre neutro y straps. Tira con los codos, no con las manos. Pausa 1 s atrás.'},
-    {id:'r2',n:'Remo en polea baja, agarre neutro',s:3,lo:10,hi:12,r:90,e:1,note:'Con straps. Torso quieto y junta escápulas al final.'},
-    {id:'r4',n:'Pájaros en máquina (contractora inversa)',s:3,lo:15,hi:15,r:60,note:'Hombro posterior. Peso ligero.'},
-    {id:'r5',n:'Curl martillo con mancuernas',s:3,lo:10,hi:12,r:75,e:1,note:'El agarre neutro es el que mejor tolera el codo. Evita el curl con barra recta.'},
-    {id:'q6',n:'Curl en polea baja con cuerda',s:2,lo:12,hi:15,r:60,e:1,note:'Agarre neutro, codos pegados y bajada en 3 s. Si notas la parte interna del codo, quítalo.'},
-    {id:'r6',n:'Isometría de extensores de muñeca',s:5,lo:30,hi:45,r:60,u:'s',e:1,note:'Antebrazo apoyado, palma abajo, mancuerna de 2-4 kg quieta. Dolor máximo 3/10. Calma el dolor del epicóndilo.'}]},
-  hombros:{n:'Hombros + Core',sub:'Hombro completo sin press vertical, y core',ex:[
-    {id:'e3',n:'Landmine press a una mano',s:3,lo:10,hi:10,r:90,u:'/lado',e:1,note:'Sustituye al press militar. El empuje inclinado no te obliga a extender el codo en vertical, que es justo lo que te duele.'},
-    {id:'e4',n:'Elevaciones laterales con mancuernas',s:4,lo:12,hi:20,r:60,note:'Sube hasta la altura del hombro. Nada de balanceo.'},
-    {id:'t5',n:'Elevaciones laterales en polea, a una mano',s:3,lo:12,hi:15,r:60,u:'/lado',note:'Codo algo flexionado y fijo. Peso ligero, control total.'},
-    {id:'t6',n:'Face pull con cuerda',s:3,lo:12,hi:15,r:60,note:'Hacia la frente, separando la cuerda. Salud del hombro.'},
-    {id:'h5',n:'Rotación externa en polea',s:2,lo:15,hi:15,r:45,u:'/lado',note:'Codo pegado al cuerpo a 90°. Muy ligero: es salud del manguito rotador.'},
-    {id:'a6',n:'Dead bug',s:3,lo:10,hi:10,r:45,u:'/lado',note:'Lumbar pegada al suelo. Core sin cargar los brazos.'},
-    {id:'b6',n:'Pallof press en polea',s:3,lo:12,hi:12,r:45,u:'/lado',note:'Antirrotación: el torso no gira.'},
-    {id:'c1',n:'Crunch en máquina',s:3,lo:12,hi:15,r:60,note:'Enrolla la columna, no tires con los brazos.'}]},
-  fullbody:{n:'Fullbody',sub:'Cuerpo completo más suave · 1 rep más en reserva',ex:[
-    {id:'b2',n:'Sentadilla búlgara en multipower',s:3,lo:8,hi:10,r:90,u:'/pierna',e:1,low:1,note:'En multipower no sujetas mancuernas: cero carga para los antebrazos.'},
-    {id:'t3',n:'Press inclinado en máquina',s:3,lo:8,hi:10,r:120,note:'Recorrido completo, sin rebotar abajo.'},
-    {id:'r3',n:'Remo a una mano con mancuerna',s:3,lo:10,hi:10,r:90,u:'/lado',e:1,note:'Con strap. Apoya mano y rodilla en el banco.'},
-    {id:'b3',n:'Extensión de cuádriceps',s:2,lo:12,hi:15,r:75,low:1,note:'Pausa 1 s arriba.'},
-    {id:'b4',n:'Curl femoral tumbado',s:2,lo:10,hi:12,r:75,low:1,note:'Cadera pegada al banco.'},
-    {id:'b5',n:'Gemelo sentado',s:2,lo:15,hi:20,r:60,low:1,note:'Recorrido completo.'}]},
-  descanso:{n:'Descanso activo',sub:'Recuperación',ex:[]},
+  pechoA:{n:'Pecho + Espalda (lunes)',sub:'Superseries de pecho y espalda',cinta:1,ex:[
+    {id:'pe_multi',ss:'A1',n:'Press inclinado en multipower',s:3,lo:6,hi:8,r:120,kg:40,note:'Banco inclinado. 40 kg más la barra. Baja controlado hasta el pecho.'},
+    {id:'es_jalon',ss:'A2',n:'Jalón al pecho, agarre neutro',s:3,lo:8,hi:10,r:120,note:'Pecho fuera y codos hacia los bolsillos. Sube en 2 s.'},
+    {id:'pe_maq',ss:'B1',n:'Press de pecho en máquina',s:3,lo:8,hi:10,r:90,kg:40,note:'Empuja sin bloquear del todo los codos.'},
+    {id:'es_remoc',ss:'B2',n:'Remo en polea, agarre cerrado al esternón',s:3,lo:10,hi:12,r:90,note:'Torso quieto. Junta escápulas al final y aguanta 1 s.'},
+    {id:'pe_peck',ss:'C1',n:'Peck deck (contractora)',s:3,lo:12,hi:15,r:90,kg:59,e:1,note:'Empuja con los antebrazos apoyados en las almohadillas y agarra suave: así no se cargan los antebrazos.'},
+    {id:'es_remou',ss:'C2',n:'Remo unilateral en polea',s:3,lo:10,hi:12,r:90,u:'/lado',note:'Lleva el codo atrás pegado al cuerpo. Sin girar el tronco.'}]},
+  pierna:{n:'Piernas + Core (martes)',sub:'Prioridad glúteo · cuádriceps, femoral, gemelo y core',ex:[
+    {id:'pi_hip',n:'Hip thrust',s:4,lo:8,hi:10,r:120,kg:20,low:1,note:'Primero del día: es tu prioridad. Pausa de 1 s arriba apretando glúteo, barbilla al pecho.'},
+    {id:'pi_prensa',n:'Prensa, pies altos y abiertos',s:4,lo:8,hi:10,r:120,low:1,note:'Pies altos y algo abiertos en la plataforma: trabaja más el glúteo. Lumbar pegada al respaldo.'},
+    {id:'pi_ext',n:'Extensión de cuádriceps',s:3,lo:12,hi:15,r:75,low:1,note:'Pausa de 1 s arriba y baja en 2-3 s.'},
+    {id:'pi_femoral',n:'Curl femoral sentado',s:3,lo:10,hi:12,r:75,low:1,note:'Sube rápido y baja en 3 s.'},
+    {id:'pi_abd',n:'Abductores, abrir',s:3,lo:15,hi:20,r:60,low:1,note:'Trabaja la parte alta y lateral del glúteo, la que lo levanta. Inclina el tronco un poco hacia delante.'},
+    {id:'pi_add',n:'Aductores, cerrar',s:2,lo:15,hi:15,r:60,low:1,note:'Controla la vuelta, sin golpear las placas.'},
+    {id:'pi_gem',n:'Gemelos de pie en máquina',s:4,lo:12,hi:15,r:60,low:1,note:'Estira 2 s abajo en cada repetición.'},
+    {id:'co_elev',n:'Elevación de piernas en máquina',s:3,lo:12,hi:12,r:45,note:'Sube las rodillas sin balanceo y baja despacio.'},
+    {id:'co_crunch',n:'Crunch tocando los pies',s:3,lo:15,hi:15,r:45,note:'Piernas arriba. Sube el tronco buscando los pies, sin tirar del cuello.'},
+    {id:'co_lateral',n:'Plancha lateral subiendo la cadera (por lado)',s:3,lo:30,hi:30,r:45,u:'s',note:'Primero un lado y luego el otro. Sube y baja la cadera un poco.'},
+    {id:'co_plancha',n:'Plancha alternando manos o moviendo pies',s:3,lo:30,hi:40,r:45,u:'s',note:'Alterna las dos variantes de una semana a otra. Cadera quieta.'}]},
+  hombrosA:{n:'Hombros + Brazos (miércoles)',sub:'Hombro en polea y superseries de bíceps y tríceps',cinta:1,ex:[
+    {id:'ho_latp',n:'Elevación lateral en polea, a la altura del pecho',s:3,lo:12,hi:15,r:60,kg:6,u:'/lado',note:'Tobillera a la muñeca. Sube hasta la altura del hombro, sin balanceo.'},
+    {id:'ho_post',n:'Hombro posterior en máquina',s:3,lo:12,hi:15,r:60,kg:30,note:'Brazos hacia atrás abriendo, sin encoger los hombros.'},
+    {id:'ho_front',n:'Elevación frontal en polea, de espaldas',s:2,lo:12,hi:15,r:60,kg:6,u:'/lado',note:'De espaldas a la polea, sube el brazo de frente hasta la altura de los ojos.'},
+    {id:'bi_pred',ss:'A1',n:'Curl predicador en máquina',s:3,lo:8,hi:10,r:90,kg:37,note:'Baja hasta casi estirar el brazo, sin rebotar abajo.'},
+    {id:'tr_v',ss:'A2',n:'Tríceps en polea con barra V',s:3,lo:10,hi:12,r:90,kg:27,note:'Codos pegados al cuerpo. Estira del todo abajo.'},
+    {id:'bi_mart',ss:'B1',n:'Curl martillo en máquina',s:3,lo:10,hi:12,r:90,kg:27,e:1,note:'Regla del codo: dolor como mucho 4/10 al hacerlo y a la mañana siguiente igual que siempre. Si dos mañanas seguidas está peor, baja un poco esa semana.'},
+    {id:'tr_fondos',ss:'B2',n:'Fondos asistidos en máquina',s:3,lo:8,hi:10,r:90,kg:40,note:'Sentado, empuja hacia abajo hasta estirar los brazos. También trabaja el pecho.'},
+    {id:'an_pron',ss:'C1',n:'Curl de muñeca en pronación en polea',s:2,lo:12,hi:15,r:60,e:1,note:'Regla del codo: dolor como mucho 4/10 y a la mañana siguiente igual que siempre. Movimiento lento, solo la muñeca.'},
+    {id:'an_sup',ss:'C2',n:'Curl de muñeca en supinación, polea baja',s:2,lo:12,hi:15,r:60,note:'Solo la muñeca, antebrazo quieto.'}]},
+  pechoB:{n:'Pecho + Espalda (viernes)',sub:'Variantes distintas a las del lunes',cinta:1,ex:[
+    {id:'pe_manc',ss:'A1',n:'Press inclinado con mancuernas a 30°',s:3,lo:8,hi:10,r:120,kg:18,note:'18 kg cada mancuerna. Codos a unos 45° del cuerpo.'},
+    {id:'es_domi',ss:'A2',n:'Dominadas',s:3,lo:3,hi:8,r:120,note:'Haz todas las que puedas con buena técnica. Meta: pasar de 3-4 a 8. Apunta 0 kg.'},
+    {id:'pe_maq',ss:'B1',n:'Press de pecho en máquina',s:3,lo:10,hi:12,r:90,kg:40,note:'Hoy algo más de repeticiones que el lunes.'},
+    {id:'es_remou',ss:'B2',n:'Remo unilateral en polea',s:3,lo:10,hi:12,r:90,u:'/lado',note:'Lleva el codo atrás pegado al cuerpo. Sin girar el tronco.'},
+    {id:'pe_peck',ss:'C1',n:'Peck deck (contractora)',s:3,lo:12,hi:15,r:90,kg:59,e:1,note:'Antebrazos apoyados en las almohadillas y agarre suave.'},
+    {id:'es_jalon',ss:'C2',n:'Jalón al pecho, agarre neutro',s:3,lo:10,hi:12,r:90,note:'Hoy al final y con algo más de repeticiones.'}]},
+  sabado:{n:'Glúteo + Hombros + Brazos (sábado)',sub:'Primero piernas, para que los brazos descansen del viernes',ex:[
+    {id:'pi_hip',n:'Hip thrust',s:4,lo:10,hi:12,r:120,kg:20,low:1,note:'Segundo día de glúteo de la semana. Pausa de 1 s arriba.'},
+    {id:'pi_ext',n:'Extensión de cuádriceps',s:3,lo:12,hi:15,r:75,low:1,note:'Para ganar anchura de muslo. Pausa de 1 s arriba.'},
+    {id:'ho_latf',n:'Elevación lateral-frontal en polea, de lado',s:3,lo:12,hi:15,r:60,kg:6,u:'/lado',note:'De lado a la polea, sube el brazo hacia el lado y un poco al frente.'},
+    {id:'ho_post',n:'Hombro posterior en máquina',s:3,lo:15,hi:15,r:60,kg:30,note:'Brazos hacia atrás abriendo, sin encoger los hombros.'},
+    {id:'bi_bay',ss:'A1',n:'Curl bayesian en polea',s:3,lo:10,hi:12,r:90,kg:12,note:'De espaldas a la polea, el brazo empieza detrás del cuerpo.'},
+    {id:'tr_nuca',ss:'A2',n:'Tríceps tras nuca en polea',s:3,lo:10,hi:12,r:90,kg:18,note:'Si algún día notas el codo, es el primero que hay que cambiar por la barra V.'},
+    {id:'bi_recta',ss:'B1',n:'Curl con barra recta en polea',s:3,lo:10,hi:12,r:75,kg:24,note:'Codos quietos, sin balanceo.'},
+    {id:'tr_patada',ss:'B2',n:'Patada de tríceps en polea',s:3,lo:12,hi:15,r:75,kg:6,u:'/brazo',note:'Tobillera a la muñeca. Estira del todo atrás.'},
+    {id:'bi_mart',ss:'C1',n:'Curl martillo en máquina',s:2,lo:10,hi:12,r:60,kg:27,e:1,note:'Regla del codo: dolor como mucho 4/10 y a la mañana siguiente igual que siempre.'},
+    {id:'an_pron',ss:'C2',n:'Curl de muñeca en pronación en polea',s:2,lo:12,hi:15,r:60,e:1,note:'Movimiento lento, solo la muñeca.'},
+    {id:'an_sup',ss:'C3',n:'Curl de muñeca en supinación, polea baja',s:2,lo:12,hi:15,r:60,note:'Solo la muñeca, antebrazo quieto.'}]},
+  descanso:{n:'Descanso',sub:'Recuperación',ex:[]},
 };
-const WEEKMAP={1:'pecho',2:'pierna',3:'espalda',4:'descanso',5:'hombros',6:'fullbody',0:'descanso'};
+const WEEKMAP={1:'pechoA',2:'pierna',3:'hombrosA',4:'descanso',5:'pechoB',6:'sabado',0:'descanso'};
 /* ejercicios de versiones anteriores: para que su historial siga teniendo nombre */
-const LEGACY_EX=[{id:'t4',n:'Jalón al pecho, agarre neutro',s:3,lo:8,hi:10,r:120,e:1,note:''}];
-const ALL_EX=Object.values(SESS).flatMap(s=>s.ex).concat(LEGACY_EX);
+const LEGACY_EX=[{id:'t1',n:'Press banca con mancuernas, agarre neutro',s:3,lo:8,hi:12,r:90,note:''},{id:'e1',n:'Press inclinado con mancuernas, agarre neutro',s:3,lo:8,hi:12,r:90,note:''},{id:'e2',n:'Press de pecho en máquina convergente',s:3,lo:8,hi:12,r:90,note:''},{id:'e5',n:'Aperturas en polea o contractora',s:3,lo:8,hi:12,r:90,note:''},{id:'e6',n:'Extensión de tríceps en polea con cuerda',s:3,lo:8,hi:12,r:90,note:''},{id:'p6',n:'Patada de tríceps en polea a una mano',s:3,lo:8,hi:12,r:90,note:''},{id:'a1',n:'Sentadilla hack o péndulo',s:3,lo:8,hi:12,r:90,note:''},{id:'a2',n:'Peso muerto rumano con barra',s:3,lo:8,hi:12,r:90,note:''},{id:'b1',n:'Hip thrust con barra o máquina',s:3,lo:8,hi:12,r:90,note:''},{id:'a3',n:'Prensa de piernas',s:3,lo:8,hi:12,r:90,note:''},{id:'a4',n:'Curl femoral sentado',s:3,lo:8,hi:12,r:90,note:''},{id:'a5',n:'Gemelo de pie en máquina',s:3,lo:8,hi:12,r:90,note:''},{id:'r1',n:'Jalón con agarre neutro o máquina',s:3,lo:8,hi:12,r:90,note:''},{id:'t2',n:'Remo en máquina con pecho apoyado',s:3,lo:8,hi:12,r:90,note:''},{id:'r2',n:'Remo en polea baja, agarre neutro',s:3,lo:8,hi:12,r:90,note:''},{id:'r4',n:'Pájaros en máquina (contractora inversa)',s:3,lo:8,hi:12,r:90,note:''},{id:'r5',n:'Curl martillo con mancuernas',s:3,lo:8,hi:12,r:90,note:''},{id:'q6',n:'Curl en polea baja con cuerda',s:3,lo:8,hi:12,r:90,note:''},{id:'r6',n:'Isometría de extensores de muñeca',s:3,lo:8,hi:12,r:90,note:''},{id:'e3',n:'Landmine press a una mano',s:3,lo:8,hi:12,r:90,note:''},{id:'e4',n:'Elevaciones laterales con mancuernas',s:3,lo:8,hi:12,r:90,note:''},{id:'t5',n:'Elevaciones laterales en polea, a una mano',s:3,lo:8,hi:12,r:90,note:''},{id:'t6',n:'Face pull con cuerda',s:3,lo:8,hi:12,r:90,note:''},{id:'h5',n:'Rotación externa en polea',s:3,lo:8,hi:12,r:90,note:''},{id:'a6',n:'Dead bug',s:3,lo:8,hi:12,r:90,note:''},{id:'b6',n:'Pallof press en polea',s:3,lo:8,hi:12,r:90,note:''},{id:'c1',n:'Crunch en máquina',s:3,lo:8,hi:12,r:90,note:''},{id:'b2',n:'Sentadilla búlgara en multipower',s:3,lo:8,hi:12,r:90,note:''},{id:'t3',n:'Press inclinado en máquina',s:3,lo:8,hi:12,r:90,note:''},{id:'r3',n:'Remo a una mano con mancuerna',s:3,lo:8,hi:12,r:90,note:''},{id:'b3',n:'Extensión de cuádriceps',s:3,lo:8,hi:12,r:90,note:''},{id:'b4',n:'Curl femoral tumbado',s:3,lo:8,hi:12,r:90,note:''},{id:'b5',n:'Gemelo sentado',s:3,lo:8,hi:12,r:90,note:''},{id:'t4',n:'Jalón al pecho, agarre neutro',s:3,lo:8,hi:12,r:90,note:''}];
+const ALL_EX=(()=>{const m=new Map();for(const e of [...Object.values(SESS).flatMap(s=>s.ex),...LEGACY_EX])if(!m.has(e.id))m.set(e.id,e);return[...m.values()]})();
 
 /* ================== UTILIDADES ================== */
 const $=s=>document.querySelector(s);
@@ -866,10 +879,11 @@ function lastPerf(exId,date){
 }
 function hintFor(ex,lp,ph){
   const unit=ex.u==='s'?'s':'reps';
-  if(!lp)return{k:'',t:`Primera vez: elige un peso con el que hagas ${ex.hi} ${unit} dejando ${ph.rir} en reserva`};
+  if(!lp)return{k:'',t:ex.kg?`Empieza con tus ${String(ex.kg).replace('.',',')} kg de siempre y apunta lo que hagas`:ex.id==='es_domi'?'Haz todas las que puedas con buena técnica':`Primera vez: elige un peso con el que hagas ${ex.hi} ${unit} dejando ${ph.rir} en reserva`};
   if(ph.deload)return{k:'hold',t:'Descarga: mismo peso, solo 2 series'};
   const allTop=lp.sets.length>=ex.s&&lp.sets.every(s=>+s.r>=ex.hi);
-  if(ex.u==='s')return allTop?{k:'up',t:'Sube de mancuerna si el dolor está en 3/10 o menos'}:{k:'hold',t:'Mismo peso, alarga el tiempo'};
+  if(ex.u==='s')return allTop?{k:'up',t:'Añade 10 s por serie'}:{k:'hold',t:'Mismo tiempo, intenta completarlo'};
+  if(ex.id==='es_domi')return allTop?{k:'up',t:'¡Meta cumplida! Prueba con algo de lastre o menos asistencia'}:{k:'hold',t:'Intenta 1 repetición más por serie'};
   if(allTop)return{k:'up',t:`Sube +${ex.low?'5':'2,5'} kg y vuelve a ${ex.lo} reps`};
   return{k:'hold',t:'Mismo peso, suma repeticiones'};
 }
@@ -878,7 +892,8 @@ function viewEntreno(){
   const sel=Object.entries(SESS).map(([k,v])=>`<option value="${k}" ${k===sk?'selected':''}>${v.n}</option>`).join('');
   let html=`<section class="phase"><b>Semana ${Math.min(w,12)} · ${ph.n} · RIR ${ph.rir}</b><span class="small">${ph.t}</span></section>
   <section class="card"><div class="field"><label for="sess">Sesión del ${longDate(d)}</label><select id="sess" data-act="session">${sel}</select></div>
-  <p class="small muted">Lun Pecho + Tríceps · Mar Piernas · Mié Espalda + Bíceps · Jue descanso · Vie Hombros + Core · Sáb Fullbody · Dom descanso. Si un día no puedes, cambia la sesión aquí.</p></section>`;
+  <p class="small muted">Lun Pecho + Espalda · Mar Piernas + Core · Mié Hombros + Brazos · Jue descanso · Vie Pecho + Espalda · Sáb Glúteo + Hombros + Brazos · Dom descanso. Si un día no puedes, cambia la sesión aquí.</p>
+  ${SS.ex.some(e=>e.ss)?'<p class="small"><b>Superseries:</b> los ejercicios con la misma letra (A1 y A2) se hacen seguidos, una serie de cada uno, y descansas al terminar la pareja.</p>':''}</section>`;
   if(sk==='descanso'){
     html+=`<section class="card"><h2>Descanso activo</h2><ul class="items">
       <li><span>Paseo o pasos de la jornada</span><span>10.000+</span></li>
@@ -889,19 +904,22 @@ function viewEntreno(){
     return html;
   }
   html+=`<section class="card"><h2>Calentamiento · 6-8 min</h2><p class="small muted">5 min de bici o elíptica, 20 rotaciones de muñeca y antebrazo, y 2 series de aproximación en el primer ejercicio (50% y 75% del peso de trabajo).</p></section>`;
-  for(const ex of SS.ex){
+  for(const [xi,ex] of SS.ex.entries()){
     const lp=lastPerf(ex.id,d),h=hintFor(ex,lp,ph),n=ph.deload?Math.min(2,ex.s):ex.s,cur=(wk.sets&&wk.sets[ex.id])||[],unit=ex.u==='s'?' s':(ex.u||'');
+    const nxt=SS.ex[xi+1],chain=ex.ss&&nxt&&nxt.ss&&nxt.ss[0]===ex.ss[0];   /* hay otro ejercicio de la misma superserie detrás */
     let rows='';
     for(let i=0;i<n;i++){const s=cur[i]||{},pk=lp&&lp.sets[i]?lp.sets[i].kg:'',pr=lp&&lp.sets[i]?lp.sets[i].r:'';
-      rows+=`<span class="n">${i+1}</span><input type="number" inputmode="decimal" step="0.5" id="w-${ex.id}-${i}-kg" data-ex="${ex.id}" data-i="${i}" data-k="kg" value="${s.kg??''}" placeholder="${pk||'kg'}" aria-label="Kilos serie ${i+1}"><input type="number" inputmode="numeric" id="w-${ex.id}-${i}-r" data-ex="${ex.id}" data-i="${i}" data-k="r" value="${s.r??''}" placeholder="${pr||(ex.u==='s'?'seg':'reps')}" aria-label="${ex.u==='s'?'Segundos':'Repeticiones'} serie ${i+1}">`}
+      rows+=`<span class="n">${i+1}</span><input type="number" inputmode="decimal" step="0.5" id="w-${ex.id}-${i}-kg" data-ex="${ex.id}" data-i="${i}" data-k="kg" value="${s.kg??''}" placeholder="${pk||ex.kg||'kg'}" aria-label="Kilos serie ${i+1}"><input type="number" inputmode="numeric" id="w-${ex.id}-${i}-r" data-ex="${ex.id}" data-i="${i}" data-k="r" value="${s.r??''}" placeholder="${pr||(ex.u==='s'?'seg':'reps')}" aria-label="${ex.u==='s'?'Segundos':'Repeticiones'} serie ${i+1}">`}
     html+=`<section class="card">
-      <div class="ex-top"><div class="grow"><h3>${esc(ex.n)}</h3><div class="ex-meta">${n} × ${ex.lo===ex.hi?ex.lo:ex.lo+'-'+ex.hi}${unit} · descanso ${mmss(ex.r)}</div></div>
-      <button type="button" class="restbtn" data-act="rest" data-sec="${ex.r}" data-name="${esc(ex.n)}">⏱ ${mmss(ex.r)}</button></div>
+      <div class="ex-top"><div class="grow"><h3>${ex.ss?`<span class="ss">${ex.ss}</span>`:''}${esc(ex.n)}</h3><div class="ex-meta">${n} × ${ex.lo===ex.hi?ex.lo:ex.lo+'-'+ex.hi}${unit} · ${chain?`sin descanso, pasa a ${nxt.ss}`:`descanso ${mmss(ex.r)}`}</div></div>
+      ${chain?'':`<button type="button" class="restbtn" data-act="rest" data-sec="${ex.r}" data-name="${esc(ex.n)}">⏱ ${mmss(ex.r)}</button>`}</div>
       <p class="note ${ex.e?'elbow':''}">${ex.e?'<b style="color:var(--band)">CODO · </b>':''}${esc(ex.note)}</p>
       <div class="row small"><span class="pill ${h.k}">${esc(h.t)}</span>${lp?`<span class="muted mono">${shortDate(lp.date)}: ${lp.sets.map(s=>`${s.kg||'–'}×${s.r}`).join(' · ')}</span>`:''}</div>
       <div class="sets"><span></span><span class="h">Kg</span><span class="h">${ex.u==='s'?'Segundos':'Reps'}</span>${rows}</div>
     </section>`;
   }
+  if(SS.cinta)html+=`<section class="card"><h2>Cinta · opcional</h2><p class="small muted">20 min con la inclinación al máximo a 5,5 km/h, al final del entreno. Solo los días que te apetezca.</p>
+    <button type="button" class="toggle" data-act="cinta" aria-pressed="${!!wk.cinta}"><span class="box">${wk.cinta?'✓':''}</span><span class="grow"><span class="t">Cinta hecha hoy</span></span></button></section>`;
   html+=`<section class="card"><h2>Al terminar</h2>
     <div class="field"><label for="w-pain">Dolor de codo en la sesión: <b class="num" id="painv">${wk.pain??0}</b>/10</label><input type="range" min="0" max="10" step="1" id="w-pain" data-act="pain" value="${wk.pain??0}"></div>
     <p class="small muted">0-3 normal, sigue. 4-5: baja el peso o el recorrido en ese ejercicio. Más de 5: quítalo esa semana.</p>
@@ -994,11 +1012,12 @@ function viewPlan(){
   </section>
   <section class="card"><div class="eyebrow">2 · Entrenamiento</div><h2>Estructura semanal</h2>
     <div class="tbl-wrap"><table><thead><tr><th>Día</th><th>Sesión</th></tr></thead><tbody>
-      <tr><td>Lunes</td><td>Pecho + Tríceps (empuje)</td></tr><tr><td>Martes</td><td>Piernas + Glúteos</td></tr><tr><td>Miércoles</td><td>Espalda + Bíceps (tirón)</td></tr>
-      <tr><td>Jueves</td><td>Descanso activo</td></tr><tr><td>Viernes</td><td>Hombros + Core</td></tr><tr><td>Sábado</td><td>Fullbody (cuerpo completo)</td></tr><tr><td>Domingo</td><td>Descanso</td></tr>
+      <tr><td>Lunes</td><td>Pecho + Espalda</td></tr><tr><td>Martes</td><td>Piernas + Core (prioridad glúteo)</td></tr><tr><td>Miércoles</td><td>Hombros + Brazos</td></tr>
+      <tr><td>Jueves</td><td>Descanso</td></tr><tr><td>Viernes</td><td>Pecho + Espalda</td></tr><tr><td>Sábado</td><td>Glúteo + Cuádriceps + Hombros + Brazos</td></tr><tr><td>Domingo</td><td>Descanso</td></tr>
     </tbody></table></div>
-    <p class="small">Los grupos que trabajan juntos van el mismo día: el tríceps ayuda en los empujes de pecho y el bíceps en los remos. El sábado de fullbody repite pierna, pecho y espalda con menos series, así cada músculo grande recibe dos estímulos por semana, que es lo que mejor funciona para ganar músculo.</p>
-    <p class="small"><b>Por tus codos:</b> tríceps (lunes) y bíceps (miércoles) nunca van en días seguidos. El día de hombros no lleva press vertical y el día de brazos lo cambiamos por core. El fullbody del sábado va con 1 repetición más en reserva que el resto de la semana, porque viene después del día de hombros.</p>
+    <p class="small">Solo con los ejercicios que haces en tu gimnasio. Pecho, espalda, hombros, brazos, glúteo y cuádriceps se trabajan dos veces por semana, que es lo que mejor funciona para ganar músculo según los metaanálisis. Femoral, gemelo y core, una vez.</p>
+    <p class="small"><b>Superseries:</b> pecho con espalda y bíceps con tríceps van en parejas (A1 y A2): una serie de cada uno seguidas y descanso al acabar la pareja. Ahorra unos 15-20 min por sesión sin perder rendimiento.</p>
+    <p class="small"><b>Glúteo:</b> el hip thrust va el primero los dos días, prensa con pies altos y abductores el martes. <b>Cinta:</b> opcional al final del lunes, miércoles o viernes; nunca el día de pierna.</p>
     <h3>Doble progresión</h3>
     <ol class="small"><li>Cada ejercicio tiene un rango, por ejemplo 6-8 reps.</li><li>Mantén el peso hasta completar todas las series en el número alto (8).</li><li>Entonces sube 2,5 kg en tren superior o 5 kg en tren inferior y vuelve al número bajo (6).</li></ol>
     <h3>Fases</h3>
@@ -1013,8 +1032,8 @@ function viewPlan(){
       <span class="dot" style="background:var(--band)"></span><span><b>4-5/10:</b> baja peso o recorrido en ese ejercicio.</span>
       <span class="dot" style="background:var(--bad)"></span><span><b>Más de 5/10, o peor a la mañana siguiente:</b> quita ese ejercicio esa semana.</span>
     </div>
-    <h3>Cambios en la rutina</h3>
-    <ul class="small"><li>Agarre neutro (palmas enfrentadas) en press y remos.</li><li>Straps en jalones, remos y peso muerto: el agarre fuerte es lo que más irrita el epicóndilo.</li><li>Fuera: press militar, press francés, extensiones por encima de la cabeza y curl con barra recta.</li><li>Sentadilla en hack o péndulo en vez de barra, y búlgaras en multipower.</li></ul>
+    <h3>Martillo y curl en pronación</h3>
+    <ul class="small"><li>Los mantienes con tu peso: el tendón se fortalece con carga progresiva, no con reposo.</li><li>Durante el ejercicio, dolor como mucho de 4/10.</li><li>A la mañana siguiente el codo tiene que estar igual que siempre. Si dos mañanas seguidas está peor, esa semana baja un poco la carga en esos dos y luego vuelves a tu peso.</li><li>En el peck deck, antebrazos apoyados y agarre suave. Si el tras nuca empieza a molestar, cámbialo por la barra V.</li></ul>
     <h3>Rutina diaria de codos · 8 min</h3>
     <div class="tbl-wrap"><table><thead><tr><th>Ejercicio</th><th>Dosis</th></tr></thead><tbody>
       <tr><td>Isometría de extensores: antebrazo apoyado, palma abajo, mancuerna quieta</td><td class="num">5 × 30-45 s</td></tr>
@@ -1103,6 +1122,7 @@ $('#view').addEventListener('click',e=>{
   else if(a==='zepp-help')openZeppHelp();
   else if(a==='watch-settings')openWatchSettings();
   else if(a==='rest')startTimer(+b.dataset.sec,b.dataset.name);
+  else if(a==='cinta'){const w=clone(S.workouts[d]||{});w.session=w.session||sessionFor(d);w.cinta=!w.cinta;saveDoc('workouts',d,w);render()}
   else if(a==='ci-photos'){const mon=mondayOf(todayISO()),ci=clone(S.checkins[mon]||{});ci.photos=!ci.photos;saveDoc('checkins',mon,ci);render()}
 });
 $('#view').addEventListener('input',e=>{
@@ -1189,7 +1209,7 @@ function coachContext(){
   L.push(`Hoy es ${longDate(t)} ${t}. Semana ${Math.min(w,12)} de 12, fase ${phase(w).n} (RIR ${phase(w).rir}).`);
   L.push('Perfil: hombre de 45 años, 175 cm. Inicio: 80 kg, ~21% grasa, cintura 96 cm. Media jornada de albañil y media de técnico de mantenimiento en un hospital (poco esfuerzo); unos 10.000 pasos al día. Epicondilitis en ambos codos (lateral y medial) diagnosticada; ahora le duele la parte externa del codo izquierdo al empujar en vertical y al cargar bolsas. Duerme 5-6 h. Alcohol social solo el fin de semana. Entrena 5 días, a veces por la mañana y a veces de 21 a 23 h.');
   L.push(`Objetivo diario: ${TARGET.kcal} kcal, proteína ${TARGET.p} g, carbohidratos ${TARGET.c} g, grasa ${TARGET.f} g. Gasto estimado ~${BASE.tdee} kcal.`);
-  L.push('Rutina: lunes Pecho + Tríceps, martes Piernas + Glúteos, miércoles Espalda + Bíceps, jueves descanso, viernes Hombros + Core, sábado Fullbody (más suave, RIR +1), domingo descanso. Sin press militar, press francés ni curl con barra recta; agarre neutro y straps.');
+  L.push('Rutina (solo ejercicios que hace en su gimnasio): lunes Pecho + Espalda en superseries, martes Piernas + Core con prioridad glúteo, miércoles Hombros + Brazos, jueves descanso, viernes Pecho + Espalda, sábado Glúteo + Cuádriceps + Hombros + Brazos, domingo descanso. Cinta opcional 20 min inclinación máxima a 5,5 km/h al final de algunos días.');
   const day=getDay(t),tt=dayTotals(day);
   L.push(`HOY llevo ${fmt(tt.k)} kcal, P ${fmt(tt.p)} g, C ${fmt(tt.c)} g, G ${fmt(tt.f)} g. Me quedan ${fmt(TARGET.kcal-tt.k)} kcal y ${fmt(TARGET.p-tt.p)} g de proteína.`);
   L.push('Comidas del plan hoy: '+MEALS.map(m=>{const s=(day.meals||{})[m.id]||{},o=m.opts[s.opt||'A'],mm=optM(o);return `${m.n} ${m.h} opción ${s.opt||'A'} "${o.t}" (${fmt(mm.k)} kcal, P ${fmt(mm.p)}) ${s.done?'COMIDA':'pendiente'}`}).join('; ')+'.');
@@ -1211,7 +1231,7 @@ function coachContext(){
 const COACH_RULES=`Eres el entrenador personal certificado y especialista en nutrición deportiva de este usuario, dentro de su app de recomposición corporal (perder grasa y ganar músculo a la vez).
 Responde en español de España, con tono directo, motivador, analítico y profesional. Va a leerlo en el móvil: como máximo unas 150 palabras salvo que pida más; frases cortas; listas con "- " solo si ayudan; negritas con **texto** para lo clave.
 Básate en sus datos (abajo) y en la evidencia científica. No inventes datos que no estén. Si propones un ajuste, dilo concreto: gramos, kcal, series, ejercicio sustituto.
-Respeta sus codos: evita recomendar press militar, press francés, extensiones por encima de la cabeza y curl con barra recta. Si describe dolor de codo de más de 5/10, hormigueo, pérdida de fuerza o empeoramiento, recomiéndale ir a su médico o fisio.
+Codos: él ha decidido mantener el curl martillo y el curl de muñeca en pronación con su peso porque nota que fortalecerlos le sienta mejor; respétalo. Aplica la regla: dolor como mucho 4/10 al hacerlo y a la mañana siguiente igual que siempre; si dos mañanas seguidas está peor, bajar un poco la carga esa semana. Recomienda solo ejercicios de su lista salvo que pida alternativas. Si describe dolor de más de 5/10, hormigueo, pérdida de fuerza o empeoramiento, recomiéndale ir a su médico o fisio.
 Si manda una foto, analízala en relación con su plan (comida, etiqueta, técnica, máquina del gimnasio).`;
 
 /* chat con el coach */

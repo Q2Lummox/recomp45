@@ -1,5 +1,10 @@
 # Novedades
 
+## v1.5.0 · 2026-11-03
+- Rutina nueva solo con los ejercicios de tu gimnasio: lunes y viernes Pecho + Espalda, martes Piernas + Core, miércoles Hombros + Brazos, sábado Glúteo + Hombros + Brazos
+- Superseries marcadas (A1, A2…) con su descanso, y tus pesos de siempre como punto de partida
+- Prioridad glúteo: hip thrust el primero dos días por semana; cinta opcional en los días de tren superior
+
 ## v1.4.2 · 2026-11-03
 - Se deshace el cambio del botón de la 1.4.1: «Actualizar desde Zepp» funciona como en la 1.4.0
 
