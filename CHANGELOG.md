@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.2.3 · 2026-11-03
+- Guía del Atajo de Zepp actualizada: agrupar por día en vez de filtrar por origen
+
 ## v1.2.2 · 2026-11-03
 - Zepp: si el Atajo llega sin datos, la app lo avisa en vez de marcar el día como sincronizado
 

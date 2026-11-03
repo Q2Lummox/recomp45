@@ -319,7 +319,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.2.2';
+const APP_VERSION='1.2.3';
 const START='2026-11-02';
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -581,7 +581,7 @@ function openZeppHelp(){
       <li>Activa al menos <b>Pasos</b>, <b>Energía activa</b> y <b>Análisis del sueño</b>, y pulsa <b>Permitir</b>.</li></ol></div>
     <div class="card"><h2>2 · Crear el Atajo «${SHORTCUT}»</h2><ol class="small" style="margin:0;padding-left:1.2em;display:grid;gap:4px">
       <li>App <b>Atajos › +</b>. Nómbralo exactamente <b>${SHORTCUT}</b>.</li>
-      <li><b>Buscar muestras médicas</b>: Tipo <b>Pasos</b>, Fecha de inicio <b>es hoy</b>, Origen <b>es Zepp</b>.</li>
+      <li><b>Buscar muestras médicas</b>: Tipo <b>Pasos</b>, Fecha de inicio <b>es hoy</b>, <b>Agrupar por › Día</b>. Sin filtro de Origen.</li>
       <li><b>Calcular estadísticas</b>: <b>Suma</b> de esas muestras.</li>
       <li>Repite los dos pasos con Tipo <b>Energía en actividad</b> y Unidad <b>kcal</b>.</li>
       <li><b>Aplicar formato a fecha</b>: Fecha actual, formato personalizado <span class="mono">dd-MM-yyyy</span> (día-mes-año). Es opcional: sin fecha, la app usa la de hoy.</li>
@@ -591,7 +591,7 @@ function openZeppHelp(){
       <li>Atajos › <b>Automatización › Nueva › Hora del día</b>, por ejemplo a las 22:00, todos los días.</li>
       <li>Acción: ejecutar el atajo <b>${SHORTCUT}</b>, y elige <b>Ejecutar inmediatamente</b>.</li></ol></div>
     <p class="note elbow small">El Atajo abre la app en Safari, que guarda la sesión aparte de la app instalada. La primera vez entra también ahí con tu cuenta de Google. Los datos llegan a tu cuenta y los ves en las dos.</p>
-    <p class="small muted">El origen «Zepp» evita contar dos veces los pasos del iPhone y los del reloj.</p>`);
+    <p class="small muted">Agrupar por día da el mismo total que la app Salud, sin contar dos veces el iPhone y el reloj. En Salud › Pasos › Fuentes de datos y acceso › Editar, pon Zepp el primero. Zepp copia los datos a Salud cada cierto tiempo: por la mañana pueden ir un poco por detrás de lo que marca Zepp.</p>`);
 }
 window.addEventListener('fb-error',e=>{
   if(e.detail==='permission-denied')toast('Firebase no deja guardar: revisa las reglas de Firestore (firestore.rules).','err');
