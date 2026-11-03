@@ -319,7 +319,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.2.1';
+const APP_VERSION='1.2.2';
 const START='2026-11-02';
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -562,6 +562,7 @@ function numES(s,int){
 function applyZeppSync(){
   const p=lsGet(ZKEY,null);if(!p||!uid)return;
   lsSet(ZKEY,null);
+  if(p.pasos==null&&p.kcal==null&&!p.sueno){toast('El Atajo no ha encontrado datos de Zepp en Salud. Abre Zepp para que sincronice y vuelve a intentarlo.','err');return}
   patchDay(p.fecha,o=>{
     if(p.pasos!=null)o.steps=p.pasos;
     if(p.sueno!=null&&p.sueno>0)o.sleep=p.sueno;

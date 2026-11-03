@@ -1,11 +1,17 @@
 {
- "version": "1.2.1",
+ "version": "1.2.2",
  "fecha": "2026-11-03",
  "notas": [
-  "Zepp: la fecha del Atajo puede ir en día-mes-año (03-11-2026 o 03-nov-2026), y si falta se usa la de hoy",
-  "Guía del Atajo con los nombres reales de iOS en español"
+  "Zepp: si el Atajo llega sin datos, la app lo avisa en vez de marcar el día como sincronizado"
  ],
  "historial": [
+  {
+   "version": "1.2.2",
+   "fecha": "2026-11-03",
+   "notas": [
+    "Zepp: si el Atajo llega sin datos, la app lo avisa en vez de marcar el día como sincronizado"
+   ]
+  },
   {
    "version": "1.2.1",
    "fecha": "2026-11-03",
