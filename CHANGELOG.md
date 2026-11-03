@@ -1,5 +1,9 @@
 # Novedades
 
+## v1.4.0 · 2026-11-03
+- Tarjeta del reloj nueva: pasos y calorías activas con icono, objetivo y barra de progreso de colores (rojo, naranja, amarillo, lima y verde)
+- Rueda de ajustes en la tarjeta: objetivos diarios de pasos y kcal, y la guía de configuración
+
 ## v1.3.2 · 2026-11-03
 - Zepp: aviso claro cuando el Atajo llega pero Salud todavía no tiene datos del reloj
 
