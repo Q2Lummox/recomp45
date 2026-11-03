@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.4.2 · 2026-11-03
+- Se deshace el cambio del botón de la 1.4.1: «Actualizar desde Zepp» funciona como en la 1.4.0
+
 ## v1.4.1 · 2026-11-03
 - El botón «Actualizar desde Zepp» avisa al Atajo de que debe volver a la app al terminar
 

@@ -341,7 +341,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.4.1';
+const APP_VERSION='1.4.2';
 const START='2026-11-02';
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -716,8 +716,7 @@ service cloud.firestore {
     }
   }
 }`;
-/* el botón le pasa «volver» al Atajo: así el Atajo sabe que debe regresar a la app (las automatizaciones no lo pasan) */
-function runShortcut(){location.href='shortcuts://run-shortcut?name='+encodeURIComponent(SHORTCUT)+'&input=text&text=volver'}
+function runShortcut(){location.href='shortcuts://run-shortcut?name='+encodeURIComponent(SHORTCUT)}
 async function openZeppHelp(){
   openSheet('Zepp','Zepp en segundo plano','<p class="small muted">Preparando tu clave…</p>');
   let key;
