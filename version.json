@@ -1,11 +1,17 @@
 {
- "version": "1.4.0",
+ "version": "1.4.1",
  "fecha": "2026-11-03",
  "notas": [
-  "Tarjeta del reloj nueva: pasos y calorías activas con icono, objetivo y barra de progreso de colores (rojo, naranja, amarillo, lima y verde)",
-  "Rueda de ajustes en la tarjeta: objetivos diarios de pasos y kcal, y la guía de configuración"
+  "El botón «Actualizar desde Zepp» avisa al Atajo de que debe volver a la app al terminar"
  ],
  "historial": [
+  {
+   "version": "1.4.1",
+   "fecha": "2026-11-03",
+   "notas": [
+    "El botón «Actualizar desde Zepp» avisa al Atajo de que debe volver a la app al terminar"
+   ]
+  },
   {
    "version": "1.4.0",
    "fecha": "2026-11-03",
