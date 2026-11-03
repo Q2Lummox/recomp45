@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.3.2 · 2026-11-03
+- Zepp: aviso claro cuando el Atajo llega pero Salud todavía no tiene datos del reloj
+
 ## v1.3.1 · 2026-11-03
 - Zepp: cada vez que se ejecuta el Atajo la app lo confirma, aunque los números no hayan cambiado, y actualiza la hora
 

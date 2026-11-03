@@ -319,7 +319,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.3.1';
+const APP_VERSION='1.3.2';
 const START='2026-11-02';
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -589,12 +589,12 @@ function processZeppInbox(){
   if(!uid||!COLS.every(c=>firstLoad[c])||!zeppIn.length)return;
   const touched=zeppTouched;zeppTouched=new Set();
   /* un registro por día; si hay dos del mismo día (formatos de fecha distintos), vale el de más pasos */
-  const byDay={};
+  const byDay={};let emptyHit=null;
   for(const d of zeppIn){
     const x=d.data||{},fecha=parseFecha(d.id);if(!fecha)continue;
     const pasos=numES(x.pasos,true),kcal=numES(x.kcal,true);let sueno=numES(x.sueno,false);
     if(sueno!=null&&sueno>24)sueno=Math.round(sueno/60*10)/10;
-    if(pasos==null&&kcal==null&&!sueno)continue;
+    if(pasos==null&&kcal==null&&!sueno){if(touched.has(fecha))emptyHit=fecha;continue}
     const prev=byDay[fecha];
     if(!prev||(pasos??-1)>(prev.pasos??-1)||((pasos??-1)===(prev.pasos??-1)&&(kcal??-1)>(prev.kcal??-1)))byDay[fecha]={fecha,pasos,kcal,sueno};
   }
@@ -609,6 +609,7 @@ function processZeppInbox(){
   const txt=r=>{const b=[];if(r.pasos!=null)b.push(fmt(r.pasos)+' pasos');if(r.kcal!=null)b.push(fmt(r.kcal)+' kcal activas');return b.join(' · ')+(r.fecha!==todayISO()?' ('+shortDate(r.fecha)+')':'')};
   if(last)toast('Zepp actualizado: '+txt(last));
   else if(same)toast('Zepp comprobado, sin cambios: '+txt(same)+'. Si Zepp marca más, ábrelo para que pase los datos a Salud.');
+  else if(emptyHit)toast('El Atajo ha llegado, pero Salud aún no tiene datos de Zepp de hoy. Abre Zepp para que sincronice y vuelve a probar.','err');
   if(last||same)requestRender();
 }
 async function ensureZeppKey(){
