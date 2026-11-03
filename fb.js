@@ -26,7 +26,8 @@ if (!configured) {
     set: (path, id, data) => { F.setDoc(F.doc(fs, path, id), data).catch(errs); },
     del: (path, id) => { F.deleteDoc(F.doc(fs, path, id)).catch(errs); },
     watch: (path, cb) => F.onSnapshot(F.collection(fs, path), { includeMetadataChanges: true },
-      s => cb({ docs: s.docs.map(d => ({ id: d.id, data: d.data() })), fromCache: s.metadata.fromCache, pending: s.metadata.hasPendingWrites }), errs),
+      s => cb({ docs: s.docs.map(d => ({ id: d.id, data: d.data() })), fromCache: s.metadata.fromCache, pending: s.metadata.hasPendingWrites,
+                changes: s.docChanges().map(c => ({ type: c.type, id: c.doc.id })) }), errs),
     getAll: async path => (await F.getDocs(F.collection(fs, path))).docs.map(d => ({ id: d.id, data: d.data() })),
   };
 

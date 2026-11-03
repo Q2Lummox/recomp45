@@ -319,7 +319,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.3.0';
+const APP_VERSION='1.3.1';
 const START='2026-11-02';
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -515,7 +515,7 @@ function startData(){
     }));
   }
   /* buzón del Atajo: users/<uid>/zepp/<día>, escrito en segundo plano */
-  unsubs.push(window.FB.db.watch(path('zepp'),snap=>{zeppIn=snap.docs;processZeppInbox()}));
+  unsubs.push(window.FB.db.watch(path('zepp'),onZeppSnap));
 }
 function maybeSeed(){
   if(!COLS.every(c=>firstLoad[c]))return;
@@ -577,9 +577,17 @@ function applyZeppSync(){
    El Atajo escribe directamente en Firestore (users/<uid>/zepp/<día>) con una clave secreta
    que solo conoce tu cuenta; las reglas comprueban esa clave. La app escucha ese buzón y,
    en cuanto llega algo nuevo, lo pasa al día y avisa. No se abre Safari ni nada. */
-let zeppIn=[],zeppKey=null;
+let zeppIn=[],zeppKey=null,zeppFirst=true,zeppTouched=new Set();
+function onZeppSnap(snap){
+  zeppIn=snap.docs;
+  /* días que el Atajo acaba de escribir (aunque traiga los mismos números): para confirmarlo */
+  if(!zeppFirst)for(const c of (snap.changes||[]))if(c.type!=='removed'){const f=parseFecha(c.id);if(f)zeppTouched.add(f)}
+  zeppFirst=false;
+  processZeppInbox();
+}
 function processZeppInbox(){
   if(!uid||!COLS.every(c=>firstLoad[c])||!zeppIn.length)return;
+  const touched=zeppTouched;zeppTouched=new Set();
   /* un registro por día; si hay dos del mismo día (formatos de fecha distintos), vale el de más pasos */
   const byDay={};
   for(const d of zeppIn){
@@ -590,18 +598,18 @@ function processZeppInbox(){
     const prev=byDay[fecha];
     if(!prev||(pasos??-1)>(prev.pasos??-1)||((pasos??-1)===(prev.pasos??-1)&&(kcal??-1)>(prev.kcal??-1)))byDay[fecha]={fecha,pasos,kcal,sueno};
   }
-  let last=null;
+  let last=null,same=null;
   for(const {fecha,pasos,kcal,sueno} of Object.values(byDay).sort((a,b)=>a.fecha.localeCompare(b.fecha))){
     const cur=(S.days[fecha]||{}).zepp||{};
-    if((cur.pasos??null)===pasos&&(cur.kcal??null)===kcal&&(cur.sueno??null)===(sueno||null))continue;
+    const equal=(cur.pasos??null)===pasos&&(cur.kcal??null)===kcal&&(cur.sueno??null)===(sueno||null);
+    if(equal&&!touched.has(fecha))continue;
     patchDay(fecha,o=>{if(pasos!=null)o.steps=pasos;if(sueno)o.sleep=sueno;o.zepp={kcal,pasos,sueno:sueno||null,at:new Date().toISOString()}});
-    last={fecha,pasos,kcal};
+    if(equal)same={fecha,pasos,kcal};else last={fecha,pasos,kcal};
   }
-  if(last){
-    const bits=[];if(last.pasos!=null)bits.push(fmt(last.pasos)+' pasos');if(last.kcal!=null)bits.push(fmt(last.kcal)+' kcal activas');
-    toast(`Zepp actualizado${last.fecha!==todayISO()?' ('+shortDate(last.fecha)+')':''}: ${bits.join(' · ')}`);
-    requestRender();
-  }
+  const txt=r=>{const b=[];if(r.pasos!=null)b.push(fmt(r.pasos)+' pasos');if(r.kcal!=null)b.push(fmt(r.kcal)+' kcal activas');return b.join(' · ')+(r.fecha!==todayISO()?' ('+shortDate(r.fecha)+')':'')};
+  if(last)toast('Zepp actualizado: '+txt(last));
+  else if(same)toast('Zepp comprobado, sin cambios: '+txt(same)+'. Si Zepp marca más, ábrelo para que pase los datos a Salud.');
+  if(last||same)requestRender();
 }
 async function ensureZeppKey(){
   if(zeppKey)return zeppKey;
@@ -1339,7 +1347,7 @@ window.addEventListener('fb-user',e=>{
   const u=e.detail;
   if(!u){uid=null;unsubs.forEach(x=>{try{x()}catch(e){}});unsubs=[];showGate('Entra con tu cuenta de Google para ver tu plan.',{login:true});return}
   if(uid===u.uid)return;
-  uid=u.uid;for(const c of COLS)S[c]={};firstLoad={};seeded=false;zeppIn=[];zeppKey=null;
+  uid=u.uid;for(const c of COLS)S[c]={};firstLoad={};seeded=false;zeppIn=[];zeppKey=null;zeppFirst=true;zeppTouched=new Set();
   showApp();startData();
 });
 
