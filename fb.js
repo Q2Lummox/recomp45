@@ -41,6 +41,7 @@ if (!configured) {
       throw e;
     }
   }
-  window.FB = { configured: true, db, signIn, signOut: () => A.signOut(auth), user: () => user };
+  window.FB = { configured: true, db, signIn, signOut: () => A.signOut(auth), user: () => user,
+    config: { projectId: firebaseConfig.projectId, apiKey: firebaseConfig.apiKey } };
   window.dispatchEvent(new Event('fb-ready'));
 }

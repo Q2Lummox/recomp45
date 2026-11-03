@@ -1,10 +1,21 @@
 {
- "version": "1.2.3",
+ "version": "1.3.0",
  "fecha": "2026-11-03",
  "notas": [
-  "Guía del Atajo de Zepp actualizada: agrupar por día en vez de filtrar por origen"
+  "Zepp en segundo plano: el Atajo envía los datos directamente a tu cuenta, sin abrir Safari",
+  "La app se actualiza sola y avisa en cuanto llegan datos nuevos del reloj",
+  "Guía para usarlo sin salir de la app (Tocar atrás) y con varias actualizaciones automáticas al día"
  ],
  "historial": [
+  {
+   "version": "1.3.0",
+   "fecha": "2026-11-03",
+   "notas": [
+    "Zepp en segundo plano: el Atajo envía los datos directamente a tu cuenta, sin abrir Safari",
+    "La app se actualiza sola y avisa en cuanto llegan datos nuevos del reloj",
+    "Guía para usarlo sin salir de la app (Tocar atrás) y con varias actualizaciones automáticas al día"
+   ]
+  },
   {
    "version": "1.2.3",
    "fecha": "2026-11-03",

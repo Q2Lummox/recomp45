@@ -1,9 +1,15 @@
 rules_version = '2';
-// Recomp 45: cada cuenta de Google solo puede leer y escribir sus propios datos.
+// Recomp 45: cada cuenta solo lee y escribe sus datos. El Atajo «Recomp Zepp» solo puede
+// escribir users/<uid>/zepp/<día> si lleva la clave secreta guardada en users/<uid>/ajustes/zepp.
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{uid}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    match /users/{uid}/zepp/{dia} {
+      allow create, update: if request.resource.data.keys().hasOnly(['k', 'pasos', 'kcal', 'sueno'])
+        && request.resource.data.k is string
+        && request.resource.data.k == get(/databases/$(database)/documents/users/$(uid)/ajustes/zepp).data.k;
     }
   }
 }

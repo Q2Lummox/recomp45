@@ -1,5 +1,10 @@
 # Novedades
 
+## v1.3.0 · 2026-11-03
+- Zepp en segundo plano: el Atajo envía los datos directamente a tu cuenta, sin abrir Safari
+- La app se actualiza sola y avisa en cuanto llegan datos nuevos del reloj
+- Guía para usarlo sin salir de la app (Tocar atrás) y con varias actualizaciones automáticas al día
+
 ## v1.2.3 · 2026-11-03
 - Guía del Atajo de Zepp actualizada: agrupar por día en vez de filtrar por origen
 
