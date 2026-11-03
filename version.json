@@ -1,12 +1,21 @@
 {
- "version": "1.1.0",
+ "version": "1.2.0",
  "fecha": "2026-11-03",
  "notas": [
-  "Nuevo plan de 5 días: Pecho + Tríceps, Piernas + Glúteos, Espalda + Bíceps, Hombros + Core y Fullbody",
-  "Adaptado a los codos: tríceps y bíceps en días separados, hombro sin press vertical y core en vez de brazos",
-  "El historial de pesos se conserva en los ejercicios que siguen en el plan"
+  "Conexión con tu reloj Amazfit: pasos, calorías activas y sueño desde Zepp, a través de Salud de Apple y un Atajo",
+  "Botón «Actualizar desde Zepp» en Hoy y guía paso a paso para configurarlo",
+  "El coach ve también tus calorías activas del reloj"
  ],
  "historial": [
+  {
+   "version": "1.2.0",
+   "fecha": "2026-11-03",
+   "notas": [
+    "Conexión con tu reloj Amazfit: pasos, calorías activas y sueño desde Zepp, a través de Salud de Apple y un Atajo",
+    "Botón «Actualizar desde Zepp» en Hoy y guía paso a paso para configurarlo",
+    "El coach ve también tus calorías activas del reloj"
+   ]
+  },
   {
    "version": "1.1.0",
    "fecha": "2026-11-03",

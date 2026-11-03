@@ -1,5 +1,10 @@
 # Novedades
 
+## v1.2.0 · 2026-11-03
+- Conexión con tu reloj Amazfit: pasos, calorías activas y sueño desde Zepp, a través de Salud de Apple y un Atajo
+- Botón «Actualizar desde Zepp» en Hoy y guía paso a paso para configurarlo
+- El coach ve también tus calorías activas del reloj
+
 ## v1.1.0 · 2026-11-03
 - Nuevo plan de 5 días: Pecho + Tríceps, Piernas + Glúteos, Espalda + Bíceps, Hombros + Core y Fullbody
 - Adaptado a los codos: tríceps y bíceps en días separados, hombro sin press vertical y core en vez de brazos

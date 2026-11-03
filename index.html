@@ -319,7 +319,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.1.0';
+const APP_VERSION='1.2.0';
 const START='2026-11-02';
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -516,12 +516,69 @@ function startData(){
   }
 }
 function maybeSeed(){
-  if(seeded||!COLS.every(c=>firstLoad[c]))return;
+  if(!COLS.every(c=>firstLoad[c]))return;
+  applyZeppSync();
+  if(seeded)return;
   seeded=true;
   if(!Object.keys(S.days).length&&!Object.keys(S.checkins).length){
     saveDoc('days',START,{meals:{},extras:[],weight:BASE.peso});
     saveDoc('checkins',START,{waist:BASE.cintura,note:'Punto de partida: 80 kg, 96 cm, ~21% grasa'});
   }
+}
+
+/* ===== Zepp (vía Salud de Apple y el Atajo «Recomp Zepp») =====
+   El Atajo abre ...?zepp=1&fecha=AAAA-MM-DD&pasos=N&kcal=N[&sueno=H]
+   Los datos se guardan aquí y se aplican al día cuando ya se han cargado tus datos, para no pisar nada. */
+const ZKEY='recomp45-zepp-pending',SHORTCUT='Recomp Zepp';
+function numES(s,int){
+  if(s==null)return null;s=String(s).replace(/[^0-9.,]/g,'');if(!s)return null;
+  if(s.includes('.')&&s.includes(','))s=s.replace(/\./g,'').replace(',','.');
+  else if(s.includes(','))s=s.replace(',','.');
+  else if(/^\d{1,3}(\.\d{3})+$/.test(s))s=s.replace(/\./g,'');
+  const n=parseFloat(s);if(!isFinite(n)||n<0)return null;return int?Math.round(n):Math.round(n*10)/10;
+}
+(function readZeppParams(){
+  try{
+    const q=new URLSearchParams(location.search);if(!q.has('zepp'))return;
+    const f=q.get('fecha'),fecha=/^\d{4}-\d{2}-\d{2}$/.test(f||'')?f:todayISO();
+    const p={fecha,pasos:numES(q.get('pasos'),true),kcal:numES(q.get('kcal'),true),sueno:numES(q.get('sueno'),false),at:new Date().toISOString()};
+    if(p.sueno!=null&&p.sueno>24)p.sueno=Math.round(p.sueno/60*10)/10;   /* si llega en minutos */
+    lsSet(ZKEY,p);
+    history.replaceState(null,'',location.pathname+location.hash);
+  }catch(e){}
+})();
+function applyZeppSync(){
+  const p=lsGet(ZKEY,null);if(!p||!uid)return;
+  lsSet(ZKEY,null);
+  patchDay(p.fecha,o=>{
+    if(p.pasos!=null)o.steps=p.pasos;
+    if(p.sueno!=null&&p.sueno>0)o.sleep=p.sueno;
+    o.zepp={kcal:p.kcal,pasos:p.pasos,sueno:p.sueno,at:p.at};
+  });
+  const bits=[];if(p.pasos!=null)bits.push(fmt(p.pasos)+' pasos');if(p.kcal!=null)bits.push(fmt(p.kcal)+' kcal activas');if(p.sueno)bits.push(fmt(p.sueno,1)+' h de sueño');
+  toast('Zepp sincronizado: '+(bits.join(' · ')||'sin datos nuevos'));
+}
+function runShortcut(){location.href='shortcuts://run-shortcut?name='+encodeURIComponent(SHORTCUT)}
+function openZeppHelp(){
+  const url=location.origin+location.pathname;
+  openSheet('Zepp','Conectar el reloj',`
+    <p class="small">Zepp no deja que otras apps lean tus datos directamente. El camino es: <b>reloj › Zepp › Salud de Apple › Atajo › esta app</b>.</p>
+    <div class="card"><h2>1 · Zepp › Salud</h2><ol class="small" style="margin:0;padding-left:1.2em;display:grid;gap:4px">
+      <li>En Zepp: <b>Perfil › Añadir cuentas › Salud de Apple</b>.</li>
+      <li>Activa al menos <b>Pasos</b>, <b>Energía activa</b> y <b>Análisis del sueño</b>, y pulsa <b>Permitir</b>.</li></ol></div>
+    <div class="card"><h2>2 · Crear el Atajo «${SHORTCUT}»</h2><ol class="small" style="margin:0;padding-left:1.2em;display:grid;gap:4px">
+      <li>App <b>Atajos › +</b>. Nómbralo exactamente <b>${SHORTCUT}</b>.</li>
+      <li><b>Buscar muestras de salud</b>: Tipo <b>Pasos</b>, Fecha de inicio <b>es hoy</b>, Fuente <b>es Zepp</b>.</li>
+      <li><b>Calcular estadísticas</b>: <b>Suma</b> de esas muestras.</li>
+      <li>Repite los dos pasos con Tipo <b>Energía activa</b>.</li>
+      <li><b>Formatear fecha</b>: Fecha actual, formato personalizado <span class="mono">yyyy-MM-dd</span>.</li>
+      <li><b>Texto</b> con esta dirección, cambiando cada [ ] por su variable:<br><span class="mono" style="overflow-wrap:anywhere">${esc(url)}?zepp=1&amp;fecha=[Fecha formateada]&amp;pasos=[Suma pasos]&amp;kcal=[Suma energía]</span></li>
+      <li><b>Abrir URL</b> con ese Texto.</li></ol></div>
+    <div class="card"><h2>3 · Que vaya solo</h2><ol class="small" style="margin:0;padding-left:1.2em;display:grid;gap:4px">
+      <li>Atajos › <b>Automatización › Nueva › Hora del día</b>, por ejemplo a las 22:00, todos los días.</li>
+      <li>Acción: ejecutar el atajo <b>${SHORTCUT}</b>, y elige <b>Ejecutar inmediatamente</b>.</li></ol></div>
+    <p class="note elbow small">El Atajo abre la app en Safari, que guarda la sesión aparte de la app instalada. La primera vez entra también ahí con tu cuenta de Google. Los datos llegan a tu cuenta y los ves en las dos.</p>
+    <p class="small muted">La fuente «Zepp» evita contar dos veces los pasos del iPhone y los del reloj.</p>`);
 }
 window.addEventListener('fb-error',e=>{
   if(e.detail==='permission-denied')toast('Firebase no deja guardar: revisa las reglas de Firestore (firestore.rules).','err');
@@ -589,9 +646,16 @@ function viewHoy(){
   <section class="card"><h2>Hábitos</h2>
     <div class="habits">
       <div class="habit"><label for="in-peso">Peso en ayunas (kg)</label><input type="number" inputmode="decimal" step="0.1" min="40" max="200" id="in-peso" data-field="weight" value="${day.weight??''}" placeholder="80,0"><span class="goal">Tras ir al baño, antes de desayunar</span></div>
-      <div class="habit"><label for="in-pasos">Pasos</label><input type="number" inputmode="numeric" step="100" min="0" id="in-pasos" data-field="steps" value="${day.steps??''}" placeholder="10000"><span class="goal">Mínimo 10.000 · ideal 12.000</span></div>
+      <div class="habit"><label for="in-pasos">Pasos</label><input type="number" inputmode="numeric" step="100" min="0" id="in-pasos" data-field="steps" value="${day.steps??''}" placeholder="10000"><span class="goal">${day.zepp?`Desde Zepp · ${new Date(day.zepp.at).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}`:'Mínimo 10.000 · ideal 12.000'}</span></div>
       <div class="habit"><label>Agua</label><div class="stepper"><button type="button" data-act="water" data-d="-0.25" aria-label="Menos agua">−</button><span class="v">${fmt(water,2)} L</span><button type="button" data-act="water" data-d="0.25" aria-label="Más agua">+</button></div><div class="track"><div class="fill" style="width:${Math.min(100,water/3*100)}%;background:var(--p)"></div></div><span class="goal">3 L + 0,5 L por hora de obra sudando</span></div>
       <div class="habit"><label for="in-sueno">Sueño anoche (h)</label><input type="number" inputmode="decimal" step="0.25" min="0" max="14" id="in-sueno" data-field="sleep" value="${day.sleep??''}" placeholder="7,5"><span class="goal">Objetivo 7-8 h</span></div>
+    </div>
+    <div class="habit zepp">
+      <div class="row between"><label>Actividad del reloj</label><span class="chip">Zepp</span></div>
+      ${day.zepp?`<div class="row" style="gap:16px"><div><span class="num" style="font-size:1.3rem;color:var(--accent)">${day.zepp.kcal!=null?fmt(day.zepp.kcal):'–'}</span> <span class="small muted">kcal activas</span></div><div><span class="num" style="font-size:1.3rem">${day.steps!=null?fmt(day.steps):'–'}</span> <span class="small muted">pasos</span></div></div>
+        <span class="goal">Actualizado a las ${new Date(day.zepp.at).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}. No sumes estas kcal a lo que comes: el objetivo de ${TARGET.kcal.toLocaleString("es-ES",{useGrouping:"always"})} kcal ya cuenta con tu actividad.</span>`
+      :`<span class="goal">Sin datos de Zepp este día. Si ya tienes el Atajo «${SHORTCUT}», tócalo para traer pasos y calorías.</span>`}
+      <div class="row"><button type="button" class="btn sm pri" data-act="zepp-run">Actualizar desde Zepp</button><button type="button" class="btn sm" data-act="zepp-help">Cómo configurarlo</button></div>
     </div>
     ${tog('codos','Rutina de codos (8 min)','Isometría + excéntricos. Ver pestaña Plan')}
     ${tog('creatina','Creatina 3-5 g','Cualquier hora, todos los días')}
@@ -870,6 +934,8 @@ $('#view').addEventListener('click',e=>{
     patchDay(d,o=>{o.extras.push({n,k:Math.round(k),p:+$('#mx-p').value||0,c:+$('#mx-c').value||0,f:+$('#mx-f').value||0})});render();toast('Añadido: '+n);
   }
   else if(a==='photo'){if(!aiReady())return;$('#f-photo').value='';$('#f-photo').click()}
+  else if(a==='zepp-run')runShortcut();
+  else if(a==='zepp-help')openZeppHelp();
   else if(a==='rest')startTimer(+b.dataset.sec,b.dataset.name);
   else if(a==='ci-photos'){const mon=mondayOf(todayISO()),ci=clone(S.checkins[mon]||{});ci.photos=!ci.photos;saveDoc('checkins',mon,ci);render()}
 });
@@ -965,7 +1031,7 @@ function coachContext(){
   L.push(`Entreno de hoy: ${SESS[sessionFor(t)].n}.`);
   L.push('ÚLTIMOS 14 DÍAS:');
   for(let i=13;i>=0;i--){const k=addDays(t,-i),v=S.days[k];if(!v)continue;const x=dayTotals(v),bits=[];
-    if(hasLog(v))bits.push(`${fmt(x.k)} kcal P${fmt(x.p)}`);if(v.weight)bits.push(`peso ${v.weight}`);if(v.steps)bits.push(`${v.steps} pasos`);if(v.sleep)bits.push(`sueño ${v.sleep} h`);if(v.water)bits.push(`agua ${v.water} L`);if(v.codos)bits.push('rutina codos');
+    if(hasLog(v))bits.push(`${fmt(x.k)} kcal P${fmt(x.p)}`);if(v.weight)bits.push(`peso ${v.weight}`);if(v.steps)bits.push(`${v.steps} pasos`);if(v.zepp&&v.zepp.kcal!=null)bits.push(`${v.zepp.kcal} kcal activas (reloj)`);if(v.sleep)bits.push(`sueño ${v.sleep} h`);if(v.water)bits.push(`agua ${v.water} L`);if(v.codos)bits.push('rutina codos');
     const wo=S.workouts[k];if(wo&&wo.sets)bits.push(`entreno ${SESS[wo.session]?SESS[wo.session].n:''}${wo.pain!=null?' dolor codo '+wo.pain+'/10':''}`);
     if(bits.length)L.push(`- ${k}: ${bits.join(', ')}`)}
   const ws=weeklyAvgs(weightSeries());if(ws.length)L.push('Peso medio por semana: '+ws.map(x=>`S${x.w} ${fmt(x.avg,1)} kg`).join(', ')+'.');
