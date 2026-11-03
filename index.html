@@ -319,7 +319,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.2.0';
+const APP_VERSION='1.2.1';
 const START='2026-11-02';
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -527,9 +527,21 @@ function maybeSeed(){
 }
 
 /* ===== Zepp (vía Salud de Apple y el Atajo «Recomp Zepp») =====
-   El Atajo abre ...?zepp=1&fecha=AAAA-MM-DD&pasos=N&kcal=N[&sueno=H]
+   El Atajo abre ...?zepp=1&fecha=DD-MM-AAAA&pasos=N&kcal=N[&sueno=H]
+   La fecha vale como día-mes-año (03-11-2026, 03/11/2026, 03-nov-2026) o año-mes-día; si falta, es hoy.
    Los datos se guardan aquí y se aplican al día cuando ya se han cargado tus datos, para no pisar nada. */
 const ZKEY='recomp45-zepp-pending',SHORTCUT='Recomp Zepp';
+function parseFecha(s){
+  if(!s)return null;s=String(s).trim().toLowerCase().replace(/\./g,'');
+  const MESES={ene:1,feb:2,mar:3,abr:4,may:5,jun:6,jul:7,ago:8,sep:9,sept:9,set:9,oct:10,nov:11,dic:12};
+  let y,m,d,r;
+  if((r=s.match(/^(\d{4})[-\/ ](\d{1,2})[-\/ ](\d{1,2})$/)))[y,m,d]=[+r[1],+r[2],+r[3]];
+  else if((r=s.match(/^(\d{1,2})[-\/ ](\d{1,2})[-\/ ](\d{4})$/)))[d,m,y]=[+r[1],+r[2],+r[3]];
+  else if((r=s.match(/^(\d{1,2})[-\/ ]([a-zñ]+)[-\/ ](\d{4})$/))&&MESES[r[2].slice(0,4)]||(r&&MESES[r[2].slice(0,3)]))[d,m,y]=[+r[1],MESES[r[2].slice(0,4)]||MESES[r[2].slice(0,3)],+r[3]];
+  else return null;
+  const dt=new Date(y,m-1,d);
+  return dt.getFullYear()===y&&dt.getMonth()===m-1&&dt.getDate()===d?iso(dt):null;
+}
 function numES(s,int){
   if(s==null)return null;s=String(s).replace(/[^0-9.,]/g,'');if(!s)return null;
   if(s.includes('.')&&s.includes(','))s=s.replace(/\./g,'').replace(',','.');
@@ -540,7 +552,7 @@ function numES(s,int){
 (function readZeppParams(){
   try{
     const q=new URLSearchParams(location.search);if(!q.has('zepp'))return;
-    const f=q.get('fecha'),fecha=/^\d{4}-\d{2}-\d{2}$/.test(f||'')?f:todayISO();
+    const fecha=parseFecha(q.get('fecha'))||todayISO();
     const p={fecha,pasos:numES(q.get('pasos'),true),kcal:numES(q.get('kcal'),true),sueno:numES(q.get('sueno'),false),at:new Date().toISOString()};
     if(p.sueno!=null&&p.sueno>24)p.sueno=Math.round(p.sueno/60*10)/10;   /* si llega en minutos */
     lsSet(ZKEY,p);
@@ -568,17 +580,17 @@ function openZeppHelp(){
       <li>Activa al menos <b>Pasos</b>, <b>Energía activa</b> y <b>Análisis del sueño</b>, y pulsa <b>Permitir</b>.</li></ol></div>
     <div class="card"><h2>2 · Crear el Atajo «${SHORTCUT}»</h2><ol class="small" style="margin:0;padding-left:1.2em;display:grid;gap:4px">
       <li>App <b>Atajos › +</b>. Nómbralo exactamente <b>${SHORTCUT}</b>.</li>
-      <li><b>Buscar muestras de salud</b>: Tipo <b>Pasos</b>, Fecha de inicio <b>es hoy</b>, Fuente <b>es Zepp</b>.</li>
+      <li><b>Buscar muestras médicas</b>: Tipo <b>Pasos</b>, Fecha de inicio <b>es hoy</b>, Origen <b>es Zepp</b>.</li>
       <li><b>Calcular estadísticas</b>: <b>Suma</b> de esas muestras.</li>
-      <li>Repite los dos pasos con Tipo <b>Energía activa</b>.</li>
-      <li><b>Formatear fecha</b>: Fecha actual, formato personalizado <span class="mono">yyyy-MM-dd</span>.</li>
+      <li>Repite los dos pasos con Tipo <b>Energía en actividad</b> y Unidad <b>kcal</b>.</li>
+      <li><b>Aplicar formato a fecha</b>: Fecha actual, formato personalizado <span class="mono">dd-MM-yyyy</span> (día-mes-año). Es opcional: sin fecha, la app usa la de hoy.</li>
       <li><b>Texto</b> con esta dirección, cambiando cada [ ] por su variable:<br><span class="mono" style="overflow-wrap:anywhere">${esc(url)}?zepp=1&amp;fecha=[Fecha formateada]&amp;pasos=[Suma pasos]&amp;kcal=[Suma energía]</span></li>
       <li><b>Abrir URL</b> con ese Texto.</li></ol></div>
     <div class="card"><h2>3 · Que vaya solo</h2><ol class="small" style="margin:0;padding-left:1.2em;display:grid;gap:4px">
       <li>Atajos › <b>Automatización › Nueva › Hora del día</b>, por ejemplo a las 22:00, todos los días.</li>
       <li>Acción: ejecutar el atajo <b>${SHORTCUT}</b>, y elige <b>Ejecutar inmediatamente</b>.</li></ol></div>
     <p class="note elbow small">El Atajo abre la app en Safari, que guarda la sesión aparte de la app instalada. La primera vez entra también ahí con tu cuenta de Google. Los datos llegan a tu cuenta y los ves en las dos.</p>
-    <p class="small muted">La fuente «Zepp» evita contar dos veces los pasos del iPhone y los del reloj.</p>`);
+    <p class="small muted">El origen «Zepp» evita contar dos veces los pasos del iPhone y los del reloj.</p>`);
 }
 window.addEventListener('fb-error',e=>{
   if(e.detail==='permission-denied')toast('Firebase no deja guardar: revisa las reglas de Firestore (firestore.rules).','err');

@@ -1,5 +1,9 @@
 # Novedades
 
+## v1.2.1 · 2026-11-03
+- Zepp: la fecha del Atajo puede ir en día-mes-año (03-11-2026 o 03-nov-2026), y si falta se usa la de hoy
+- Guía del Atajo con los nombres reales de iOS en español
+
 ## v1.2.0 · 2026-11-03
 - Conexión con tu reloj Amazfit: pasos, calorías activas y sueño desde Zepp, a través de Salud de Apple y un Atajo
 - Botón «Actualizar desde Zepp» en Hoy y guía paso a paso para configurarlo
