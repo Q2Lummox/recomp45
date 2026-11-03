@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.5.1 · 2026-11-03
+- Zepp: el Atajo puede enviar también la hora, para que la app se entere de cada actualización aunque los números no cambien (reglas y guía actualizadas)
+
 ## v1.5.0 · 2026-11-03
 - Rutina nueva solo con los ejercicios de tu gimnasio: lunes y viernes Pecho + Espalda, martes Piernas + Core, miércoles Hombros + Brazos, sábado Glúteo + Hombros + Brazos
 - Superseries marcadas (A1, A2…) con su descanso, y tus pesos de siempre como punto de partida

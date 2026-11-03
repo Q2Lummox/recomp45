@@ -1,12 +1,17 @@
 {
- "version": "1.5.0",
+ "version": "1.5.1",
  "fecha": "2026-11-03",
  "notas": [
-  "Rutina nueva solo con los ejercicios de tu gimnasio: lunes y viernes Pecho + Espalda, martes Piernas + Core, miércoles Hombros + Brazos, sábado Glúteo + Hombros + Brazos",
-  "Superseries marcadas (A1, A2…) con su descanso, y tus pesos de siempre como punto de partida",
-  "Prioridad glúteo: hip thrust el primero dos días por semana; cinta opcional en los días de tren superior"
+  "Zepp: el Atajo puede enviar también la hora, para que la app se entere de cada actualización aunque los números no cambien (reglas y guía actualizadas)"
  ],
  "historial": [
+  {
+   "version": "1.5.1",
+   "fecha": "2026-11-03",
+   "notas": [
+    "Zepp: el Atajo puede enviar también la hora, para que la app se entere de cada actualización aunque los números no cambien (reglas y guía actualizadas)"
+   ]
+  },
   {
    "version": "1.5.0",
    "fecha": "2026-11-03",

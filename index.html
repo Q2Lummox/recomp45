@@ -342,7 +342,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.5.0';
+const APP_VERSION='1.5.1';
 const START='2026-11-02';
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -723,7 +723,7 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
     match /users/{uid}/zepp/{dia} {
-      allow create, update: if request.resource.data.keys().hasOnly(['k', 'pasos', 'kcal', 'sueno'])
+      allow create, update: if request.resource.data.keys().hasOnly(['k', 'pasos', 'kcal', 'sueno', 'hora'])
         && request.resource.data.k is string
         && request.resource.data.k == get(/databases/$(database)/documents/users/$(uid)/ajustes/zepp).data.k;
     }
@@ -736,7 +736,7 @@ async function openZeppHelp(){
   try{key=await ensureZeppKey()}catch(e){$('#sheet-body').innerHTML='<p class="small" style="color:var(--bad)">No he podido preparar la clave. Comprueba la conexión y vuelve a abrir esta guía.</p>';return}
   const c=window.FB.config||{};
   const url=`https://firestore.googleapis.com/v1/projects/${c.projectId}/databases/(default)/documents/users/${uid}/zepp/FECHA?key=${c.apiKey}`;
-  const body=`{"fields":{"k":{"stringValue":"${key}"},"pasos":{"stringValue":"PASOS"},"kcal":{"stringValue":"KCAL"}}}`;
+  const body=`{"fields":{"k":{"stringValue":"${key}"},"pasos":{"stringValue":"PASOS"},"kcal":{"stringValue":"KCAL"},"hora":{"stringValue":"HORA"}}}`;
   const copyBox=(id,txt)=>`<div style="display:grid;gap:6px"><textarea readonly id="${id}" rows="3" class="mono" style="font-size:.75rem">${esc(txt)}</textarea><button type="button" class="btn sm" data-copy="${id}">Copiar</button></div>`;
   $('#sheet-body').innerHTML=`
     <p class="small">El Atajo enviará los datos directamente a tu base de datos, sin abrir Safari. Si la app está abierta, se actualiza sola y te avisa.</p>
@@ -745,7 +745,7 @@ async function openZeppHelp(){
       ${copyBox('cp-rules',ZEPP_RULES)}</div>
     <div class="card"><h2>2 · Cambiar el final del Atajo</h2><ol class="small" style="margin:0;padding-left:1.2em;display:grid;gap:6px">
       <li>Borra con la ✕ las acciones <b>Texto</b>, <b>Abrir</b> y <b>Detener y generar</b>. Deja todo lo de arriba como está, también <b>Aplicar formato a fecha</b>.</li>
-      <li>Añade <b>Texto</b> y pega esto. Después borra la palabra <b>PASOS</b> y pon en su lugar la variable <b>pasos</b>, y haz lo mismo con <b>KCAL</b> y la variable <b>kcal</b>. Respeta las comillas que las rodean.
+      <li>Añade <b>Texto</b> y pega esto. Después borra la palabra <b>PASOS</b> y pon en su lugar la variable <b>pasos</b>; haz lo mismo con <b>KCAL</b> y la variable <b>kcal</b>, y con <b>HORA</b> y la variable <b>Fecha actual</b>. Respeta las comillas que las rodean. La hora hace que cada envío sea distinto, para que la app se entere siempre.
         ${copyBox('cp-body',body)}</li>
       <li>Añade <b>Obtener contenido de URL</b>. En la URL pega esto y cambia la palabra <b>FECHA</b> por la variable <b>Fecha con formato</b>:
         ${copyBox('cp-url',url)}</li>
