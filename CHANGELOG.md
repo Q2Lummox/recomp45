@@ -1,5 +1,10 @@
 # Novedades
 
+## v1.7.0 · 2026-11-03
+- Revisión del domingo: asistente paso a paso con peso, cintura, bíceps, muslo, glúteos y espalda, y fotos de frente, perfil y espalda con la cámara
+- Progreso con gráficas de peso y de cada medida, y comparación de tu primera foto con la última
+- Aviso en Hoy los domingos para hacer la revisión
+
 ## v1.6.0 · 2026-11-03
 - El plan de 12 semanas empieza el lunes 9 de noviembre
 - Menú › Ajustes › Empezar de cero: borra los datos de prueba y conserva objetivos y claves

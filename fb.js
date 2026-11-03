@@ -29,6 +29,7 @@ if (!configured) {
       s => cb({ docs: s.docs.map(d => ({ id: d.id, data: d.data() })), fromCache: s.metadata.fromCache, pending: s.metadata.hasPendingWrites,
                 changes: s.docChanges().map(c => ({ type: c.type, id: c.doc.id })) }), errs),
     getAll: async path => (await F.getDocs(F.collection(fs, path))).docs.map(d => ({ id: d.id, data: d.data() })),
+    get: async (path, id) => { const d = await F.getDoc(F.doc(fs, path, id)); return d.exists() ? d.data() : null; },
   };
 
   let user = null;

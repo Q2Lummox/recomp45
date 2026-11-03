@@ -111,6 +111,29 @@ a{color:var(--accent)}
 
 
 .ss{display:inline-grid;place-items:center;min-width:30px;height:24px;padding:0 6px;margin-right:8px;border-radius:3px;background:var(--accent);color:var(--accent-ink);font-family:var(--f-display);font-weight:700;font-size:.9rem;letter-spacing:.04em;vertical-align:2px}
+
+/* revisión semanal */
+.wz-card.due{border-color:var(--accent);box-shadow:var(--bevel),0 0 0 1px #f39a1e55,0 0 18px #f39a1e22}
+.wz-dots{display:flex;gap:4px}
+.wz-dots i{flex:1;height:4px;border-radius:2px;background:#2a3037}
+.wz-dots i.done{background:var(--good)}.wz-dots i.on{background:var(--accent)}
+.wz{display:grid;gap:12px}
+.wz-list{margin:0;padding-left:1.2em;display:grid;gap:6px}
+.wz-in{display:flex;align-items:center;gap:10px}
+.wz-in input{font-size:2rem;padding:12px 14px;text-align:center;font-family:var(--f-display);font-weight:700}
+.wz-in span{font-family:var(--f-display);font-size:1.3rem;color:var(--muted)}
+.wz-photo{width:100%;max-height:46vh;object-fit:contain;border-radius:4px;border:1px solid var(--line);background:#07080a}
+.wz-photo.empty{height:180px;display:grid;place-items:center;color:var(--muted);font-size:.9rem;border-style:dashed}
+.wz-nav{position:sticky;bottom:0;background:var(--surface);padding-top:8px}
+.wz-thumbs,.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}
+.wz-thumbs figure,.cmp figure{margin:0;display:grid;gap:4px;text-align:center}
+.wz-thumbs img,.cmp img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:4px;border:1px solid var(--line)}
+.cmp button{border:0;padding:0;background:none}
+.wz-thumbs figcaption,.cmp figcaption{font-size:.75rem;color:var(--muted);text-transform:capitalize}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.mcard{border:1px solid #23282e;background:#101215;border-radius:4px;padding:10px 12px;display:grid;gap:6px;min-width:0}
+.mcard b{font-family:var(--f-display);font-weight:600;letter-spacing:.04em;text-transform:uppercase;font-size:.95rem}
+
 /* tarjeta del reloj */
 .watch{border:1px solid #23282e;background:#101215;border-radius:4px;padding:12px;display:grid;gap:12px;min-width:0}
 .watch-head{display:flex;align-items:center;gap:8px}
@@ -336,13 +359,15 @@ td.num{white-space:nowrap}
 </div>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 <input type="file" id="f-photo" accept="image/*" hidden>
+<input type="file" id="f-wzcam" accept="image/*" capture="environment" hidden>
+<input type="file" id="f-wzgal" accept="image/*" hidden>
 <input type="file" id="f-chatimg" accept="image/*" hidden>
 <input type="file" id="f-restore" accept=".json,application/json" hidden>
 
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.6.0';
+const APP_VERSION='1.7.0';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -806,7 +831,9 @@ function viewHoy(){
   const d=st.date,day=getDay(d),t=dayTotals(day),w=weekOf(d),ph=phase(w),sk=sessionFor(d),SS=SESS[sk],water=+day.water||0;
   const tog=(key,title,desc)=>`<button type="button" class="toggle" data-act="toggle" data-key="${key}" aria-pressed="${!!day[key]}"><span class="box">${day[key]?'✓':''}</span><span class="grow"><span class="t">${title}</span><br><span class="d">${desc}</span></span></button>`;
   const nextMeal=MEALS.find(m=>!(day.meals&&day.meals[m.id]&&day.meals[m.id].done));
+  const sundayDue=d===todayISO()&&parse(d).getDay()===0&&!S.checkins[d];
   return `
+  ${sundayDue?`<section class="card wz-card due"><div class="row between"><div><div class="eyebrow">Domingo</div><div class="big-title">Hoy toca revisión</div></div><button type="button" class="btn pri" data-act="wizard">Empezar</button></div><p class="small muted">Peso en ayunas, medidas y tres fotos. Unos 5 minutos.</p></section>`:''}
   <section class="phase"><b>Semana ${Math.min(w,12)} · ${ph.n}</b><span class="small">${ph.t}</span></section>
   <section class="card"><div class="row between"><h2 class="grow">Energía del día</h2><button type="button" class="btn sm" data-goto="comida">Registrar</button></div>
     ${energyBlock(t)}
@@ -942,7 +969,7 @@ function lineChart({pts,line,xmin,xmax,dec=1}){
 }
 function weightSeries(){return Object.entries(S.days).filter(([k,v])=>v&&+v.weight>0).map(([k,v])=>({d:k,x:diffDays(START,k),y:+v.weight})).sort((a,b)=>a.x-b.x)}
 function weeklyAvgs(ws){const m={};for(const p of ws){const w=Math.floor(p.x/7)+1;(m[w]=m[w]||[]).push(p.y)}return Object.entries(m).map(([w,a])=>({w:+w,n:a.length,avg:a.reduce((s,v)=>s+v,0)/a.length})).sort((a,b)=>a.w-b.w)}
-function waistSeries(){const arr=Object.entries(S.checkins).filter(([k,v])=>v&&+v.waist>0).map(([k,v])=>({d:k,x:diffDays(START,k),y:+v.waist}));if(!arr.some(p=>p.x===0))arr.push({d:START,x:0,y:BASE.cintura});return arr.sort((a,b)=>a.x-b.x)}
+function waistSeries(){return measureSeries('waist')}
 function advice(ws){
   const wa=weeklyAvgs(ws),cw=weekOf(todayISO()),full=wa.filter(w=>w.w<cw&&w.n>=3);
   if(full.length<2)return{k:'info',t:'Recogiendo datos',d:'Pésate al menos 3 mañanas por semana. Con dos semanas completas te digo si hay que ajustar algo.'};
@@ -956,40 +983,162 @@ function advice(ws){
   }
   return{k:'good',t:'Ritmo ideal',d:`${r}. Estás dentro del rango de -0,2 a -0,8 kg por semana. Sigue igual.`};
 }
+/* ===== revisión semanal (domingo) ===== */
+const MEDIDAS=[
+  {k:'waist',t:'Cintura',u:'cm',up:false,help:'A la altura del ombligo, de pie y relajado, después de soltar el aire. Cinta recta y sin apretar.'},
+  {k:'biceps',t:'Bíceps',u:'cm',up:true,help:'Brazo derecho contraído, en la parte más ancha. Mide siempre el mismo brazo y de la misma forma.'},
+  {k:'muslo',t:'Pierna (muslo)',u:'cm',up:true,help:'Pierna derecha, de pie con el peso repartido, en la parte más ancha del muslo, justo debajo del glúteo.'},
+  {k:'gluteo',t:'Glúteos',u:'cm',up:true,help:'De pie y con los pies juntos, en la parte más saliente del glúteo, con la cinta paralela al suelo.'},
+  {k:'espalda',t:'Espalda',u:'cm',up:true,help:'Contorno del torso justo por debajo de las axilas, a la altura de los omóplatos, brazos relajados y después de soltar el aire. Mejor con ayuda.'},
+];
+const VISTAS=[{k:'frente',t:'de frente',help:'De pie, brazos relajados a los lados, mirando a la cámara. Mismo sitio, misma luz y misma distancia cada semana.'},
+  {k:'perfil',t:'de perfil',help:'Gírate de lado, siempre hacia el mismo lado, con los brazos relajados.'},
+  {k:'espalda',t:'de espalda',help:'De espaldas a la cámara, brazos relajados a los lados.'}];
+const WZ_STEPS=['intro','peso',...MEDIDAS.map(m=>'m:'+m.k),...VISTAS.map(v=>'f:'+v.k),'cierre','resumen'];
+let WZ=null;
+function lastCheckin(before){const ks=Object.keys(S.checkins).filter(k=>!before||k<before).sort();return ks.length?{d:ks[ks.length-1],...S.checkins[ks[ks.length-1]]}:null}
+function checkinDue(){const t=todayISO(),l=lastCheckin();return !l||diffDays(l.d,t)>=6}
+function openWizard(){
+  const date=todayISO(),prev=lastCheckin(date),cur=S.checkins[date]||{};
+  WZ={i:0,date,prev,data:{peso:cur.peso??getDay(date).weight??null,...Object.fromEntries(MEDIDAS.map(m=>[m.k,cur[m.k]??null])),pain:cur.pain??null,note:cur.note||''},fotos:{},thumbs:{...(Object.fromEntries(Object.entries(cur.fotos||{}).map(([k,v])=>[k,v.th])))}};
+  drawWizard();
+}
+function wzNum(id){const v=$('#'+id);if(!v)return null;const n=numES(v.value,false);return n&&n>0?n:null}
+function wzPrevTxt(k,u){const p=WZ.prev&&WZ.prev[k];return p?`La última vez: <b class="num">${fmt(p,1)} ${u}</b> (${shortDate(WZ.prev.d)})`:'Primera medición: será tu punto de partida.'}
+function drawWizard(){
+  const step=WZ_STEPS[WZ.i],n=WZ_STEPS.length,dots=`<div class="wz-dots">${WZ_STEPS.map((s,j)=>`<i class="${j<WZ.i?'done':j===WZ.i?'on':''}"></i>`).join('')}</div>`;
+  let body='',next='Siguiente',skip=true;
+  if(step==='intro'){
+    skip=false;next='Empezar';
+    body=`<h3>Revisión del ${longDate(WZ.date)}</h3>
+      <p class="small">Unos 5 minutos: peso, cinco medidas y tres fotos. Hazla siempre igual para que se pueda comparar:</p>
+      <ul class="small wz-list"><li>Por la mañana, en ayunas y después de ir al baño.</li><li>Con la misma cinta métrica, sin apretar.</li><li>Fotos en el mismo sitio y con la misma luz. Si nadie te ayuda, apoya el móvil y usa el temporizador.</li></ul>`;
+  }else if(step==='peso'){
+    body=`<h3>Peso en ayunas</h3><p class="small muted">Nada más levantarte, después de ir al baño y antes de beber o comer.</p>
+      <div class="wz-in"><input type="text" inputmode="decimal" autocomplete="off" id="wz-v" value="${WZ.data.peso??''}" placeholder="${WZ.prev&&WZ.prev.peso?fmt(WZ.prev.peso,1):'80,0'}"><span>kg</span></div>
+      <p class="small">${wzPrevTxt('peso','kg')}</p>`;
+  }else if(step.startsWith('m:')){
+    const m=MEDIDAS.find(x=>'m:'+x.k===step);
+    body=`<h3>${m.t}</h3><p class="small muted">${m.help}</p>
+      <div class="wz-in"><input type="text" inputmode="decimal" autocomplete="off" id="wz-v" value="${WZ.data[m.k]??''}" placeholder="${WZ.prev&&WZ.prev[m.k]?fmt(WZ.prev[m.k],1):'cm'}"><span>cm</span></div>
+      <p class="small">${wzPrevTxt(m.k,'cm')}</p>`;
+  }else if(step.startsWith('f:')){
+    const v=VISTAS.find(x=>'f:'+x.k===step),th=WZ.thumbs[v.k];
+    next=th?'Siguiente':'Saltar foto';skip=false;
+    body=`<h3>Ahora, foto ${v.t}</h3><p class="small muted">${v.help}</p>
+      ${th?`<img class="wz-photo" src="${th}" alt="Foto ${v.t}">`:`<div class="wz-photo empty">Sin foto todavía</div>`}
+      <div class="row"><button type="button" class="btn pri" data-wz="cam" data-v="${v.k}">📷 ${th?'Repetir foto':'Hacer foto'}</button><button type="button" class="btn" data-wz="gal" data-v="${v.k}">Elegir de la galería</button></div>`;
+  }else if(step==='cierre'){
+    body=`<h3>Cómo va la semana</h3>
+      <div class="field"><label for="wz-pain">Dolor de codo medio esta semana: <b class="num" id="wz-painv">${WZ.data.pain??0}</b>/10</label><input type="range" min="0" max="10" step="1" id="wz-pain" value="${WZ.data.pain??0}"></div>
+      <div class="field"><label for="wz-note">Notas (opcional)</label><textarea id="wz-note" rows="3" placeholder="Energía, hambre, obra pesada, sueño…">${esc(WZ.data.note)}</textarea></div>`;
+  }else if(step==='resumen'){
+    skip=false;next='Guardar revisión';
+    const row=(t,k,u,up)=>{const v=WZ.data[k],p=WZ.prev&&WZ.prev[k];if(v==null)return `<tr><td>${t}</td><td class="num muted">–</td><td></td></tr>`;
+      const dd=p?v-p:null,good=dd==null?'':(up?dd>=0:dd<=0)?'good':'bad';
+      return `<tr><td>${t}</td><td class="num">${fmt(v,1)} ${u}</td><td class="num d ${good}">${dd==null?'inicio':`${dd>0?'+':''}${fmt(dd,1)}`}</td></tr>`};
+    body=`<h3>Resumen</h3><div class="tbl-wrap"><table><tbody>${row('Peso','peso','kg',false)}${MEDIDAS.map(m=>row(m.t,m.k,'cm',m.up)).join('')}</tbody></table></div>
+      <div class="wz-thumbs">${VISTAS.map(v=>WZ.thumbs[v.k]?`<figure><img src="${WZ.thumbs[v.k]}" alt="Foto ${v.t}"><figcaption>${v.k}</figcaption></figure>`:'').join('')}</div>
+      ${WZ.prev?`<p class="small muted">Comparado con la revisión del ${shortDate(WZ.prev.d)}.</p>`:''}`;
+  }
+  openSheet('Revisión',`Paso ${WZ.i+1} de ${n}`,`${dots}<div class="wz">${body}</div>
+    <div class="row wz-nav">${WZ.i>0?'<button type="button" class="btn" data-wz="back">‹ Atrás</button>':''}<span class="grow"></span>${skip?'<button type="button" class="btn" data-wz="skip">Saltar</button>':''}<button type="button" class="btn pri" data-wz="next">${next}</button></div>`);
+  const inp=$('#wz-v');if(inp){setTimeout(()=>inp.focus(),250);inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();wzGo(1)}})}
+  const pr=$('#wz-pain');if(pr)pr.oninput=()=>{$('#wz-painv').textContent=pr.value};
+  $('#sheet-body').onclick=e=>{const b=e.target.closest('[data-wz]');if(!b)return;const a=b.dataset.wz;
+    if(a==='next'){if(WZ_STEPS[WZ.i]==='resumen')saveWizard();else wzGo(1)}
+    else if(a==='back')wzGo(-1);
+    else if(a==='skip'){wzCollect(true);WZ.i++;drawWizard()}
+    else if(a==='cam'||a==='gal'){WZ.pending=b.dataset.v;const f=$(a==='cam'?'#f-wzcam':'#f-wzgal');f.value='';f.click()}};
+}
+function wzCollect(skip){
+  const step=WZ_STEPS[WZ.i];
+  if(step==='peso')WZ.data.peso=skip?null:wzNum('wz-v');
+  else if(step.startsWith('m:'))WZ.data[step.slice(2)]=skip?null:wzNum('wz-v');
+  else if(step==='cierre'){WZ.data.pain=+$('#wz-pain').value;WZ.data.note=$('#wz-note').value.trim()}
+}
+function wzGo(d){wzCollect(false);WZ.i=Math.max(0,Math.min(WZ_STEPS.length-1,WZ.i+d));drawWizard()}
+async function compressPhoto(blob){
+  const bmp=await createImageBitmap(blob);let max=1400,q=.82,url='';
+  for(let k=0;k<6;k++){const sc=Math.min(1,max/Math.max(bmp.width,bmp.height)),c=document.createElement('canvas');c.width=Math.round(bmp.width*sc);c.height=Math.round(bmp.height*sc);
+    c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);url=c.toDataURL('image/jpeg',q);if(url.length<680000)break;max*=.85;q-=.07}
+  const sc=Math.min(1,320/Math.max(bmp.width,bmp.height)),t=document.createElement('canvas');t.width=Math.round(bmp.width*sc);t.height=Math.round(bmp.height*sc);
+  t.getContext('2d').drawImage(bmp,0,0,t.width,t.height);
+  return{full:url,th:t.toDataURL('image/jpeg',.7)};
+}
+async function onWzPhoto(e){
+  const f=e.target.files[0],v=WZ&&WZ.pending;if(!f||!v)return;
+  try{const r=await compressPhoto(f);WZ.fotos[v]=r;WZ.thumbs[v]=r.th;drawWizard()}
+  catch(err){toast('No he podido leer esa foto. Prueba otra vez.','err')}
+}
+async function saveWizard(){
+  const b=$('[data-wz="next"]');if(b){b.disabled=true;b.textContent='Guardando…'}
+  const date=WZ.date,old=S.checkins[date]||{},fotos={...(old.fotos||{})};
+  for(const [v,r] of Object.entries(WZ.fotos)){
+    const id=`${date}_${v}`;window.FB.db.set(path('fotos'),id,{d:r.full,vista:v,fecha:date});
+    fotos[v]={id,th:r.th};await sleep(150);
+  }
+  const ci={...old,at:new Date().toISOString(),fotos};
+  for(const k of ['peso',...MEDIDAS.map(m=>m.k),'pain'])if(WZ.data[k]!=null)ci[k]=WZ.data[k];else delete ci[k];
+  ci.note=WZ.data.note||'';
+  saveDoc('checkins',date,ci);
+  if(WZ.data.peso)patchDay(date,o=>{o.weight=WZ.data.peso});
+  WZ=null;closeSheet();goTab('progreso');toast('Revisión guardada');
+}
+async function openPhoto(id,title){
+  openSheet('Foto',title,'<p class="small muted">Cargando foto…</p>');
+  try{const d=await window.FB.db.get(path('fotos'),id);$('#sheet-body').innerHTML=d&&d.d?`<img src="${d.d}" alt="${esc(title)}" style="width:100%;border-radius:4px">`:'<p class="small">No encuentro esta foto. Puede que aún se esté subiendo: prueba en un momento.</p>'}
+  catch(e){$('#sheet-body').innerHTML='<p class="small">No he podido cargar la foto. Comprueba la conexión.</p>'}
+}
+function measureSeries(k){return Object.entries(S.checkins).filter(([d,v])=>v&&+v[k]>0).map(([d,v])=>({d,x:diffDays(START,d),y:+v[k]})).sort((a,b)=>a.x-b.x)}
+function measureCard(t,s,u,up){
+  if(!s.length)return `<div class="mcard"><div class="row between"><b>${t}</b><span class="small muted">–</span></div><p class="small muted">Sin medidas todavía.</p></div>`;
+  const first=s[0],last=s[s.length-1],dd=last.y-first.y,good=s.length<2?'':(up?dd>=0:dd<=0)?'good':'bad';
+  return `<div class="mcard"><div class="row between"><b>${t}</b><span class="num">${fmt(last.y,1)} ${u}</span></div>
+    ${s.length>1?lineChart({pts:s,line:null,xmin:Math.min(0,first.x),xmax:Math.max(last.x,first.x+7)}):''}
+    <p class="small d ${good}">${s.length>1?`${dd>0?'+':''}${fmt(dd,1)} ${u} desde el ${shortDate(first.d)}`:`Punto de partida (${shortDate(first.d)})`}</p></div>`;
+}
+let photoView='frente';
+function photoCompare(){
+  const list=Object.entries(S.checkins).filter(([d,v])=>v.fotos&&v.fotos[photoView]).sort();
+  const seg=`<div class="seg" role="group" aria-label="Vista">${VISTAS.map(v=>`<button type="button" data-act="pview" data-v="${v.k}" aria-pressed="${v.k===photoView}"><b>${v.k[0].toUpperCase()+v.k.slice(1)}</b></button>`).join('')}</div>`;
+  if(!list.length)return seg+'<div class="empty">Aquí podrás comparar tu primera foto con la última. Se hacen en la revisión del domingo.</div>';
+  const pick=list.length>1?[list[0],list[list.length-1]]:[list[0]];
+  return seg+`<div class="cmp">${pick.map(([d,v],j)=>`<figure><button type="button" data-act="pfull" data-id="${v.fotos[photoView].id}" data-t="Foto ${photoView} · ${shortDate(d)}"><img src="${v.fotos[photoView].th}" alt="Foto ${photoView} del ${shortDate(d)}"></button><figcaption>${j===0&&list.length>1?'Inicio · ':''}${shortDate(d)}</figcaption></figure>`).join('')}</div>
+    <p class="small muted">Toca una foto para verla en grande. ${list.length} revisiones con foto.</p>`;
+}
+
 function last7(){return [...Array(7)].map((_,i)=>addDays(todayISO(),-i))}
 function viewProgreso(){
   const ws=weightSeries(),wa=weeklyAvgs(ws),cw=weekOf(todayISO()),wsr=waistSeries();
-  const thisW=wa.find(w=>w.w===cw),prevW=wa.find(w=>w.w===cw-1),lastWaist=wsr[wsr.length-1],recent=last7();
+  const thisW=wa.find(w=>w.w===cw),prevW=wa.find(w=>w.w===cw-1),lastWaist=wsr[wsr.length-1],firstWaist=wsr[0],recent=last7();
   const sleeps=recent.map(k=>S.days[k]&&+S.days[k].sleep).filter(v=>v>0),sleepAvg=sleeps.length?sleeps.reduce((a,b)=>a+b,0)/sleeps.length:null;
   const logged=recent.map(k=>S.days[k]).filter(hasLog).map(dayTotals),onTarget=logged.filter(t=>Math.abs(t.k-TARGET.kcal)<=TARGET.kcal*.1).length;
-  const pAvg=logged.length?logged.reduce((a,t)=>a+t.p,0)/logged.length:null,delta=(thisW&&prevW)?thisW.avg-prevW.avg:null,totalW=ws.length?ws[ws.length-1].y-BASE.peso:null;
-  const ad=advice(ws),mon=mondayOf(todayISO()),ci=S.checkins[mon]||{};
+  const pAvg=logged.length?logged.reduce((a,t)=>a+t.p,0)/logged.length:null,delta=(thisW&&prevW)?thisW.avg-prevW.avg:null,totalW=ws.length>1?ws[ws.length-1].y-ws[0].y:null;
+  const ad=advice(ws),lc=lastCheckin(),due=checkinDue(),sunday=parse(todayISO()).getDay()===0;
   const avgLine=ws.map(p=>{const win=ws.filter(q=>q.x<=p.x&&q.x>p.x-7);return{x:p.x,y:win.reduce((s,q)=>s+q.y,0)/win.length}});
-  return `<section class="advice ${ad.k}"><b>${ad.t}</b><span class="small">${ad.d}</span></section>
+  const wd=lastWaist&&firstWaist&&wsr.length>1?lastWaist.y-firstWaist.y:null;
+  return `<section class="card wz-card ${due?'due':''}">
+    <div class="row between"><div><div class="eyebrow">Revisión semanal · domingo</div><div class="big-title">${due?(sunday?'Hoy toca revisión':'Revisión pendiente'):'Revisión hecha'}</div></div>
+    <button type="button" class="btn ${due?'pri':''}" data-act="wizard">${S.checkins[todayISO()]?'Editar':'Empezar'}</button></div>
+    <p class="small muted">${lc?`Última: ${longDate(lc.d)}. `:''}Peso en ayunas, cinco medidas y tres fotos. Unos 5 minutos.</p></section>
+  <section class="advice ${ad.k}"><b>${ad.t}</b><span class="small">${ad.d}</span></section>
   <section class="kpis">
-    <div class="kpi"><span class="eyebrow">Peso medio semana</span><span class="v">${thisW?fmt(thisW.avg,1):'–'}<small> kg</small></span><span class="d ${delta!=null?(delta<=0?'good':'bad'):''}">${delta!=null?`${delta>0?'+':''}${fmt(delta,2)} vs semana anterior`:`Inicio: ${fmt(BASE.peso)} kg`}</span></div>
-    <div class="kpi"><span class="eyebrow">Cintura</span><span class="v">${fmt(lastWaist.y,1)}<small> cm</small></span><span class="d ${lastWaist.y<BASE.cintura?'good':''}">${lastWaist.y<BASE.cintura?`${fmt(lastWaist.y-BASE.cintura,1)} cm desde el inicio`:'Inicio: 96 cm · mide cada lunes'}</span></div>
+    <div class="kpi"><span class="eyebrow">Peso medio semana</span><span class="v">${thisW?fmt(thisW.avg,1):'–'}<small> kg</small></span><span class="d ${delta!=null?(delta<=0?'good':'bad'):''}">${delta!=null?`${delta>0?'+':''}${fmt(delta,2)} vs semana anterior`:'Pésate en ayunas en Hoy'}</span></div>
+    <div class="kpi"><span class="eyebrow">Cintura</span><span class="v">${lastWaist?fmt(lastWaist.y,1):'–'}<small> cm</small></span><span class="d ${wd!=null&&wd<0?'good':''}">${wd!=null?`${wd>0?'+':''}${fmt(wd,1)} cm desde el inicio`:'Se mide en la revisión'}</span></div>
     <div class="kpi"><span class="eyebrow">Sueño medio 7 días</span><span class="v">${sleepAvg?fmt(sleepAvg,1):'–'}<small> h</small></span><span class="d ${sleepAvg?(sleepAvg>=7?'good':'bad'):''}">${sleepAvg?(sleepAvg>=7?'En objetivo':'Por debajo de 7 h'):'Apúntalo en Hoy'}</span></div>
     <div class="kpi"><span class="eyebrow">Días en objetivo</span><span class="v">${onTarget}<small> / ${logged.length||7}</small></span><span class="d">${pAvg?`Proteína media ${fmt(pAvg)} g`:'Kcal a ±10% de 2.400'}</span></div>
   </section>
   <section class="card"><div class="row between"><h2 class="grow">Peso</h2>${totalW!=null?`<span class="chip">${totalW>0?'+':''}${fmt(totalW,1)} kg total</span>`:''}</div>
-    ${ws.length?lineChart({pts:ws,line:ws.length>2?avgLine:null,xmin:Math.min(0,ws[0].x),xmax:Math.max(ws[ws.length-1].x,6)}):`<div class="empty">Aquí verás tu peso diario y la media de 7 días.<br>Apunta mañana tu peso en ayunas en la pestaña Hoy.</div>`}
-    <p class="small muted">Los puntos son pesajes diarios; la línea es la media de 7 días. Fíjate en la línea: el peso diario sube y baja con agua, sal y comida.</p>
+    ${ws.length?lineChart({pts:ws,line:ws.length>2?avgLine:null,xmin:Math.min(0,ws[0].x),xmax:Math.max(ws[ws.length-1].x,6)}):`<div class="empty">Aquí verás tu peso diario y la media de 7 días.<br>Apunta tu peso en ayunas en Hoy o en la revisión.</div>`}
+    <p class="small muted">Los puntos son pesajes; la línea es la media de 7 días. Fíjate en la línea: el peso diario sube y baja con agua, sal y comida.</p>
   </section>
-  <section class="card"><h2>Revisión semanal</h2><p class="small muted">Cada lunes por la mañana, en ayunas. Semana del ${shortDate(mon)}.</p>
-    <div class="grid2">
-      <div class="field"><label for="ci-waist">Cintura en el ombligo (cm)</label><input type="number" inputmode="decimal" step="0.1" id="ci-waist" data-ci="waist" value="${ci.waist??''}" placeholder="${fmt(lastWaist.y,1)}"></div>
-      <div class="field"><label for="ci-pain">Dolor de codo (0-10)</label><input type="number" inputmode="numeric" min="0" max="10" id="ci-pain" data-ci="pain" value="${ci.pain??''}" placeholder="0-10"></div>
-    </div>
-    <button type="button" class="toggle" data-act="ci-photos" aria-pressed="${!!ci.photos}"><span class="box">${ci.photos?'✓':''}</span><span class="grow"><span class="t">Fotos hechas</span><br><span class="d">Cada 2 semanas: frente, perfil y espalda, misma luz y hora</span></span></button>
-    <div class="field"><label for="ci-note">Cómo va la semana</label><textarea id="ci-note" rows="2" data-ci="note" placeholder="Energía, hambre, obra pesada, sueño…">${esc(ci.note||'')}</textarea></div>
+  <section class="card"><h2>Medidas</h2>
+    <div class="mgrid">${MEDIDAS.map(m=>measureCard(m.t,measureSeries(m.k),m.u,m.up)).join('')}</div>
+    <p class="small muted">Verde: va en la buena dirección (cintura hacia abajo; bíceps, muslo, glúteo y espalda hacia arriba). Objetivo de cintura a 12 semanas: bajar 5-7 cm.</p>
   </section>
-  <section class="card"><h2>Cintura</h2>
-    ${wsr.length>1?lineChart({pts:wsr,line:null,xmin:0,xmax:Math.max(wsr[wsr.length-1].x,7)}):`<div class="empty">Punto de partida: 96 cm. Cada lunes añade la medida en la revisión semanal.</div>`}
-    <p class="small muted">Objetivo a 12 semanas: 89-91 cm. La cintura es el mejor indicador de grasa abdominal.</p>
-  </section>`;
+  <section class="card"><h2>Fotos</h2>${photoCompare()}</section>`;
 }
-
 function viewPlan(){
   return `<div class="plan" style="display:grid;gap:14px">
   <section class="card"><div class="eyebrow">1 · Diagnóstico</div><h2>Tus números</h2>
@@ -1118,7 +1267,9 @@ $('#view').addEventListener('click',e=>{
   else if(a==='watch-settings')openWatchSettings();
   else if(a==='rest')startTimer(+b.dataset.sec,b.dataset.name);
   else if(a==='cinta'){const w=clone(S.workouts[d]||{});w.session=w.session||sessionFor(d);w.cinta=!w.cinta;saveDoc('workouts',d,w);render()}
-  else if(a==='ci-photos'){const mon=mondayOf(todayISO()),ci=clone(S.checkins[mon]||{});ci.photos=!ci.photos;saveDoc('checkins',mon,ci);render()}
+  else if(a==='wizard')openWizard();
+  else if(a==='pview'){photoView=b.dataset.v;render()}
+  else if(a==='pfull')openPhoto(b.dataset.id,b.dataset.t);
 });
 $('#view').addEventListener('input',e=>{
   const el=e.target,d=st.date;
@@ -1130,7 +1281,6 @@ $('#view').addEventListener('input',e=>{
   }
   else if(el.dataset.act==='pain'){$('#painv').textContent=el.value;const w=clone(S.workouts[d]||{});w.session=w.session||sessionFor(d);w.pain=+el.value;saveDoc('workouts',d,w)}
   else if(el.dataset.act==='wnote'){const w=clone(S.workouts[d]||{});w.session=w.session||sessionFor(d);w.note=el.value;saveDoc('workouts',d,w)}
-  else if(el.dataset.ci){const mon=mondayOf(todayISO()),ci=clone(S.checkins[mon]||{}),k=el.dataset.ci;if(k==='note')ci.note=el.value;else{if(el.value==='')delete ci[k];else ci[k]=+el.value}saveDoc('checkins',mon,ci)}
 });
 $('#view').addEventListener('change',e=>{
   const el=e.target;
@@ -1217,7 +1367,7 @@ function coachContext(){
     const wo=S.workouts[k];if(wo&&wo.sets)bits.push(`entreno ${SESS[wo.session]?SESS[wo.session].n:''}${wo.pain!=null?' dolor codo '+wo.pain+'/10':''}`);
     if(bits.length)L.push(`- ${k}: ${bits.join(', ')}`)}
   const ws=weeklyAvgs(weightSeries());if(ws.length)L.push('Peso medio por semana: '+ws.map(x=>`S${x.w} ${fmt(x.avg,1)} kg`).join(', ')+'.');
-  const cis=Object.entries(S.checkins).sort().map(([k,v])=>`${k}: ${v.waist?'cintura '+v.waist+' cm':''}${v.pain!=null?' dolor codo '+v.pain:''}${v.note?' nota "'+v.note+'"':''}`);if(cis.length)L.push('Revisiones semanales: '+cis.join(' | ')+'.');
+  const cis=Object.entries(S.checkins).sort().map(([k,v])=>`${k}: `+[v.peso?'peso '+v.peso+' kg':'',...MEDIDAS.map(m=>v[m.k]?m.t.toLowerCase()+' '+v[m.k]+' cm':''),v.pain!=null?'dolor codo '+v.pain+'/10':'',v.note?'nota "'+v.note+'"':''].filter(Boolean).join(', '));if(cis.length)L.push('Revisiones semanales: '+cis.join(' | ')+'.');
   const wks=Object.keys(S.workouts).sort().slice(-8);
   if(wks.length){L.push('ÚLTIMOS ENTRENOS:');for(const k of wks){const wo=S.workouts[k];if(!wo||!wo.sets)continue;
     L.push(`- ${k} ${SESS[wo.session]?SESS[wo.session].n:''}: `+Object.entries(wo.sets).map(([id,sets])=>{const ex=ALL_EX.find(e=>e.id===id);return `${ex?ex.n:id} ${sets.filter(s=>s&&s.r).map(s=>`${s.kg||'?'}x${s.r}`).join(' ')}`}).join('; ')+(wo.note?` (nota: ${wo.note})`:''))}}
@@ -1284,6 +1434,7 @@ $('#btn-ia').onclick=()=>openCoach();
 
 /* foto del plato o etiqueta */
 let photoRes=null,photoImg=null;
+$('#f-wzcam').onchange=onWzPhoto;$('#f-wzgal').onchange=onWzPhoto;
 $('#f-photo').onchange=async e=>{
   const f=e.target.files[0];if(!f)return;
   try{photoImg=await blobToB64(f,1400)}catch(err){toast('No puedo leer esa imagen. Prueba con otra.','err');return}
@@ -1339,7 +1490,7 @@ function openSettings(msg){
     </div>
     <div class="card"><h2>Cuenta</h2><p class="small">${u?'Conectado como <b>'+esc(u.email||u.displayName||'')+'</b>':'Sin sesión'}</p><button type="button" class="btn" id="logout">Cerrar sesión</button></div>
     <div class="card"><h2>Empezar de cero</h2>
-      <p class="small">Borra todos los datos de prueba: comidas, entrenos, pesos, pasos, revisiones, datos de Zepp y la conversación con el coach. Se quedan tus objetivos del reloj, la clave del Atajo y la de Gemini.</p>
+      <p class="small">Borra todos los datos de prueba: comidas, entrenos, pesos, pasos, revisiones con sus fotos, datos de Zepp y la conversación con el coach. Se quedan tus objetivos del reloj, la clave del Atajo y la de Gemini.</p>
       <div id="reset-box"><button type="button" class="btn" id="reset-1">Empezar de cero</button></div>
     </div>`);
   $('#g-save').onclick=async()=>{
@@ -1364,7 +1515,8 @@ async function resetAll(){
   for(const k of Object.keys(timers))clearTimeout(timers[k]);
   for(const k of Object.keys(dirty))delete dirty[k];
   let i=0;
-  const items=[...COLS.flatMap(c=>Object.keys(S[c]).map(id=>[c,id])),...zeppIn.map(d=>['zepp',d.id])];
+  const fotoIds=Object.values(S.checkins).flatMap(v=>Object.values(v.fotos||{}).map(f=>f.id)).filter(Boolean);
+  const items=[...COLS.flatMap(c=>Object.keys(S[c]).map(id=>[c,id])),...zeppIn.map(d=>['zepp',d.id]),...fotoIds.map(id=>['fotos',id])];
   for(const [c,id] of items){window.FB.db.del(path(c),id);if(++i%40===0)await sleep(300)}
   for(const c of COLS)S[c]={};
   zeppIn=[];chat=[];lsSet(CHATK,[]);lsSet(ZKEY,null);
@@ -1417,16 +1569,16 @@ async function exportPdf(){
     line('Recomp 45 · Informe de progreso',18,true);gap(1);
     line(`Generado el ${new Date().toLocaleDateString('es-ES')} · Semana ${cw} de 12 (${phase(cw).n}) · Inicio ${shortDate(START)} ${START.slice(0,4)}`,9,false,[90,90,90]);gap(4);
     line('Punto de partida y objetivo',13,true);gap(1);
-    line(`Hombre, 45 años, 175 cm. Inicio: ${BASE.peso} kg, ~${BASE.grasa}% grasa, cintura ${BASE.cintura} cm.`,10);
+    {const w0=weightSeries()[0],c0=waistSeries()[0];line(`Hombre, 45 años, 175 cm. Inicio: ${w0?fmt(w0.y,1):BASE.peso} kg, ~${BASE.grasa}% grasa, cintura ${c0?fmt(c0.y,1):BASE.cintura} cm.`,10)}
     line(`Objetivo diario: ${TARGET.kcal} kcal · proteína ${TARGET.p} g · carbohidratos ${TARGET.c} g · grasas ${TARGET.f} g.`,10);gap(4);
     const ws=weightSeries(),wsr=waistSeries(),wa=weeklyAvgs(ws);
-    if(ws.length){const last=ws[ws.length-1];line(`Peso: ${fmt(last.y,1)} kg (${fmt(last.y-BASE.peso,1)} kg desde el inicio) · Cintura: ${fmt(wsr[wsr.length-1].y,1)} cm (${fmt(wsr[wsr.length-1].y-BASE.cintura,1)} cm)`,11,true);gap(3)}
+    if(ws.length){const last=ws[ws.length-1];line(`Peso: ${fmt(last.y,1)} kg (${fmt(last.y-ws[0].y,1)} kg desde el inicio)${wsr.length?` · Cintura: ${fmt(wsr[wsr.length-1].y,1)} cm (${fmt(wsr[wsr.length-1].y-wsr[0].y,1)} cm)`:''}`,11,true);gap(3)}
     line('Semana a semana',13,true);gap(2);
     const cols=[M,32,58,82,108,132,156,180],head=['Sem.','Peso','Cintura','Kcal','Prot.','Sueño','Pasos','Codo'];
     doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(90,90,90);head.forEach((h,i)=>doc.text(h,cols[i],y));y+=5;doc.setFont('helvetica','normal');doc.setTextColor(20,20,20);
     for(let w=1;w<=cw;w++){
       const days=[...Array(7)].map((_,i)=>addDays(START,(w-1)*7+i)),dd=days.map(k=>S.days[k]).filter(Boolean),lg=dd.filter(hasLog).map(dayTotals);
-      const avg=a=>a.length?a.reduce((s,v)=>s+v,0)/a.length:null,wav=wa.find(x=>x.w===w),ci=S.checkins[days[0]]||{};
+      const avg=a=>a.length?a.reduce((s,v)=>s+v,0)/a.length:null,wav=wa.find(x=>x.w===w),ci=days.map(k=>S.checkins[k]).filter(Boolean).pop()||{};
       const sl=avg(dd.map(v=>+v.sleep).filter(v=>v>0)),stp=avg(dd.map(v=>+v.steps).filter(v=>v>0));
       const pains=days.map(k=>S.workouts[k]&&S.workouts[k].pain).filter(v=>v!=null),pn=avg(pains);
       const row=[String(w),wav?fmt(wav.avg,1):'-',ci.waist?fmt(ci.waist,1):'-',lg.length?fmt(avg(lg.map(x=>x.k))):'-',lg.length?fmt(avg(lg.map(x=>x.p))):'-',sl?fmt(sl,1)+' h':'-',stp?fmt(stp):'-',pn!=null?fmt(pn,1)+'/10':(ci.pain!=null?ci.pain+'/10':'-')];
