@@ -369,7 +369,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.9.0';
+const APP_VERSION='1.9.1';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -715,7 +715,7 @@ function parseSleep(raw){
   else{const c=s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
     if(c)t=+c[1]+(+c[2])/60+(c[3]?+c[3]/3600:0);
     else{const n=numES(s,false);if(n==null)return null;t=n>1440?n/3600:n>24?n/60:n}}
-  if(!(t>0)||t>20)return null;
+  if(!(t>0)||t>14)return null;   /* más de 14 h: casi seguro sueño contado dos veces */
   return Math.round(t*100)/100;
 }
 function processZeppInbox(){

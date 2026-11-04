@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.9.1 · 2026-11-04
+- Sueño desde Zepp: se descarta un total de más de 14 h (suele ser la misma noche contada dos veces)
+
 ## v1.9.0 · 2026-11-04
 - Menú › Acerca de: botón «Buscar actualizaciones» y «Actualizar ahora» cuando hay versión nueva
 - La app comprueba sola si hay versión nueva al abrirla y lo marca con un punto rojo en Menú
