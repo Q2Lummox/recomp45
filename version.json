@@ -1,10 +1,17 @@
 {
- "version": "1.9.1",
+ "version": "1.9.2",
  "fecha": "2026-11-04",
  "notas": [
-  "Sueño desde Zepp: se descarta un total de más de 14 h (suele ser la misma noche contada dos veces)"
+  "Hoy: se quitan la rutina de codos y la creatina del final de la pantalla"
  ],
  "historial": [
+  {
+   "version": "1.9.2",
+   "fecha": "2026-11-04",
+   "notas": [
+    "Hoy: se quitan la rutina de codos y la creatina del final de la pantalla"
+   ]
+  },
   {
    "version": "1.9.1",
    "fecha": "2026-11-04",

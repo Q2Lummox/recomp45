@@ -369,7 +369,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.9.1';
+const APP_VERSION='1.9.2';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -881,8 +881,6 @@ function viewHoy(){
       <div class="habit"><label for="in-sueno">Sueño anoche (h)</label><input type="number" inputmode="decimal" step="0.25" min="0" max="14" id="in-sueno" data-field="sleep" value="${day.sleep??''}" placeholder="7,5"><span class="goal">${day.zepp&&day.zepp.sueno?'Desde Zepp':`Objetivo ${hm(goals().sueno)}`}</span></div>
     </div>
     ${watchCard(day)}
-    ${tog('codos','Rutina de codos (8 min)','Isometría + excéntricos. Ver pestaña Plan')}
-    ${tog('creatina','Creatina 3-5 g','Cualquier hora, todos los días')}
   </section>`;
 }
 

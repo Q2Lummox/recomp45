@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.9.2 · 2026-11-04
+- Hoy: se quitan la rutina de codos y la creatina del final de la pantalla
+
 ## v1.9.1 · 2026-11-04
 - Sueño desde Zepp: se descarta un total de más de 14 h (suele ser la misma noche contada dos veces)
 
