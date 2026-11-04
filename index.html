@@ -367,7 +367,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.7.0';
+const APP_VERSION='1.8.0';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -635,16 +635,18 @@ let AJ={};   /* users/<uid>/ajustes: objetivos del reloj y clave del Atajo */
 const ICON_STEPS='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8.2 2.5c1.9 0 3 2.2 2.8 4.9-.2 2.3-1 3.9-1.2 5.3l-4.9.6C4.3 11.2 3.6 9.6 3.8 7.4 4 4.7 6.2 2.5 8.2 2.5zM5.1 14.6l4.6-.6c.3 1.9.2 3.4-.4 4.5-.6 1.2-1.6 1.8-2.6 1.7-1.2-.2-1.9-1.4-1.9-2.9 0-.9.1-1.8.3-2.7zM15.8 5.5c2 0 4.2 2.2 4.4 4.9.2 2.2-.5 3.8-1.1 5.9l-4.9-.6c-.2-1.4-1-3-1.2-5.3-.2-2.7.9-4.9 2.8-4.9zM14.3 17.1l4.6.6c.2.9.3 1.8.3 2.7 0 1.5-.7 2.7-1.9 2.9-1 .1-2-.5-2.6-1.7-.6-1.1-.7-2.6-.4-4.5z"/></svg>';
 const ICON_FLAME='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.6 1.8c.4 3-1.1 4.7-2.6 6.4C8.4 10 6.5 11.9 6.5 15a5.5 5.5 0 0 0 11 0c0-2.2-.9-4-2.1-5.5-.1 1.3-.7 2.4-1.7 3 .3-3.9-.6-7.6-1.1-10.7zM12 21a3 3 0 0 1-3-3c0-1.6 1-2.6 2-3.6.2 1.1.8 1.9 1.7 2.3.2-.9.6-1.6 1.1-2.1.7.8 1.2 1.9 1.2 3.4a3 3 0 0 1-3 3z"/></svg>';
 const ICON_GEAR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
-const GOAL_DEF={pasos:10000,kcal:400};
-function goals(){const r=AJ.reloj||{};return{pasos:+r.pasos>0?+r.pasos:GOAL_DEF.pasos,kcal:+r.kcal>0?+r.kcal:GOAL_DEF.kcal}}
+const GOAL_DEF={pasos:10000,kcal:400,sueno:7.5};
+const ICON_MOON='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.3 14.6A8.5 8.5 0 0 1 9.4 3.7a.6.6 0 0 0-.8-.7A9.5 9.5 0 1 0 21 15.4a.6.6 0 0 0-.7-.8z"/></svg>';
+const hm=h=>{const t=Math.round(h*60);return `${Math.floor(t/60)} h ${String(t%60).padStart(2,'0')}`};
+function goals(){const r=AJ.reloj||{};return{pasos:+r.pasos>0?+r.pasos:GOAL_DEF.pasos,kcal:+r.kcal>0?+r.kcal:GOAL_DEF.kcal,sueno:+r.sueno>0?+r.sueno:GOAL_DEF.sueno}}
 /* rojo: vas mal · naranja: avanzando · amarillo: te acercas · lima: casi · verde: cumplido */
 const fmtG=n=>{try{return Number(n).toLocaleString('es-ES',{useGrouping:'always',maximumFractionDigits:0})}catch(e){return fmt(n)}};
 function pClass(pct){return pct>=100?'p-green':pct>=75?'p-lime':pct>=50?'p-yellow':pct>=25?'p-orange':'p-red'}
-function metric(icon,val,goal,unit,label){
+function metric(icon,val,goal,unit,label,f=fmtG){
   const has=val!=null,pct=has&&goal?Math.round(val/goal*100):0;
   return `<div class="metric ${pClass(pct)}" role="group" aria-label="${label}">
     <span class="ico">${icon}</span>
-    <div class="val"><b class="num">${has?fmtG(val):'–'}</b><span>/ ${fmtG(goal)} ${unit}</span><em>${pct>=100?'✓ Cumplido':has?pct+' %':''}</em></div>
+    <div class="val"><b class="num">${has?f(val):'–'}</b><span>/ ${f(goal)}${unit?' '+unit:''}</span><em>${pct>=100?'✓ Cumplido':has?pct+' %':''}</em></div>
     <div class="pbar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.min(pct,100)}"><i style="width:${Math.min(pct,100)}%"></i></div>
   </div>`;
 }
@@ -655,6 +657,7 @@ function watchCard(day){
     <div class="watch-head"><label>Actividad del reloj</label><button type="button" class="gear" data-act="watch-settings" aria-label="Ajustes del reloj">${ICON_GEAR}</button></div>
     ${metric(ICON_STEPS,pasos,g.pasos,'pasos','Pasos')}
     ${metric(ICON_FLAME,kcal,g.kcal,'kcal activas','Calorías activas')}
+    ${metric(ICON_MOON,day.sleep!=null&&day.sleep!==''&&+day.sleep>0?+day.sleep:null,g.sueno,'','Sueño de anoche',hm)}
     <span class="goal">${z?`Zepp · actualizado a las ${hora}`:'Sin datos del reloj este día'}</span>
     <button type="button" class="btn pri" data-act="zepp-run">Actualizar desde Zepp</button>
   </div>`;
@@ -666,8 +669,9 @@ function openWatchSettings(){
       <div class="grid2">
         <div class="field"><label for="g-pasos">Pasos</label><input type="number" inputmode="numeric" step="500" min="1000" id="g-pasos" value="${g.pasos}"></div>
         <div class="field"><label for="g-kcal">Kcal activas</label><input type="number" inputmode="numeric" step="50" min="50" id="g-kcal" value="${g.kcal}"></div>
+        <div class="field"><label for="g-sueno">Sueño (horas)</label><input type="text" inputmode="decimal" id="g-sueno" value="${String(g.sueno).replace('.',',')}"></div>
       </div>
-      <p class="small muted">Para tu plan: pasos mínimo 10.000, ideal 12.000. Las kcal activas son las de «consumo de actividad» de Zepp; con 10.000-12.000 pasos y tu trabajo suelen salir entre 350 y 500.</p>
+      <p class="small muted">Para tu plan: pasos mínimo 10.000, ideal 12.000. Las kcal activas son las de «consumo de actividad» de Zepp; con 10.000-12.000 pasos y tu trabajo suelen salir entre 350 y 500. Sueño: 7-8 h; 7,5 es un buen objetivo.</p>
       <div class="legend">
         <span class="p-red"><i></i>Menos de 25 %</span><span class="p-orange"><i></i>25-49 %</span><span class="p-yellow"><i></i>50-74 %</span><span class="p-lime"><i></i>75-99 %</span><span class="p-green"><i></i>Cumplido</span>
       </div>
@@ -678,11 +682,12 @@ function openWatchSettings(){
       <button type="button" class="btn" id="g-help">Cómo configurarlo</button>
     </div>`);
   $('#g-save').onclick=()=>{
-    const pasos=Math.round(+$('#g-pasos').value),kcal=Math.round(+$('#g-kcal').value);
+    const pasos=Math.round(+$('#g-pasos').value),kcal=Math.round(+$('#g-kcal').value),sueno=numES($('#g-sueno').value,false);
     if(!(pasos>=1000)){$('#g-pasos').focus();toast('Pon un objetivo de pasos de 1.000 o más','err');return}
     if(!(kcal>=50)){$('#g-kcal').focus();toast('Pon un objetivo de kcal de 50 o más','err');return}
-    AJ.reloj={pasos,kcal};window.FB.db.set(path('ajustes'),'reloj',{pasos,kcal});
-    closeSheet();render();toast(`Objetivos guardados: ${fmt(pasos)} pasos y ${fmt(kcal)} kcal`);
+    if(!(sueno>=4&&sueno<=12)){$('#g-sueno').focus();toast('Pon un objetivo de sueño entre 4 y 12 horas','err');return}
+    AJ.reloj={pasos,kcal,sueno};window.FB.db.set(path('ajustes'),'reloj',{pasos,kcal,sueno});
+    closeSheet();render();toast(`Objetivos guardados: ${fmt(pasos)} pasos, ${fmt(kcal)} kcal y ${hm(sueno)} de sueño`);
   };
   $('#g-help').onclick=()=>openZeppHelp();
 }
@@ -707,7 +712,8 @@ function processZeppInbox(){
   for(const d of zeppIn){
     const x=d.data||{},fecha=parseFecha(d.id);if(!fecha)continue;
     const pasos=numES(x.pasos,true),kcal=numES(x.kcal,true);let sueno=numES(x.sueno,false);
-    if(sueno!=null&&sueno>24)sueno=Math.round(sueno/60*10)/10;
+    if(sueno!=null&&sueno>1440)sueno=Math.round(sueno/3600*10)/10;   /* llega en segundos */
+    else if(sueno!=null&&sueno>24)sueno=Math.round(sueno/60*10)/10;   /* llega en minutos */
     if(pasos==null&&kcal==null&&!sueno){if(touched.has(fecha))emptyHit=fecha;continue}
     const prev=byDay[fecha];
     if(!prev||(pasos??-1)>(prev.pasos??-1)||((pasos??-1)===(prev.pasos??-1)&&(kcal??-1)>(prev.kcal??-1)))byDay[fecha]={fecha,pasos,kcal,sueno};
@@ -756,7 +762,7 @@ async function openZeppHelp(){
   try{key=await ensureZeppKey()}catch(e){$('#sheet-body').innerHTML='<p class="small" style="color:var(--bad)">No he podido preparar la clave. Comprueba la conexión y vuelve a abrir esta guía.</p>';return}
   const c=window.FB.config||{};
   const url=`https://firestore.googleapis.com/v1/projects/${c.projectId}/databases/(default)/documents/users/${uid}/zepp/FECHA?key=${c.apiKey}`;
-  const body=`{"fields":{"k":{"stringValue":"${key}"},"pasos":{"stringValue":"PASOS"},"kcal":{"stringValue":"KCAL"},"hora":{"stringValue":"HORA"}}}`;
+  const body=`{"fields":{"k":{"stringValue":"${key}"},"pasos":{"stringValue":"PASOS"},"kcal":{"stringValue":"KCAL"},"sueno":{"stringValue":"SUENO"},"hora":{"stringValue":"HORA"}}}`;
   const copyBox=(id,txt)=>`<div style="display:grid;gap:6px"><textarea readonly id="${id}" rows="3" class="mono" style="font-size:.75rem">${esc(txt)}</textarea><button type="button" class="btn sm" data-copy="${id}">Copiar</button></div>`;
   $('#sheet-body').innerHTML=`
     <p class="small">El Atajo enviará los datos directamente a tu base de datos, sin abrir Safari. Si la app está abierta, se actualiza sola y te avisa.</p>
@@ -765,7 +771,7 @@ async function openZeppHelp(){
       ${copyBox('cp-rules',ZEPP_RULES)}</div>
     <div class="card"><h2>2 · Cambiar el final del Atajo</h2><ol class="small" style="margin:0;padding-left:1.2em;display:grid;gap:6px">
       <li>Borra con la ✕ las acciones <b>Texto</b>, <b>Abrir</b> y <b>Detener y generar</b>. Deja todo lo de arriba como está, también <b>Aplicar formato a fecha</b>.</li>
-      <li>Añade <b>Texto</b> y pega esto. Después borra la palabra <b>PASOS</b> y pon en su lugar la variable <b>pasos</b>; haz lo mismo con <b>KCAL</b> y la variable <b>kcal</b>, y con <b>HORA</b> y la variable <b>Fecha actual</b>. Respeta las comillas que las rodean. La hora hace que cada envío sea distinto, para que la app se entere siempre.
+      <li>Añade <b>Texto</b> y pega esto. Después borra la palabra <b>PASOS</b> y pon en su lugar la variable <b>pasos</b>; haz lo mismo con <b>KCAL</b> y la variable <b>kcal</b>, con <b>SUENO</b> y la variable <b>sueno</b> (ver el apartado 4), y con <b>HORA</b> y la variable <b>Fecha actual</b>. Respeta las comillas que las rodean. La hora hace que cada envío sea distinto, para que la app se entere siempre.
         ${copyBox('cp-body',body)}</li>
       <li>Añade <b>Obtener contenido de URL</b>. En la URL pega esto y cambia la palabra <b>FECHA</b> por la variable <b>Fecha con formato</b>:
         ${copyBox('cp-url',url)}</li>
@@ -777,6 +783,12 @@ async function openZeppHelp(){
     <div class="card"><h2>3 · Sin salir de la app</h2><ol class="small" style="margin:0;padding-left:1.2em;display:grid;gap:6px">
       <li><b>Tocar atrás</b>: Ajustes del iPhone › <b>Accesibilidad › Tocar › Tocar atrás › Doble toque</b> › <b>${SHORTCUT}</b>. Dos toques en la parte de atrás del móvil y los datos aparecen aquí.</li>
       <li><b>Automático</b>: crea más automatizaciones de <b>Hora del día</b> (por ejemplo 14:00, 18:00 y 22:00) con <b>Ejecutar atajo › ${SHORTCUT}</b>. Ya no se ve nada al ejecutarse.</li></ol></div>
+    <div class="card"><h2>4 · Sueño</h2><ol class="small" style="margin:0;padding-left:1.2em;display:grid;gap:6px">
+      <li>Antes del <b>Texto</b>, añade <b>Buscar muestras médicas</b>: Tipo <b>Análisis del sueño</b>, <b>Fecha de finalización es hoy</b> (el sueño que terminó esta mañana), <b>Origen es Zepp</b>, y <b>Valor no es Despierto</b> y <b>Valor no es En cama</b>.</li>
+      <li><b>Obtener detalles de muestras médicas</b>: <b>Duración</b>.</li>
+      <li><b>Calcular estadísticas</b>: <b>Suma</b>.</li>
+      <li><b>Definir variable</b> <b>sueno</b>.</li>
+      <li>Da igual que llegue en horas, minutos o segundos: la app lo convierte y lo apunta en «Sueño anoche».</li></ol></div>
     <p class="note elbow small">Tu clave secreta va dentro del Atajo. No compartas el Atajo con nadie. Si algún día lo haces, avísame y la cambiamos.</p>
     <p class="small muted">Agrupar por día da el mismo total que la app Salud. Zepp copia los datos a Salud cada cierto tiempo: por la mañana pueden ir un poco por detrás de lo que marca Zepp.</p>`;
   $('#sheet-body').querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{
@@ -854,7 +866,7 @@ function viewHoy(){
       <div class="habit"><label for="in-peso">Peso en ayunas (kg)</label><input type="number" inputmode="decimal" step="0.1" min="40" max="200" id="in-peso" data-field="weight" value="${day.weight??''}" placeholder="80,0"><span class="goal">Tras ir al baño, antes de desayunar</span></div>
       <div class="habit"><label for="in-pasos">Pasos</label><input type="number" inputmode="numeric" step="100" min="0" id="in-pasos" data-field="steps" value="${day.steps??''}" placeholder="10000"><span class="goal">${day.zepp?`Desde Zepp · ${new Date(day.zepp.at).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}`:`Objetivo ${fmt(goals().pasos)}`}</span></div>
       <div class="habit"><label>Agua</label><div class="stepper"><button type="button" data-act="water" data-d="-0.25" aria-label="Menos agua">−</button><span class="v">${fmt(water,2)} L</span><button type="button" data-act="water" data-d="0.25" aria-label="Más agua">+</button></div><div class="track"><div class="fill" style="width:${Math.min(100,water/3*100)}%;background:var(--p)"></div></div><span class="goal">3 L + 0,5 L por hora de obra sudando</span></div>
-      <div class="habit"><label for="in-sueno">Sueño anoche (h)</label><input type="number" inputmode="decimal" step="0.25" min="0" max="14" id="in-sueno" data-field="sleep" value="${day.sleep??''}" placeholder="7,5"><span class="goal">Objetivo 7-8 h</span></div>
+      <div class="habit"><label for="in-sueno">Sueño anoche (h)</label><input type="number" inputmode="decimal" step="0.25" min="0" max="14" id="in-sueno" data-field="sleep" value="${day.sleep??''}" placeholder="7,5"><span class="goal">${day.zepp&&day.zepp.sueno?'Desde Zepp':`Objetivo ${hm(goals().sueno)}`}</span></div>
     </div>
     ${watchCard(day)}
     ${tog('codos','Rutina de codos (8 min)','Isometría + excéntricos. Ver pestaña Plan')}
@@ -1360,7 +1372,7 @@ function coachContext(){
   L.push('Comidas del plan hoy: '+MEALS.map(m=>{const s=(day.meals||{})[m.id]||{},o=m.opts[s.opt||'A'],mm=optM(o);return `${m.n} ${m.h} opción ${s.opt||'A'} "${o.t}" (${fmt(mm.k)} kcal, P ${fmt(mm.p)}) ${s.done?'COMIDA':'pendiente'}`}).join('; ')+'.');
   if((day.extras||[]).length)L.push('Fuera de plan hoy: '+day.extras.map(x=>`${x.n} ${x.k} kcal`).join(', ')+'.');
   L.push(`Entreno de hoy: ${SESS[sessionFor(t)].n}.`);
-  {const g=goals();L.push(`Objetivos del reloj: ${g.pasos} pasos y ${g.kcal} kcal activas al día.`)}
+  {const g=goals();L.push(`Objetivos del reloj: ${g.pasos} pasos, ${g.kcal} kcal activas y ${g.sueno} h de sueño al día.`)}
   L.push('ÚLTIMOS 14 DÍAS:');
   for(let i=13;i>=0;i--){const k=addDays(t,-i),v=S.days[k];if(!v)continue;const x=dayTotals(v),bits=[];
     if(hasLog(v))bits.push(`${fmt(x.k)} kcal P${fmt(x.p)}`);if(v.weight)bits.push(`peso ${v.weight}`);if(v.steps)bits.push(`${v.steps} pasos`);if(v.zepp&&v.zepp.kcal!=null)bits.push(`${v.zepp.kcal} kcal activas (reloj)`);if(v.sleep)bits.push(`sueño ${v.sleep} h`);if(v.water)bits.push(`agua ${v.water} L`);if(v.codos)bits.push('rutina codos');

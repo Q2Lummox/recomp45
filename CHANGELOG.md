@@ -1,5 +1,9 @@
 # Novedades
 
+## v1.8.0 · 2026-11-04
+- Sueño desde Zepp: el Atajo puede traer las horas dormidas y la app las apunta en «Sueño anoche»
+- Barra de sueño en la tarjeta del reloj, con objetivo ajustable (7 h 30 por defecto)
+
 ## v1.7.0 · 2026-11-03
 - Revisión del domingo: asistente paso a paso con peso, cintura, bíceps, muslo, glúteos y espalda, y fotos de frente, perfil y espalda con la cámara
 - Progreso con gráficas de peso y de cada medida, y comparación de tu primera foto con la última
