@@ -131,6 +131,19 @@ a{color:var(--accent)}
 .wz-thumbs figure,.cmp figure{margin:0;display:grid;gap:4px;text-align:center}
 .wz-thumbs img,.cmp img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:4px;border:1px solid var(--line)}
 .cmp button{border:0;padding:0;background:none}
+/* asistente de dieta y lista de la compra */
+.dw-prog{display:flex;align-items:center;gap:10px}
+.dw-opts{display:grid;gap:10px}
+.dw-opt{display:grid;gap:6px;text-align:left;width:100%;border:1px solid #23282e;border-radius:5px;background:#101215;color:var(--ink);padding:12px 14px}
+.dw-opt[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent),0 0 14px #f39a1e22}
+.dw-opt .t{font-weight:700;font-size:1.02rem}
+.dw-opt .d{font-size:.82rem;color:var(--muted);line-height:1.35}
+.dw-opt .m{font-family:var(--f-mono);font-size:.8rem;color:var(--accent)}
+.dw-day{display:grid;gap:4px;border-bottom:1px dashed #2a3037;padding-bottom:10px}
+.fixed-meal{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.shop{display:grid;gap:6px}
+.shop .q{font-family:var(--f-mono);font-size:.82rem;color:var(--muted);white-space:nowrap}
+.shop .toggle[aria-pressed=true] .t{text-decoration:line-through;color:var(--muted)}
 .wz-thumbs figcaption,.cmp figcaption{font-size:.75rem;color:var(--muted);text-transform:capitalize}
 .mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
 .mcard{border:1px solid #23282e;background:#101215;border-radius:4px;padding:10px 12px;display:grid;gap:6px;min-width:0}
@@ -369,7 +382,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.9.2';
+const APP_VERSION='1.10.0';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -819,7 +832,13 @@ function requestRender(){
 }
 document.addEventListener('focusout',()=>{setTimeout(()=>{if(!pendingRender)return;const a=document.activeElement;if(a&&$('#view').contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return;pendingRender=false;render()},0)});
 
-const getDay=d=>clone(S.days[d]||{});
+/* Si el día tiene menú fijado por el asistente de dieta, esa opción manda. */
+const planOf=d=>(AJ.menu&&AJ.menu.plan&&AJ.menu.plan[d])||null;
+function getDay(d){
+  const o=clone(S.days[d]||{}),p=planOf(d);
+  if(p){o.meals=o.meals||{};for(const m of MEALS)if(p[m.id]&&m.opts[p[m.id]])o.meals[m.id]={...(o.meals[m.id]||{}),opt:p[m.id]}}
+  return o;
+}
 function patchDay(d,fn){const o=getDay(d);o.meals=o.meals||{};o.extras=o.extras||[];fn(o);saveDoc('days',d,o)}
 function dayTotals(day){
   const parts=[];
@@ -884,16 +903,136 @@ function viewHoy(){
   </section>`;
 }
 
+/* ===== asistente de dieta y lista de la compra (v1.10.0) =====
+   Guarda en users/<uid>/ajustes: menu {plan:{fecha:{des,alm,com,mer,cen}}} y compra {semana, items:{alimento:g}, done}.
+   Van en ajustes para que «Empezar de cero» no los borre. */
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const SHOP_CATS=[
+  ['Fruta y verdura',['platano','manzana','naranja','frutosrojos','aguacate','tomate','verdura','patata']],
+  ['Carne y pescado',['pollo','pavocarne','ternera','cerdo','salmon','merluza']],
+  ['Charcutería y queso',['pavo','jamon','quesocurado']],
+  ['Lácteos y huevos',['leche','skyr','quesofresco','huevo','claras']],
+  ['Pan',['pan','panint']],
+  ['Despensa',['avena','arroz','pasta','lentejas','garbanzos','tomatetrit','atun','nueces','cacahuete','miel','chocolate','aove','whey']],
+];
+const shopName=id=>FOODS[id].n.replace(/ \((en crudo|en seco)\)/,'');
+function shopQty(id,g){
+  const F=FOODS[id];
+  if(F.u){const n=Math.ceil(g/F.u[0]-.01);return `${n} ${n===1?F.u[1]:F.u[2]}`}
+  const w=F.ml?(g>=1000?`${fmt(Math.ceil(g/100)/10,1)} L`:`${Math.ceil(g/50)*50} ml`):(g>=1000?`${fmt(Math.ceil(g/100)/10,1)} kg`:`${Math.ceil(g/10)*10} g`);
+  if(id==='pan'){const b=Math.ceil(g/250);return `${w} · ${b} ${b===1?'barra':'barras'}`}
+  return w;
+}
+const weekDays=mon=>[...Array(7)].map((_,i)=>addDays(mon,i));
+function menuCard(){
+  const thisMon=mondayOf(todayISO()),nextMon=addDays(thisMon,7);
+  const line=(mon,lab)=>{const n=weekDays(mon).filter(planOf).length;
+    return `<li><span>${lab} · ${shortDate(mon)} – ${shortDate(addDays(mon,6))}</span><span>${n===7?'<b style="color:var(--good)">Fijado</b>':n?`${n} de 7 días`:'Sin fijar'}</span></li>`};
+  const c=AJ.compra,ids=c&&c.items?Object.keys(c.items):[],nd=ids.filter(k=>c.done&&c.done[k]).length;
+  return `<section class="card"><div class="row between"><div><div class="eyebrow">Menú semanal</div><h2 style="margin:0">Asistente de dieta</h2></div><button type="button" class="btn pri" data-act="diet">Organizar</button></div>
+    <ul class="items">${line(thisMon,'Esta semana')}${line(nextMon,'La que viene')}</ul>
+    ${ids.length?`<button type="button" class="btn" data-act="shop">🛒 Lista de la compra · <span class="num">${nd}/${ids.length}</span></button>`:'<p class="small muted">Al terminar el asistente tendrás aquí la lista de la compra.</p>'}</section>`;
+}
+let DW=null;
+function openDiet(){
+  const mon=addDays(mondayOf(todayISO()),7),days=weekDays(mon),sel={};
+  days.forEach(d=>{const p=planOf(d);sel[d]=p?{...p}:{}});
+  DW={i:0,mon,days,sel,had:days.some(planOf),busy:false};drawDiet();
+}
+function drawDiet(){
+  const {i,mon,days,sel}=DW,N=days.length*MEALS.length;
+  let body,nav='';
+  if(i===0){
+    body=`<div><div class="eyebrow">Semana que viene</div><div class="big-title">${shortDate(mon)} – ${shortDate(addDays(mon,6))}</div></div>
+      <p class="small">Para cada día te propongo tres desayunos, tres almuerzos, tres comidas, tres meriendas y tres cenas. Tú eliges uno de cada.</p>
+      <ul class="small wz-list"><li>El menú de esta semana no se toca.</li><li>Al terminar, esos días quedan fijados en Comida y ya no tendrás que elegir.</li><li>La lista de la compra anterior se borra y se crea una nueva con todo lo de esa semana.</li>${DW.had?'<li>Esa semana ya tenía menú: verás marcado lo que elegiste y puedes cambiarlo.</li>':''}<li>Si cierras antes de terminar, no cambia nada.</li></ul>`;
+    nav=`<span class="grow"></span><button type="button" class="btn pri" data-dw="next">Empezar</button>`;
+  }else if(i<=N){
+    const di=Math.floor((i-1)/MEALS.length),m=MEALS[(i-1)%MEALS.length],d=days[di],cur=sel[d][m.id],prev=di>0?sel[days[di-1]][m.id]:null;
+    body=`<div class="dw-prog"><div class="track grow"><div class="fill" style="width:${i/N*100}%;background:var(--accent)"></div></div><span class="small muted num">${i} / ${N}</span></div>
+      <div><div class="eyebrow">${cap(longDate(d))}</div><div class="big-title">${m.n}</div></div>
+      <div class="dw-opts">${Object.entries(m.opts).map(([k,o])=>{const mm=optM(o);
+        return `<button type="button" class="dw-opt" data-dw="pick" data-opt="${k}" aria-pressed="${cur===k}"><span class="row between"><span class="t">${esc(o.t)}</span>${prev===k?'<span class="pill">Ayer</span>':''}</span><span class="d">${o.items.map(([id])=>esc(shopName(id))).join(' · ')}</span><span class="m">${fmt(mm.k)} kcal · P ${fmt(mm.p)} g</span></button>`}).join('')}</div>`;
+    nav=`<button type="button" class="btn" data-dw="back">‹ Atrás</button><span class="grow"></span>${cur?'<button type="button" class="btn" data-dw="next">Siguiente ›</button>':''}`;
+  }else{
+    body=`<p class="small">Repasa la semana. Toca <b>Cambiar</b> en un día para corregirlo.</p>`+days.map((d,di)=>{
+      const os=MEALS.map(m=>m.opts[sel[d][m.id]]),t=sumM(os.map(optM));
+      return `<div class="dw-day"><div class="row between"><b>${cap(longDate(d))}</b><button type="button" class="btn sm" data-dw="goto" data-i="${1+di*MEALS.length}">Cambiar</button></div>
+        <p class="small muted" style="margin:0">${os.map(o=>esc(o.t)).join(' · ')}</p><span class="small num">${fmt(t.k)} kcal · P ${fmt(t.p)} g</span></div>`}).join('');
+    nav=`<button type="button" class="btn" data-dw="back">‹ Atrás</button><span class="grow"></span><button type="button" class="btn pri" data-dw="save">Guardar y crear lista</button>`;
+  }
+  openSheet('Menú','Asistente de dieta',`<div class="wz">${body}</div><div class="row wz-nav">${nav}</div>`,()=>{DW=null});
+  $('#sheet-body').scrollTop=0;
+  $('#sheet-body').onclick=e=>{const b=e.target.closest('[data-dw]');if(!b||!DW||DW.busy)return;const a=b.dataset.dw;
+    if(a==='next'){DW.i++;drawDiet()}
+    else if(a==='back'){DW.i=Math.max(0,DW.i-1);drawDiet()}
+    else if(a==='goto'){DW.i=+b.dataset.i;DW.edit=true;drawDiet()}
+    else if(a==='save')saveDiet();
+    else if(a==='pick'){
+      const di=Math.floor((DW.i-1)/MEALS.length),m=MEALS[(DW.i-1)%MEALS.length];DW.sel[DW.days[di]][m.id]=b.dataset.opt;
+      b.parentNode.querySelectorAll('.dw-opt').forEach(x=>x.setAttribute('aria-pressed',x===b));
+      DW.busy=true;setTimeout(()=>{if(!DW)return;DW.busy=false;
+        /* al corregir un día desde el resumen, vuelve al resumen al terminar ese día */
+        if(DW.edit&&DW.i%MEALS.length===0){DW.i=N+1;DW.edit=false}else DW.i++;drawDiet()},200);
+    }};
+}
+function saveDiet(){
+  const menu=clone(AJ.menu||{});menu.plan=menu.plan||{};
+  const cut=addDays(mondayOf(todayISO()),-28);
+  for(const k of Object.keys(menu.plan))if(k<cut)delete menu.plan[k];
+  const items={};
+  for(const d of DW.days){menu.plan[d]={...DW.sel[d]};
+    for(const m of MEALS)for(const [id,g] of m.opts[DW.sel[d][m.id]].items)items[id]=(items[id]||0)+g}
+  menu.at=new Date().toISOString();
+  const compra={semana:DW.mon,items,done:{},at:menu.at};
+  AJ.menu=menu;AJ.compra=compra;
+  window.FB.db.set(path('ajustes'),'menu',menu);window.FB.db.set(path('ajustes'),'compra',compra);
+  DW=null;render();openShop();toast('Menú de la semana fijado y lista de la compra nueva');
+}
+function shopText(){
+  const c=AJ.compra,L=[`Lista de la compra · ${shortDate(c.semana)} – ${shortDate(addDays(c.semana,6))}`];
+  for(const [cat,ids] of shopGroups(c)){L.push('',cat.toUpperCase());for(const id of ids)L.push(`- ${shopName(id)}: ${shopQty(id,c.items[id])}`)}
+  return L.join('\n');
+}
+function shopGroups(c){
+  const all=Object.keys(c.items).filter(id=>FOODS[id]),used=new Set(),out=[];
+  for(const [cat,ids] of SHOP_CATS){const l=ids.filter(id=>c.items[id]);l.forEach(id=>used.add(id));if(l.length)out.push([cat,l])}
+  const rest=all.filter(id=>!used.has(id));if(rest.length)out.push(['Otros',rest]);
+  return out;
+}
+function openShop(){
+  if(!AJ.compra||!AJ.compra.items){toast('Todavía no hay lista: pulsa Organizar en el asistente de dieta');return}
+  openSheet('Compra','Lista de la compra','');drawShop();
+}
+function drawShop(){
+  const c=AJ.compra,done=c.done||{},box=$('#sheet-body'),top=box.scrollTop;
+  box.innerHTML=`<p class="small muted">Para el menú del ${longDate(c.semana)} al ${longDate(addDays(c.semana,6))}. Toca cada cosa al echarla al carro. Antes, mira lo que ya tienes en casa (aceite, avena, whey…).</p>
+    ${shopGroups(c).map(([cat,ids])=>`<div class="shop"><div class="eyebrow">${cat}</div>${ids.map(id=>`<button type="button" class="toggle" data-shop="${id}" aria-pressed="${!!done[id]}"><span class="box">${done[id]?'✓':''}</span><span class="grow t">${esc(shopName(id))}</span><span class="q num">${shopQty(id,c.items[id])}</span></button>`).join('')}</div>`).join('')}
+    <p class="small muted">El pan, mejor cada 2-3 días o congelado en porciones.</p>
+    <div class="row"><button type="button" class="btn" data-shopact="copy">Copiar lista</button><button type="button" class="btn" data-shopact="clear">Desmarcar todo</button></div>
+    <textarea id="shop-txt" rows="8" readonly hidden></textarea>`;
+  box.scrollTop=top;
+  box.onclick=async e=>{
+    const it=e.target.closest('[data-shop]');
+    if(it){const id=it.dataset.shop;c.done=c.done||{};if(c.done[id])delete c.done[id];else c.done[id]=true;
+      window.FB.db.set(path('ajustes'),'compra',c);drawShop();render();return}
+    const b=e.target.closest('[data-shopact]');if(!b)return;
+    if(b.dataset.shopact==='clear'){c.done={};window.FB.db.set(path('ajustes'),'compra',c);drawShop();render()}
+    else{const txt=shopText();try{await navigator.clipboard.writeText(txt);toast('Lista copiada: pégala en Notas o WhatsApp')}
+      catch(err){const t=$('#shop-txt');t.value=txt;t.hidden=false;t.focus();t.select();toast('Pulsa Copiar en el menú del texto seleccionado')}}
+  };
+}
+
 function viewComida(){
-  const d=st.date,day=getDay(d),t=dayTotals(day),pl=planTotals(day);
-  let html=`<section class="card"><div class="row between"><h2 class="grow">Control del día</h2><span class="chip">${fmt(TARGET.kcal)} kcal</span></div>${energyBlock(t)}
-  <p class="small muted">Plan completo con las opciones elegidas: <span class="num">${fmt(pl.k)} kcal · P ${fmt(pl.p)} · C ${fmt(pl.c)} · G ${fmt(pl.f)}</span></p></section>`;
+  const d=st.date,day=getDay(d),t=dayTotals(day),pl=planTotals(day),fixed=!!planOf(d);
+  let html=menuCard()+`<section class="card"><div class="row between"><h2 class="grow">Control del día</h2><span class="chip">${fmt(TARGET.kcal)} kcal</span></div>${energyBlock(t)}
+  <p class="small muted">${fixed?'Menú del día fijado':'Plan completo con las opciones elegidas'}: <span class="num">${fmt(pl.k)} kcal · P ${fmt(pl.p)} · C ${fmt(pl.c)} · G ${fmt(pl.f)}</span></p></section>`;
   for(const m of MEALS){
     const sm=(day.meals&&day.meals[m.id])||{},opt=sm.opt||'A',o=m.opts[opt],mm=optM(o);
     html+=`<section class="card meal ${sm.done?'done':''}">
       <div class="meal-head"><div><div class="eyebrow">${m.h}</div><h3>${m.n}</h3></div>
       <button type="button" class="done-btn" data-act="meal-done" data-meal="${m.id}" aria-pressed="${!!sm.done}">${sm.done?'✓ Comido':'Marcar comido'}</button></div>
-      <div class="seg" role="group" aria-label="Opciones de ${m.n}">${Object.entries(m.opts).map(([k,v])=>`<button type="button" data-act="meal-opt" data-meal="${m.id}" data-opt="${k}" aria-pressed="${k===opt}"><b>Opción ${k}</b>${esc(v.t)}</button>`).join('')}</div>
+      ${fixed?`<div class="fixed-meal"><b>${esc(o.t)}</b><span class="chip">Menú de la semana</span></div>`:`<div class="seg" role="group" aria-label="Opciones de ${m.n}">${Object.entries(m.opts).map(([k,v])=>`<button type="button" data-act="meal-opt" data-meal="${m.id}" data-opt="${k}" aria-pressed="${k===opt}"><b>Opción ${k}</b>${esc(v.t)}</button>`).join('')}</div>`}
       <ul class="items">${o.items.map(([id,g])=>`<li><span>${esc(FOODS[id].n)}</span><span>${qty(id,g)}</span></li>`).join('')}</ul>
       <div class="macroline"><span>${fmt(mm.k)} kcal</span><span class="pP">P ${fmt(mm.p)} g</span><span class="pC">C ${fmt(mm.c)} g</span><span class="pF">G ${fmt(mm.f)} g</span></div>
     </section>`;
@@ -1135,7 +1274,7 @@ function viewProgreso(){
   const ws=weightSeries(),wa=weeklyAvgs(ws),cw=weekOf(todayISO()),wsr=waistSeries();
   const thisW=wa.find(w=>w.w===cw),prevW=wa.find(w=>w.w===cw-1),lastWaist=wsr[wsr.length-1],firstWaist=wsr[0],recent=last7();
   const sleeps=recent.map(k=>S.days[k]&&+S.days[k].sleep).filter(v=>v>0),sleepAvg=sleeps.length?sleeps.reduce((a,b)=>a+b,0)/sleeps.length:null;
-  const logged=recent.map(k=>S.days[k]).filter(hasLog).map(dayTotals),onTarget=logged.filter(t=>Math.abs(t.k-TARGET.kcal)<=TARGET.kcal*.1).length;
+  const logged=recent.map(k=>S.days[k]&&getDay(k)).filter(hasLog).map(dayTotals),onTarget=logged.filter(t=>Math.abs(t.k-TARGET.kcal)<=TARGET.kcal*.1).length;
   const pAvg=logged.length?logged.reduce((a,t)=>a+t.p,0)/logged.length:null,delta=(thisW&&prevW)?thisW.avg-prevW.avg:null,totalW=ws.length>1?ws[ws.length-1].y-ws[0].y:null;
   const ad=advice(ws),lc=lastCheckin(),due=checkinDue(),sunday=parse(todayISO()).getDay()===0;
   const avgLine=ws.map(p=>{const win=ws.filter(q=>q.x<=p.x&&q.x>p.x-7);return{x:p.x,y:win.reduce((s,q)=>s+q.y,0)/win.length}});
@@ -1272,7 +1411,9 @@ $('#view').addEventListener('click',e=>{
   if(a==='toggle'){patchDay(d,o=>{o[b.dataset.key]=!o[b.dataset.key]});render()}
   else if(a==='water'){patchDay(d,o=>{o.water=Math.max(0,Math.round(((+o.water||0)+(+b.dataset.d))*100)/100)});render()}
   else if(a==='meal-done'){patchDay(d,o=>{const m=o.meals[b.dataset.meal]||{opt:'A'};m.done=!m.done;o.meals[b.dataset.meal]=m});render()}
-  else if(a==='meal-opt'){patchDay(d,o=>{const m=o.meals[b.dataset.meal]||{};m.opt=b.dataset.opt;o.meals[b.dataset.meal]=m});render()}
+  else if(a==='diet')openDiet();
+  else if(a==='shop')openShop();
+  else if(a==='meal-opt'){if(planOf(d))return;patchDay(d,o=>{const m=o.meals[b.dataset.meal]||{};m.opt=b.dataset.opt;o.meals[b.dataset.meal]=m});render()}
   else if(a==='del-extra'){patchDay(d,o=>{o.extras.splice(+b.dataset.i,1)});render()}
   else if(a==='add-extra'){
     const fid=$('#ex-food').value,gr=+$('#ex-g').value;if(!(gr>0)){$('#ex-g').focus();return}
@@ -1384,7 +1525,7 @@ function coachContext(){
   L.push(`Entreno de hoy: ${SESS[sessionFor(t)].n}.`);
   {const g=goals();L.push(`Objetivos del reloj: ${g.pasos} pasos, ${g.kcal} kcal activas y ${g.sueno} h de sueño al día.`)}
   L.push('ÚLTIMOS 14 DÍAS:');
-  for(let i=13;i>=0;i--){const k=addDays(t,-i),v=S.days[k];if(!v)continue;const x=dayTotals(v),bits=[];
+  for(let i=13;i>=0;i--){const k=addDays(t,-i),v=S.days[k]&&getDay(k);if(!v)continue;const x=dayTotals(v),bits=[];
     if(hasLog(v))bits.push(`${fmt(x.k)} kcal P${fmt(x.p)}`);if(v.weight)bits.push(`peso ${v.weight}`);if(v.steps)bits.push(`${v.steps} pasos`);if(v.zepp&&v.zepp.kcal!=null)bits.push(`${v.zepp.kcal} kcal activas (reloj)`);if(v.sleep)bits.push(`sueño ${v.sleep} h`);if(v.water)bits.push(`agua ${v.water} L`);if(v.codos)bits.push('rutina codos');
     const wo=S.workouts[k];if(wo&&wo.sets)bits.push(`entreno ${SESS[wo.session]?SESS[wo.session].n:''}${wo.pain!=null?' dolor codo '+wo.pain+'/10':''}`);
     if(bits.length)L.push(`- ${k}: ${bits.join(', ')}`)}
@@ -1512,7 +1653,7 @@ function openSettings(msg){
     </div>
     <div class="card"><h2>Cuenta</h2><p class="small">${u?'Conectado como <b>'+esc(u.email||u.displayName||'')+'</b>':'Sin sesión'}</p><button type="button" class="btn" id="logout">Cerrar sesión</button></div>
     <div class="card"><h2>Empezar de cero</h2>
-      <p class="small">Borra todos los datos de prueba: comidas, entrenos, pesos, pasos, revisiones con sus fotos, datos de Zepp y la conversación con el coach. Se quedan tus objetivos del reloj, la clave del Atajo y la de Gemini.</p>
+      <p class="small">Borra todos los datos de prueba: comidas, entrenos, pesos, pasos, revisiones con sus fotos, datos de Zepp y la conversación con el coach. Se quedan tus objetivos del reloj, la clave del Atajo, la de Gemini, el menú semanal y la lista de la compra.</p>
       <div id="reset-box"><button type="button" class="btn" id="reset-1">Empezar de cero</button></div>
     </div>`);
   $('#g-save').onclick=async()=>{
@@ -1624,7 +1765,7 @@ async function exportPdf(){
     const cols=[M,32,58,82,108,132,156,180],head=['Sem.','Peso','Cintura','Kcal','Prot.','Sueño','Pasos','Codo'];
     doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(90,90,90);head.forEach((h,i)=>doc.text(h,cols[i],y));y+=5;doc.setFont('helvetica','normal');doc.setTextColor(20,20,20);
     for(let w=1;w<=cw;w++){
-      const days=[...Array(7)].map((_,i)=>addDays(START,(w-1)*7+i)),dd=days.map(k=>S.days[k]).filter(Boolean),lg=dd.filter(hasLog).map(dayTotals);
+      const days=[...Array(7)].map((_,i)=>addDays(START,(w-1)*7+i)),dd=days.map(k=>S.days[k]&&getDay(k)).filter(Boolean),lg=dd.filter(hasLog).map(dayTotals);
       const avg=a=>a.length?a.reduce((s,v)=>s+v,0)/a.length:null,wav=wa.find(x=>x.w===w),ci=days.map(k=>S.checkins[k]).filter(Boolean).pop()||{};
       const sl=avg(dd.map(v=>+v.sleep).filter(v=>v>0)),stp=avg(dd.map(v=>+v.steps).filter(v=>v>0));
       const pains=days.map(k=>S.workouts[k]&&S.workouts[k].pain).filter(v=>v!=null),pn=avg(pains);

@@ -1,5 +1,10 @@
 # Novedades
 
+## v1.10.0 · 2026-11-04
+- Comida › Asistente de dieta: eliges día a día, entre tres opciones, el desayuno, almuerzo, comida, merienda y cena de la semana que viene
+- Los días con menú fijado ya no piden elegir opción
+- Lista de la compra con todo lo de esa semana, por secciones, para ir marcando en el súper y copiar a Notas o WhatsApp
+
 ## v1.9.2 · 2026-11-04
 - Hoy: se quitan la rutina de codos y la creatina del final de la pantalla
 
