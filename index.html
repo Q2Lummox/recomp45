@@ -133,8 +133,8 @@ a{color:var(--accent)}
 .cmp button{border:0;padding:0;background:none}
 /* asistente de dieta y lista de la compra */
 .dw-prog{display:flex;align-items:center;gap:10px}
-.dw-opts{display:grid;gap:10px}
-.dw-opt{display:grid;gap:6px;text-align:left;width:100%;border:1px solid #23282e;border-radius:5px;background:#101215;color:var(--ink);padding:12px 14px}
+.dw-opts{display:grid;gap:8px}
+.dw-opt{display:grid;gap:4px;text-align:left;width:100%;border:1px solid #23282e;border-radius:5px;background:#101215;color:var(--ink);padding:10px 12px}
 .dw-opt[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent),0 0 14px #f39a1e22}
 .dw-opt .t{font-weight:700;font-size:1.02rem}
 .dw-opt .d{font-size:.82rem;color:var(--muted);line-height:1.35}
@@ -382,7 +382,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.10.0';
+const APP_VERSION='1.11.0';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -430,29 +430,49 @@ const FOODS={
   pizza:{n:'Pizza',k:266,p:11,c:33,f:10},
   hamburguesa:{n:'Hamburguesa (solo la carne)',k:250,p:17,c:0,f:20},
   patatasfritas:{n:'Patatas fritas',k:312,p:3.4,c:41,f:15},
+  tortillatrigo:{n:'Tortilla de trigo (wrap)',k:310,p:8.5,c:51,f:7.5,u:[60,'tortilla','tortillas']},
+  quesoburgos:{n:'Queso fresco de Burgos 0%',k:70,p:12,c:4,f:0.5},
+  bacalao:{n:'Bacalao desalado',k:82,p:18,c:0,f:0.7},
+  gambas:{n:'Gambas peladas',k:70,p:16,c:0,f:0.8},
+  boniato:{n:'Boniato (en crudo)',k:86,p:1.6,c:20,f:0.1},
 };
 
 const MEALS=[
   {id:'des',n:'Desayuno',h:'07:00',opts:{
     A:{t:'Avena con whey',items:[['avena',60],['leche',250],['whey',30],['platano',120]]},
     B:{t:'Tostadas y huevos',items:[['panint',80],['huevo',120],['claras',150],['tomate',60],['naranja',200]]},
-    C:{t:'Bol de skyr',items:[['skyr',250],['avena',50],['frutosrojos',150],['whey',15],['nueces',10],['miel',10]]}}},
+    C:{t:'Bol de skyr',items:[['skyr',250],['avena',50],['frutosrojos',150],['whey',15],['nueces',10],['miel',10]]},
+    D:{t:'Tortilla francesa y jamón',items:[['panint',80],['huevo',120],['claras',100],['jamon',20],['tomate',60],['naranja',200]]},
+    E:{t:'Tortitas de avena y plátano',items:[['avena',60],['claras',200],['platano',120],['whey',15],['miel',10],['leche',100]]},
+    F:{t:'Tostadas con Burgos y pavo',items:[['panint',100],['quesoburgos',125],['pavo',80],['aguacate',40],['naranja',200]]}}},
   {id:'alm',n:'Almuerzo',h:'10:30',opts:{
     A:{t:'Bocadillo de pavo',items:[['pan',80],['pavo',80],['tomate',60],['aove',5]]},
     B:{t:'Bocadillo de atún',items:[['pan',80],['atun',112],['tomate',60]]},
-    C:{t:'Batido rápido',items:[['leche',300],['whey',30],['platano',120]]}}},
+    C:{t:'Batido rápido',items:[['leche',300],['whey',30],['platano',120]]},
+    D:{t:'Bocadillo de tortilla',items:[['pan',80],['huevo',60],['claras',100],['tomate',40]]},
+    E:{t:'Bocadillo de lomo',items:[['pan',80],['cerdo',90],['tomate',40]]},
+    F:{t:'Wrap de pavo y Burgos',items:[['tortillatrigo',60],['pavo',90],['quesoburgos',80],['tomate',60]]}}},
   {id:'com',n:'Comida',h:'14:00',opts:{
     A:{t:'Pollo con arroz',items:[['pollo',170],['arroz',80],['verdura',200],['aove',10]]},
     B:{t:'Pasta con ternera',items:[['ternera',160],['pasta',80],['tomatetrit',100],['aove',10]]},
-    C:{t:'Lentejas con pollo',items:[['lentejas',80],['pollo',120],['verdura',150],['aove',10],['pan',30]]}}},
+    C:{t:'Lentejas con pollo',items:[['lentejas',80],['pollo',120],['verdura',150],['aove',10],['pan',30]]},
+    D:{t:'Lomo con patatas',items:[['cerdo',170],['patata',300],['verdura',150],['aove',10]]},
+    E:{t:'Arroz con gambas y pollo',items:[['arroz',80],['pollo',110],['gambas',100],['verdura',150],['aove',10]]},
+    F:{t:'Pavo con boniato',items:[['pavocarne',190],['boniato',300],['verdura',150],['aove',10]]}}},
   {id:'mer',n:'Merienda',h:'17:30',opts:{
     A:{t:'Skyr, nueces y fruta',items:[['skyr',250],['nueces',15],['manzana',150]]},
     B:{t:'Bocadillo de jamón',items:[['pan',60],['jamon',50],['naranja',200]]},
-    C:{t:'Batido de whey',items:[['leche',250],['whey',30],['platano',120]]}}},
+    C:{t:'Batido de whey',items:[['leche',250],['whey',30],['platano',120]]},
+    D:{t:'Tostadas de pavo y Burgos',items:[['panint',80],['pavo',60],['quesoburgos',100],['tomate',40]]},
+    E:{t:'Queso batido con frutos rojos',items:[['quesofresco',300],['frutosrojos',150],['avena',30],['whey',10]]},
+    F:{t:'Skyr con plátano y cacahuete',items:[['skyr',200],['platano',120],['cacahuete',15]]}}},
   {id:'cen',n:'Cena',h:'21:00',opts:{
     A:{t:'Salmón con patata',items:[['salmon',140],['patata',250],['verdura',150],['aove',5]]},
     B:{t:'Tortilla de patata',items:[['huevo',180],['claras',100],['patata',200],['verdura',150],['aove',5]]},
-    C:{t:'Merluza con arroz',items:[['merluza',200],['arroz',70],['verdura',200],['aove',10]]}}},
+    C:{t:'Merluza con arroz',items:[['merluza',200],['arroz',70],['verdura',200],['aove',10]]},
+    D:{t:'Bacalao con patata',items:[['bacalao',230],['patata',300],['verdura',150],['aove',10]]},
+    E:{t:'Ensalada de pasta y atún',items:[['pasta',70],['atun',112],['huevo',60],['tomate',100],['verdura',100],['aove',10]]},
+    F:{t:'Fajitas de pollo',items:[['tortillatrigo',120],['pollo',150],['verdura',150],['aguacate',20]]}}},
 ];
 
 /* Rutina de 5 días con los ejercicios que hace en su gimnasio (v1.5.0).
@@ -908,11 +928,11 @@ function viewHoy(){
    Van en ajustes para que «Empezar de cero» no los borre. */
 const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
 const SHOP_CATS=[
-  ['Fruta y verdura',['platano','manzana','naranja','frutosrojos','aguacate','tomate','verdura','patata']],
-  ['Carne y pescado',['pollo','pavocarne','ternera','cerdo','salmon','merluza']],
+  ['Fruta y verdura',['platano','manzana','naranja','frutosrojos','aguacate','tomate','verdura','patata','boniato']],
+  ['Carne y pescado',['pollo','pavocarne','ternera','cerdo','salmon','merluza','bacalao','gambas']],
   ['Charcutería y queso',['pavo','jamon','quesocurado']],
-  ['Lácteos y huevos',['leche','skyr','quesofresco','huevo','claras']],
-  ['Pan',['pan','panint']],
+  ['Lácteos y huevos',['leche','skyr','quesofresco','quesoburgos','huevo','claras']],
+  ['Pan',['pan','panint','tortillatrigo']],
   ['Despensa',['avena','arroz','pasta','lentejas','garbanzos','tomatetrit','atun','nueces','cacahuete','miel','chocolate','aove','whey']],
 ];
 const shopName=id=>FOODS[id].n.replace(/ \((en crudo|en seco)\)/,'');
@@ -944,7 +964,7 @@ function drawDiet(){
   let body,nav='';
   if(i===0){
     body=`<div><div class="eyebrow">Semana que viene</div><div class="big-title">${shortDate(mon)} – ${shortDate(addDays(mon,6))}</div></div>
-      <p class="small">Para cada día te propongo tres desayunos, tres almuerzos, tres comidas, tres meriendas y tres cenas. Tú eliges uno de cada.</p>
+      <p class="small">Para cada día te propongo seis desayunos, seis almuerzos, seis comidas, seis meriendas y seis cenas. Tú eliges uno de cada.</p>
       <ul class="small wz-list"><li>El menú de esta semana no se toca.</li><li>Al terminar, esos días quedan fijados en Comida y ya no tendrás que elegir.</li><li>La lista de la compra anterior se borra y se crea una nueva con todo lo de esa semana.</li>${DW.had?'<li>Esa semana ya tenía menú: verás marcado lo que elegiste y puedes cambiarlo.</li>':''}<li>Si cierras antes de terminar, no cambia nada.</li></ul>`;
     nav=`<span class="grow"></span><button type="button" class="btn pri" data-dw="next">Empezar</button>`;
   }else if(i<=N){
@@ -1352,7 +1372,7 @@ function viewPlan(){
   </section>
   <section class="card"><div class="eyebrow">4 · Nutrición</div><h2>Cómo comer</h2>
     <ul class="small">
-      <li><b>Cumple el total diario.</b> Las 3 opciones de cada comida tienen macros parecidas: cambia cuando quieras y la app recalcula.</li>
+      <li><b>Cumple el total diario.</b> Las 6 opciones de cada comida tienen macros parecidas: cambia cuando quieras y la app recalcula.</li>
       <li><b>Proteína repartida:</b> 30-45 g en cada comida. Lo que más importa es llegar a 175 g; repartirla ayuda un poco más.</li>
       <li><b>Alrededor del entreno:</b> 30-40 g de proteína en las 2 h antes o después. Si entrenas de noche, la cena es tu comida post-entreno.</li>
       <li><b>Antes de dormir</b> funciona bien un skyr o queso fresco batido: proteína de digestión lenta.</li>

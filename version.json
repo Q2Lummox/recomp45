@@ -1,12 +1,19 @@
 {
- "version": "1.10.0",
+ "version": "1.11.0",
  "fecha": "2026-11-04",
  "notas": [
-  "Comida › Asistente de dieta: eliges día a día, entre tres opciones, el desayuno, almuerzo, comida, merienda y cena de la semana que viene",
-  "Los días con menú fijado ya no piden elegir opción",
-  "Lista de la compra con todo lo de esa semana, por secciones, para ir marcando en el súper y copiar a Notas o WhatsApp"
+  "El doble de variedad: seis desayunos, seis almuerzos, seis comidas, seis meriendas y seis cenas para elegir",
+  "Nuevos platos: tortilla francesa, tortitas de avena, tostadas con Burgos, bocadillos de tortilla y de lomo, wraps, lomo con patatas, arroz con gambas, pavo con boniato, bacalao, ensalada de pasta y fajitas"
  ],
  "historial": [
+  {
+   "version": "1.11.0",
+   "fecha": "2026-11-04",
+   "notas": [
+    "El doble de variedad: seis desayunos, seis almuerzos, seis comidas, seis meriendas y seis cenas para elegir",
+    "Nuevos platos: tortilla francesa, tortitas de avena, tostadas con Burgos, bocadillos de tortilla y de lomo, wraps, lomo con patatas, arroz con gambas, pavo con boniato, bacalao, ensalada de pasta y fajitas"
+   ]
+  },
   {
    "version": "1.10.0",
    "fecha": "2026-11-04",
