@@ -367,7 +367,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.8.0';
+const APP_VERSION='1.8.1';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -704,6 +704,18 @@ function onZeppSnap(snap){
   zeppFirst=false;
   processZeppInbox();
 }
+/* sueño en cualquier formato: «8 h 56 min», «8:56:00», «536 min», 32160 (s), 536 (min) u 8,9 (h) → horas */
+function parseSleep(raw){
+  if(raw==null)return null;const s=String(raw).trim().toLowerCase();if(!s)return null;
+  let h=s.match(/(\d+(?:[.,]\d+)?)\s*(?:h|hr|hrs|hora|horas)\b/),m=s.match(/(\d+(?:[.,]\d+)?)\s*(?:min|mins|minutos?|m)\b/),sec=s.match(/(\d+(?:[.,]\d+)?)\s*(?:s|seg|segundos?)\b/);
+  let t=null;
+  if(h||m||sec)t=(h?numES(h[1],false):0)+(m?numES(m[1],false)/60:0)+(sec?numES(sec[1],false)/3600:0);
+  else{const c=s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+    if(c)t=+c[1]+(+c[2])/60+(c[3]?+c[3]/3600:0);
+    else{const n=numES(s,false);if(n==null)return null;t=n>1440?n/3600:n>24?n/60:n}}
+  if(!(t>0)||t>20)return null;
+  return Math.round(t*100)/100;
+}
 function processZeppInbox(){
   if(!uid||!COLS.every(c=>firstLoad[c])||!zeppIn.length)return;
   const touched=zeppTouched;zeppTouched=new Set();
@@ -711,9 +723,7 @@ function processZeppInbox(){
   const byDay={};let emptyHit=null;
   for(const d of zeppIn){
     const x=d.data||{},fecha=parseFecha(d.id);if(!fecha)continue;
-    const pasos=numES(x.pasos,true),kcal=numES(x.kcal,true);let sueno=numES(x.sueno,false);
-    if(sueno!=null&&sueno>1440)sueno=Math.round(sueno/3600*10)/10;   /* llega en segundos */
-    else if(sueno!=null&&sueno>24)sueno=Math.round(sueno/60*10)/10;   /* llega en minutos */
+    const pasos=numES(x.pasos,true),kcal=numES(x.kcal,true),sueno=parseSleep(x.sueno);
     if(pasos==null&&kcal==null&&!sueno){if(touched.has(fecha))emptyHit=fecha;continue}
     const prev=byDay[fecha];
     if(!prev||(pasos??-1)>(prev.pasos??-1)||((pasos??-1)===(prev.pasos??-1)&&(kcal??-1)>(prev.kcal??-1)))byDay[fecha]={fecha,pasos,kcal,sueno};

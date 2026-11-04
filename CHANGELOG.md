@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.8.1 · 2026-11-04
+- Sueño desde Zepp: se entiende en cualquier formato (8 h 56 min, 8:56, minutos o segundos)
+
 ## v1.8.0 · 2026-11-04
 - Sueño desde Zepp: el Atajo puede traer las horas dormidas y la app las apunta en «Sueño anoche»
 - Barra de sueño en la tarjeta del reloj, con objetivo ajustable (7 h 30 por defecto)
