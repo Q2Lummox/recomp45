@@ -1,5 +1,9 @@
 # Novedades
 
+## v1.9.0 · 2026-11-04
+- Menú › Acerca de: botón «Buscar actualizaciones» y «Actualizar ahora» cuando hay versión nueva
+- La app comprueba sola si hay versión nueva al abrirla y lo marca con un punto rojo en Menú
+
 ## v1.8.1 · 2026-11-04
 - Sueño desde Zepp: se entiende en cualquier formato (8 h 56 min, 8:56, minutos o segundos)
 

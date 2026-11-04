@@ -54,6 +54,8 @@ button{cursor:pointer}
 .brand small{display:block;font-family:var(--f-mono);font-weight:400;font-size:.68rem;letter-spacing:.04em;color:var(--muted);margin-top:3px;text-transform:none;text-shadow:none}
 .brand .acts{margin-left:auto;display:flex;gap:6px}
 .hbtn{background:linear-gradient(180deg,#2c3138,#1a1e23);border:1px solid #3b424b;color:#e9edf1;box-shadow:var(--bevel),0 2px 6px #0008;font-family:var(--f-display);font-weight:600;font-size:.95rem;letter-spacing:.07em;text-transform:uppercase;padding:7px 12px;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+#btn-menu{position:relative}
+#btn-menu.has-upd::after{content:"";position:absolute;top:4px;right:6px;width:9px;height:9px;border-radius:50%;background:#e8452c;box-shadow:0 0 0 2px #111316}
 .hbtn.pri{background:linear-gradient(180deg,#f8b04c,var(--accent-2));border-color:#f9b75a;color:var(--accent-ink);box-shadow:inset 0 1px 0 #fff5,0 2px 10px #f39a1e40}
 .datenav{display:flex;align-items:center;gap:6px}
 .datenav .lbl{flex:1;text-align:center;font-family:var(--f-display);font-weight:600;font-size:1.05rem;letter-spacing:.05em;text-transform:uppercase}
@@ -331,7 +333,7 @@ td.num{white-space:nowrap}
     <button class="mi" role="menuitem" data-menu="pdf">Informe en PDF<small>Progreso semana a semana</small></button>
     <div class="msep"></div>
     <button class="mi" role="menuitem" data-menu="settings">Ajustes<small>Clave de Gemini y cuenta</small></button>
-    <button class="mi" role="menuitem" data-menu="about">Acerca de y novedades<small id="mi-ver">v1.0.0</small></button>
+    <button class="mi" role="menuitem" data-menu="about">Acerca de · buscar actualizaciones<small id="mi-ver">v1.0.0</small></button>
   </div>
 </header>
 
@@ -367,7 +369,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.8.1';
+const APP_VERSION='1.9.0';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -1545,13 +1547,38 @@ async function resetAll(){
   closeSheet();st.date=todayISO();render();
   toast(`Datos borrados (${items.length}). Todo listo para empezar el ${longDate(START)}.`);
 }
-async function openAbout(){
-  let v=null;try{v=await (await fetch('version.json',{cache:'no-cache'})).json()}catch(e){}
-  openSheet('Acerca de','Recomp 45',`<p class="small">Versión instalada <b class="num">v${APP_VERSION}</b>${v&&v.version!==APP_VERSION?` · disponible <b class="num">v${esc(v.version)}</b>`:''}</p>
-    ${v?`<div class="card"><h2>Novedades v${esc(v.version)}</h2><ul class="small" style="margin:0;padding-left:1.2em;display:grid;gap:4px">${(v.notas||[]).map(n=>`<li>${esc(n)}</li>`).join('')}</ul></div>`:''}
-    ${v&&v.version!==APP_VERSION?'<button type="button" class="btn pri" id="upd">Actualizar ahora</button>':''}
+/* ===== acerca de y actualizaciones ===== */
+const vcmp=(a,b)=>{const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);for(let i=0;i<3;i++){if((x[i]||0)!==(y[i]||0))return(x[i]||0)-(y[i]||0)}return 0};
+let latest=null,updToastFor=null;
+async function fetchLatest(){
+  const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http '+r.status);
+  latest=await r.json();markUpdate();return latest;
+}
+function hasUpdate(){return !!(latest&&vcmp(latest.version,APP_VERSION)>0)}
+function markUpdate(){const b=$('#btn-menu');if(b)b.classList.toggle('has-upd',hasUpdate());const mi=$('#mi-ver');if(mi)mi.textContent=hasUpdate()?`v${APP_VERSION} · nueva v${latest.version}`:`v${APP_VERSION}`}
+async function checkUpdateSilent(){
+  try{await fetchLatest();if(swReg)swReg.update().catch(()=>{})}catch(e){return}
+  if(hasUpdate()&&updToastFor!==latest.version){updToastFor=latest.version;toast(`Hay una versión nueva: v${latest.version}`,'',{label:'Actualizar',fn:applyUpdate})}
+}
+function openAbout(){
+  openSheet('Acerca de','Recomp 45',`
+    <div class="card"><div class="row between"><div><div class="eyebrow">Versión instalada</div><div class="big-title num">v${APP_VERSION}</div></div>
+      <button type="button" class="btn" id="upd-check">Buscar actualizaciones</button></div>
+      <div id="upd-res" aria-live="polite"></div></div>
+    <div id="upd-notes"></div>
     <p class="small muted">Datos en tu Firebase, IA con tu clave de Gemini, app en GitHub Pages. Funciona sin conexión salvo la IA.</p>`);
-  const u=$('#upd');if(u)u.onclick=applyUpdate;
+  const run=async()=>{
+    const res=$('#upd-res'),btn=$('#upd-check');if(!res)return;
+    btn.disabled=true;res.innerHTML='<p class="small muted">Buscando…</p>';
+    try{await fetchLatest();if(swReg)swReg.update().catch(()=>{})}
+    catch(e){res.innerHTML='<p class="small" style="color:var(--bad)">No he podido comprobarlo. Revisa la conexión y vuelve a intentarlo.</p>';btn.disabled=false;return}
+    btn.disabled=false;
+    if(hasUpdate()){res.innerHTML=`<p class="small">Hay una versión nueva: <b class="num">v${esc(latest.version)}</b> (${esc(latest.fecha||'')}).</p><button type="button" class="btn pri" id="upd-go">Actualizar ahora</button>`;$('#upd-go').onclick=applyUpdate}
+    else res.innerHTML=`<p class="small" style="color:var(--good)">✓ Tienes la última versión.</p>`;
+    const hist=(latest.historial||[{version:latest.version,fecha:latest.fecha,notas:latest.notas}]).slice(0,4);
+    $('#upd-notes').innerHTML=`<div class="card"><h2>Novedades</h2>${hist.map(x=>`<div><div class="eyebrow">v${esc(x.version)} · ${esc(x.fecha||'')}${vcmp(x.version,APP_VERSION)>0?' · <span style="color:var(--accent)">nueva</span>':''}</div><ul class="small" style="margin:4px 0 0;padding-left:1.2em;display:grid;gap:4px">${(x.notas||[]).map(n=>`<li>${esc(n)}</li>`).join('')}</ul></div>`).join('')}</div>`;
+  };
+  $('#upd-check').onclick=run;run();
 }
 
 /* ================== COPIA, RESTAURAR Y PDF ================== */
@@ -1625,7 +1652,8 @@ async function exportPdf(){
 
 /* ================== ARRANQUE ================== */
 function showGate(msg,{login=false,setup=false}={}){$('#gate').hidden=false;$('#app').hidden=true;$('#gate-msg').textContent=msg;$('#btn-login').hidden=!login;$('#gate-setup').hidden=!setup}
-function showApp(){$('#gate').hidden=true;$('#app').hidden=false;readHash();render()}
+function showApp(){$('#gate').hidden=true;$('#app').hidden=false;readHash();render();markUpdate();setTimeout(checkUpdateSilent,2500)}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&!$('#app').hidden)checkUpdateSilent()});
 $('#btn-login').onclick=async()=>{try{await window.FB.signIn()}catch(e){toast('No se pudo iniciar sesión ('+(e&&e.code||'error')+')','err')}};
 function boot(){
   if(!window.FB.configured){showGate('Instalada, pero sin base de datos todavía.',{setup:true});return}
@@ -1642,11 +1670,18 @@ window.addEventListener('fb-user',e=>{
 
 /* actualizaciones (service worker) */
 let swReg=null;
-function applyUpdate(){if(swReg&&swReg.waiting)swReg.waiting.postMessage('SKIP_WAITING');else location.reload()}
+/* actualizar: si el service worker nuevo ya está listo, se activa; si no, se vacía la caché de la app y se recarga desde GitHub */
+async function applyUpdate(){
+  toast('Actualizando…');
+  try{if(swReg){await swReg.update().catch(()=>{});if(swReg.waiting){swReg.waiting.postMessage('SKIP_WAITING');return}}}catch(e){}
+  try{for(const k of await caches.keys())if(k.startsWith('recomp-v-'))await caches.delete(k)}catch(e){}
+  location.replace(location.pathname+'?v='+encodeURIComponent((latest&&latest.version)||Date.now())+location.hash);
+}
+if(/[?&]v=/.test(location.search)&&!/[?&]zepp=/.test(location.search))history.replaceState(null,'',location.pathname+location.hash);
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js').then(reg=>{
     swReg=reg;
-    const offer=()=>toast('Hay una versión nueva de la app.','',{label:'Actualizar',fn:applyUpdate});
+    const offer=()=>{if(updToastFor==='sw')return;updToastFor='sw';toast('Hay una versión nueva de la app.','',{label:'Actualizar',fn:applyUpdate})};
     if(reg.waiting&&navigator.serviceWorker.controller)offer();
     reg.addEventListener('updatefound',()=>{const nw=reg.installing;nw&&nw.addEventListener('statechange',()=>{if(nw.state==='installed'&&navigator.serviceWorker.controller)offer()})});
     setInterval(()=>reg.update().catch(()=>{}),30*60*1000);
