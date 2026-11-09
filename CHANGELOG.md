@@ -1,5 +1,11 @@
 # Novedades
 
+## v1.19.0 · 2026-11-09
+- Comidas habituales: guarda lo que repites (p. ej. tu café con leche de la obra) y añádelo con un toque al cambiar una comida
+- Mis alimentos: escanea el código de barras (o escribe el número) y se rellena desde Open Food Facts
+- Entreno: si la última vez llegaste al tope de repeticiones, te dice a qué peso subir y lo pone en las casillas
+- Récords: aviso «¡Nuevo récord!» al superar tu mejor peso en un ejercicio, tu récord a la vista en cada ejercicio y marcados en la gráfica de fuerza
+
 ## v1.18.0 · 2026-11-09
 - Progreso › Fuerza por ejercicio: eliges un ejercicio y ves tu peso máximo o los kilos totales de cada entreno, con tus últimas series
 - Sale solo de lo que escribes en las casillas de Entreno (las sugerencias en gris no cuentan)

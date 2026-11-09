@@ -207,6 +207,13 @@ a{color:var(--accent)}
 .macroline{display:flex;gap:12px;flex-wrap:wrap;font-family:var(--f-mono);font-size:.8rem}
 .pP{color:var(--p)} .pC{color:var(--c)} .pF{color:var(--f)}
 .extra-form{display:grid;grid-template-columns:1fr 90px;gap:8px}
+.pr-badge{color:#ffd166;font-weight:700}
+.hab-chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 4px}
+.hab{display:grid;text-align:left;border:1px solid #23282e;background:#101215;color:var(--ink);border-radius:4px;padding:7px 10px}
+.hab small{color:var(--muted);font-family:var(--f-mono);font-size:.72rem}
+.hab.del{border-color:var(--bad)}.hab.del b{color:var(--bad)}
+.hab-form{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center}
+.bar-in{display:grid;grid-template-columns:1fr auto;gap:6px;margin-top:6px}
 .seg2{grid-template-columns:1fr 1fr!important}
 .fz-log{display:grid;gap:4px}
 .fz-row{display:flex;gap:10px;align-items:baseline;border-bottom:1px dashed #23282e;padding-bottom:4px}
@@ -415,6 +422,7 @@ td.num{white-space:nowrap}
 <input type="file" id="f-photo" accept="image/*" hidden>
 <input type="file" id="f-lblcam" accept="image/*" capture="environment" hidden>
 <input type="file" id="f-lblgal" accept="image/*" hidden>
+<input type="file" id="f-barcam" accept="image/*" capture="environment" hidden>
 <input type="file" id="f-wzcam" accept="image/*" capture="environment" hidden>
 <input type="file" id="f-wzgal" accept="image/*" hidden>
 <input type="file" id="f-chatimg" accept="image/*" hidden>
@@ -423,7 +431,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.18.0';
+const APP_VERSION='1.19.0';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -1115,6 +1123,7 @@ function openMealEdit(d,mid){
   const items=Array.isArray(sm.items)?sm.items.map(x=>({...x,base:x.id?null:{g:x.g,k:x.k,p:x.p,c:x.c,f:x.f}})):o.items.map(([id,g])=>meItem(id,g));
   ME={d,mid,m,o,items,q:''};
   openSheet(m.n,'¿Qué has comido?',`<p class="small muted">Quita lo que no has comido, cambia cantidades y añade lo que sí. Escribe por ejemplo «café con leche» o «tostada integral con atún».</p>
+    <div id="me-hab"></div>
     <div class="me-list" id="me-list"></div>
     <div class="field"><label for="me-q">Añadir</label><input type="text" id="me-q" placeholder="Busca un alimento o escribe lo que has comido" autocomplete="off"></div>
     <div class="me-res" id="me-res"></div><div id="me-msg"></div>
@@ -1128,15 +1137,38 @@ function openMealEdit(d,mid){
     if(a==='del'){ME.items.splice(+b.dataset.i,1);drawME()}
     else if(a==='add'){const F=FOODS[b.dataset.id];ME.items.push(meItem(b.dataset.id,F.u?F.u[0]:(F.def||100)));ME.q='';$('#me-q').value='';drawME()}
     else if(a==='ia')meIA();
+    else if(a==='hab-add'){const h=myHab()[b.dataset.id];if(!h)return;
+      if(ME.habEdit){const all={...myHab()};delete all[b.dataset.id];saveHab(all);drawHab();toast('Quitada de habituales: '+h.n);return}
+      ME.items.push(...h.items.map(x=>x.id&&FOODS[x.id]?meItem(x.id,x.g):{...x,base:{g:x.g,k:x.k,p:x.p,c:x.c,f:x.f}}));drawME();toast('Añadido: '+h.n)}
+    else if(a==='clear'){ME.items=[];drawME()}
+    else if(a==='hab-edit'){ME.habEdit=!ME.habEdit;drawHab()}
+    else if(a==='hab-new'){ME.habForm=true;drawTot();setTimeout(()=>{const i=$('#hab-n');if(i)i.focus()},50)}
+    else if(a==='hab-cancel'){ME.habForm=false;drawTot()}
+    else if(a==='hab-save'){const n=($('#hab-n').value||'').trim();if(!n){toast('Ponle un nombre','err');return}
+      const items=ME.items.filter(x=>+x.g>0).map(x=>{const o={n:x.n,g:Math.round(+x.g*10)/10};if(x.id)o.id=x.id;else{o.k=Math.round(x.k*10)/10;o.p=Math.round(x.p*10)/10;o.c=Math.round(x.c*10)/10;o.f=Math.round(x.f*10)/10}if(x.ml)o.ml=true;return o});
+      if(!items.length){toast('No hay nada que guardar','err');return}
+      const all={...myHab()};all['h'+Date.now().toString(36)]={n,items};saveHab(all);ME.habForm=false;drawHab();drawTot();toast('Guardada como habitual: '+n)}
     else if(a==='save')saveME(true);
     else if(a==='plan')saveME(false)};
 }
 function drawME(){
+  drawHab();
   $('#me-list').innerHTML=ME.items.length?ME.items.map((x,i)=>{const u=x.ml?'ml':'g';
     return `<div class="me-row"><div class="nm">${x.ia?'<span class="pill" style="margin-right:4px">IA</span>':''}${esc(x.n)}<small>${x.id&&FOODS[x.id]&&FOODS[x.id].u?esc(qty(x.id,x.g)):u} · ${fmt(x.k)} kcal · P ${fmt(x.p)}</small></div>
       <input type="number" inputmode="decimal" min="0" step="any" value="${+(+x.g).toFixed(1)}" data-meg="${i}" aria-label="Cantidad de ${esc(x.n)} en ${u}"><button type="button" class="x" data-me="del" data-i="${i}" aria-label="Quitar ${esc(x.n)}">×</button></div>`}).join('')
     :'<p class="small muted">No hay nada apuntado en esta comida.</p>';
+  if(ME.items.length>1)$('#me-list').insertAdjacentHTML('beforeend','<button type="button" class="btn sm" data-me="clear" style="justify-self:start">Vaciar la lista</button>');
   drawRes();drawTot();
+}
+/* comidas habituales: users/<uid>/ajustes/habituales = {items:{id:{n, items:[{n,g,id?|k,p,c,f,ml?}]}}} */
+const myHab=()=>(AJ.habituales&&AJ.habituales.items)||{};
+function saveHab(all){AJ.habituales={items:all};window.FB.db.set(path('ajustes'),'habituales',AJ.habituales)}
+function drawHab(){
+  const box=$('#me-hab');if(!box)return;const hs=Object.entries(myHab()).sort((a,b)=>a[1].n.localeCompare(b[1].n,'es'));
+  if(!hs.length){box.innerHTML='';ME.habEdit=false;return}
+  box.innerHTML=`<div class="row between"><span class="flbl">Tus habituales</span><button type="button" class="btn sm" data-me="hab-edit">${ME.habEdit?'Hecho':'Quitar alguna'}</button></div>
+    <div class="hab-chips">${hs.map(([id,h])=>{const t=sumM(h.items.map(x=>x.id&&FOODS[x.id]?itemM(x.id,x.g):{k:x.k,p:x.p,c:x.c,f:x.f}));
+      return `<button type="button" class="hab ${ME.habEdit?'del':''}" data-me="hab-add" data-id="${id}"><b>${ME.habEdit?'× ':'＋ '}${esc(h.n)}</b><small>${fmt(t.k)} kcal · P ${fmt(t.p)}</small></button>`}).join('')}</div>`;
 }
 function drawRes(){
   const q=norm(ME.q.trim()),box=$('#me-res');if(!q){box.innerHTML='';return}
@@ -1178,6 +1210,8 @@ function openFoodForm(id){
     <div class="field"><label for="mf-n">Nombre</label><input type="text" id="mf-n" value="${esc(x.n||'')}" placeholder="p. ej. Cereales de espelta"></div>
     <div class="field"><span class="flbl">Tabla nutricional</span><p class="small muted" style="margin:0 0 6px">Haz una foto a la tabla de valores del envase y relleno los números yo.</p>
       <div class="row"><button type="button" class="btn" data-mf="cam">📷 Hacer foto</button><button type="button" class="btn" data-mf="gal">Elegir de la galería</button></div>
+      <div class="row" style="margin-top:8px"><button type="button" class="btn" data-mf="bar">▦ Escanear código de barras</button></div>
+      <div class="bar-in"><input type="text" inputmode="numeric" id="mf-code" placeholder="o escribe el número del código" autocomplete="off"><button type="button" class="btn sm" data-mf="code">Buscar</button></div>
       <div id="mf-photo"></div><div id="mf-msg"></div></div>
     <button type="button" class="toggle" data-mf="ml" aria-pressed="${!!x.ml}"><span class="box">${x.ml?'✓':''}</span><span class="grow"><span class="t">Es una bebida (valores por 100 ml)</span></span></button>
     <div class="mf-grid" id="mf-grid">${MF_FIELDS.map(([k,l,u])=>`<label for="mf-${k}">${l}</label><div class="mf-in"><input type="text" inputmode="decimal" id="mf-${k}" value="${x[k]!=null&&x[k]!==''?String(x[k]).replace('.',','):''}" placeholder="0"><span class="u">${u}</span></div>`).join('')}</div>
@@ -1188,6 +1222,8 @@ function openFoodForm(id){
     <div class="row"><button type="button" class="btn" data-mf="back">‹ Mis alimentos</button>${id?'<button type="button" class="btn" data-mf="del" id="mf-del">Borrar</button>':''}<span class="grow"></span><button type="button" class="btn pri" data-mf="save">Guardar</button></div>`);
   $('#sheet-body').onclick=e=>{const b=e.target.closest('[data-mf]');if(!b||!MF)return;const a=b.dataset.mf;
     if(a==='cam'||a==='gal'){if(!aiReady())return;const f=$(a==='cam'?'#f-lblcam':'#f-lblgal');f.value='';f.click()}
+    else if(a==='bar'){const f=$('#f-barcam');f.value='';f.click()}
+    else if(a==='code'){const c=($('#mf-code').value||'').replace(/\D/g,'');if(c.length<8){toast('El código tiene 8 o 13 números','err');return}offLookup(c)}
     else if(a==='ml'){MF.x.ml=!MF.x.ml;b.setAttribute('aria-pressed',MF.x.ml);b.querySelector('.box').textContent=MF.x.ml?'✓':'';
       $('#mf-per').textContent=`Valores por 100 ${MF.x.ml?'ml':'g'}, como en la columna «por 100» de la etiqueta.`;$('label[for=mf-def]').textContent=`Ración habitual (${MF.x.ml?'ml':'g'}, opcional)`}
     else if(a==='back')openMyFoods();
@@ -1235,6 +1271,39 @@ function flatLabel(r){
   for(const [k,names] of Object.entries(al))for(const n of names)if(nk[n]!=null){out[k]=nk[n];break}
   return out;
 }
+/* código de barras: foto → número (lector del navegador si lo tiene; si no, la IA lee los dígitos) → Open Food Facts */
+async function readBarcode(file){
+  const msg=$('#mf-msg');msg.innerHTML='<p class="small" style="color:var(--accent)">⏳ Leyendo el código…</p>';
+  let code=null;
+  try{if('BarcodeDetector' in window){const bd=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e']});const r=await bd.detect(await createImageBitmap(file));if(r[0])code=r[0].rawValue}}catch(e){}
+  if(!code){
+    if(!lsGet(GKEY,'')){msg.innerHTML='<p class="small" style="color:var(--bad)">No he podido leer el código. Escribe el número que hay debajo de las barras y pulsa Buscar.</p>';return}
+    try{const img=await blobToB64(file,1400);
+      const r=await gemini({contents:[{role:'user',parts:[{text:'En esta foto hay un código de barras de un producto de supermercado. Lee los números que hay escritos debajo de las barras (EAN-13 u 8). Responde SOLO JSON: {"codigo":"8480000123456"} o {"codigo":null} si no se lee.'},{inline_data:{mime_type:img.mime,data:img.data}}]}],json:true,fast:true});
+      code=String((r&&(r.codigo||r.code))||'').replace(/\D/g,'')||null}catch(e){}
+  }
+  if(!code||code.length<8){msg.innerHTML='<p class="small" style="color:var(--bad)">No he podido leer el código. Haz la foto más cerca y recta, o escribe el número de debajo de las barras.</p>';return}
+  $('#mf-code').value=code;offLookup(code);
+}
+async function offLookup(code){
+  const msg=$('#mf-msg');msg.innerHTML=`<p class="small" style="color:var(--accent)">⏳ Buscando el producto ${code}…</p>`;
+  try{
+    const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),20000);
+    const r=await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,product_name_es,brands,quantity,serving_quantity,nutriments`,{signal:ctl.signal});clearTimeout(tm);
+    const j=await r.json();if(!MF)return;
+    if(!j||j.status!==1||!j.product){msg.innerHTML='<p class="small" style="color:var(--bad)">Ese producto no está en la base de datos pública. Haz una foto a la tabla nutricional y la leo.</p>';return}
+    const P=j.product,N=P.nutriments||{},num=v=>v==null||v===''||isNaN(+v)?null:+v;
+    const kcal=num(N['energy-kcal_100g'])??(num(N.energy_100g)!=null?num(N.energy_100g)/4.184:null);
+    const vals={k:kcal,p:num(N.proteins_100g),c:num(N.carbohydrates_100g),az:num(N.sugars_100g),f:num(N.fat_100g),fib:num(N.fiber_100g),sal:num(N.salt_100g),sod:num(N.sodium_100g)};
+    let filled=0;for(const [k,v] of Object.entries(vals))if(v!=null){const d=(k==='sal'||k==='sod')?100:10;$('#mf-'+k).value=String(Math.round(v*d)/d).replace('.',',');filled++}
+    const name=[(P.product_name_es||P.product_name||'').trim(),(P.brands||'').split(',')[0].trim()].filter(Boolean).join(' · ');
+    if(!$('#mf-n').value.trim()&&name)$('#mf-n').value=name;
+    if(num(P.serving_quantity)>0&&!$('#mf-def').value)$('#mf-def').value=String(num(P.serving_quantity)).replace('.',',');
+    msg.innerHTML=filled?`<p class="small" style="color:var(--good)">Encontrado${name?': <b>'+esc(name)+'</b>':''}. Compara los números con la etiqueta antes de guardar: la base de datos la rellena gente voluntaria.</p>`
+      :'<p class="small" style="color:var(--bad)">El producto está, pero sin valores nutricionales. Haz una foto a la tabla y la leo.</p>';
+  }catch(e){msg.innerHTML='<p class="small" style="color:var(--bad)">No he podido conectar con la base de datos de productos. Prueba otra vez o haz una foto a la tabla.</p>'}
+}
+$('#f-barcam').onchange=e=>{const f=e.target.files[0];if(f&&MF)readBarcode(f)};
 $('#f-lblcam').onchange=e=>{const f=e.target.files[0];if(f&&MF)readLabel(f)};
 $('#f-lblgal').onchange=e=>{const f=e.target.files[0];if(f&&MF)readLabel(f)};
 const numIn=id=>{const v=$(id).value.trim().replace(',','.');return v===''||isNaN(+v)?null:+v};
@@ -1260,6 +1329,8 @@ function drawTot(){
   $('#me-list').querySelectorAll('.me-row').forEach((r,i)=>{const x=ME.items[i];if(x)r.querySelector('small').textContent=`${x.id&&FOODS[x.id]&&FOODS[x.id].u?qty(x.id,x.g):(x.ml?'ml':'g')} · ${fmt(x.k)} kcal · P ${fmt(x.p)}`});
   $('#me-tot').innerHTML=`<div class="macroline"><span>${fmt(t.k)} kcal</span><span class="pP">P ${fmt(t.p)} g</span><span class="pC">C ${fmt(t.c)} g</span><span class="pF">G ${fmt(t.f)} g</span></div>
     <p class="small muted" style="margin:0">El menú tenía ${fmt(pl.k)} kcal y ${fmt(pl.p)} g de proteína.</p>
+    ${ME.habForm?`<div class="hab-form"><input type="text" id="hab-n" placeholder="Nombre, p. ej. Café con leche de la obra"><button type="button" class="btn sm" data-me="hab-cancel">Cancelar</button><button type="button" class="btn sm pri" data-me="hab-save">Guardar</button></div>`
+      :`<button type="button" class="btn sm" data-me="hab-new" style="justify-self:start">☆ Guardar esto como comida habitual</button>`}
     <div class="row"><button type="button" class="btn" data-me="plan">Volver al menú</button><span class="grow"></span><button type="button" class="btn pri" data-me="save">Guardar como comido</button></div>`;
 }
 async function meIA(){
@@ -1329,6 +1400,17 @@ function viewComida(){
 /* resumen de un entreno guardado: series apuntadas y kilos totales movidos */
 function woSummary(w){let n=0,vol=0;for(const sets of Object.values((w&&w.sets)||{}))for(const x of sets||[])if(x&&x.r){n++;vol+=(+x.kg||0)*(+x.r||0)}return{n,vol}}
 const hhmm=iso=>new Date(iso).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+/* récord: el mayor peso con el que has hecho al menos una repetición antes de esa fecha (solo series reales) */
+function bestBefore(exId,date){let m=0;for(const [k,wo] of Object.entries(S.workouts)){if(k>=date)continue;for(const x of ((wo&&wo.sets&&wo.sets[exId])||[]))if(x&&+x.r>0&&+x.kg>m)m=+x.kg}return m}
+const prShown=new Set();
+function checkRecord(exId,d){
+  const prev=bestBefore(exId,d);if(!prev)return;
+  const now=Math.max(0,...(((S.workouts[d]||{}).sets||{})[exId]||[]).filter(x=>x&&+x.r>0).map(x=>+x.kg||0));
+  const key=d+'|'+exId+'|'+now;
+  if(now>prev&&!prShown.has(key)){prShown.add(key);const ex=ALL_EX.find(e=>e.id===exId);
+    toast(`🏆 ¡Nuevo récord en ${ex?ex.n:'el ejercicio'}: ${fmt(now,now%1?1:0)} kg! (antes ${fmt(prev,prev%1?1:0)} kg)`);
+    const c=document.querySelector(`[data-pr="${exId}"]`);if(c){c.hidden=false;c.textContent=`🏆 Récord nuevo: ${fmt(now,now%1?1:0)} kg`}}
+}
 function lastPerf(exId,date){
   const ks=Object.keys(S.workouts).filter(k=>k<date).sort().reverse();
   for(const k of ks){const sets=S.workouts[k]&&S.workouts[k].sets&&S.workouts[k].sets[exId];if(sets&&sets.some(s=>s&&s.r))return{date:k,sets:sets.filter(s=>s&&s.r)}}
@@ -1341,7 +1423,8 @@ function hintFor(ex,lp,ph){
   const allTop=lp.sets.length>=ex.s&&lp.sets.every(s=>+s.r>=ex.hi);
   if(ex.u==='s')return allTop?{k:'up',t:'Añade 10 s por serie'}:{k:'hold',t:'Mismo tiempo, intenta completarlo'};
   if(ex.id==='es_domi')return allTop?{k:'up',t:'¡Meta cumplida! Prueba con algo de lastre o menos asistencia'}:{k:'hold',t:'Intenta 1 repetición más por serie'};
-  if(allTop)return{k:'up',t:`Sube +${ex.low?'5':'2,5'} kg y vuelve a ${ex.lo} reps`};
+  if(allTop){const inc=ex.low?5:2.5,top=Math.max(...lp.sets.map(s=>+s.kg||0));
+    return top?{k:'up',t:`↑ Sube a ${fmt(top+inc,(top+inc)%1?1:0)} kg y vuelve a ${ex.lo} reps${ex.e?' (si el codo va bien)':''}`,kg:top+inc}:{k:'up',t:`Sube +${inc} kg y vuelve a ${ex.lo} reps`}}
   return{k:'hold',t:'Mismo peso, suma repeticiones'};
 }
 function viewEntreno(){
@@ -1366,11 +1449,13 @@ function viewEntreno(){
     const nxt=SS.ex[xi+1],chain=ex.ss&&nxt&&nxt.ss&&nxt.ss[0]===ex.ss[0];   /* hay otro ejercicio de la misma superserie detrás */
     let rows='';
     for(let i=0;i<n;i++){const s=cur[i]||{},pk=lp&&lp.sets[i]?lp.sets[i].kg:'',pr=lp&&lp.sets[i]?lp.sets[i].r:'';
-      rows+=`<span class="n">${i+1}</span><input type="number" inputmode="decimal" step="0.5" id="w-${ex.id}-${i}-kg" data-ex="${ex.id}" data-i="${i}" data-k="kg" value="${s.kg??''}" placeholder="${pk||ex.kg||'kg'}" aria-label="Kilos serie ${i+1}"><input type="number" inputmode="numeric" id="w-${ex.id}-${i}-r" data-ex="${ex.id}" data-i="${i}" data-k="r" value="${s.r??''}" placeholder="${pr||(ex.u==='s'?'seg':'reps')}" aria-label="${ex.u==='s'?'Segundos':'Repeticiones'} serie ${i+1}">`}
+      rows+=`<span class="n">${i+1}</span><input type="number" inputmode="decimal" step="0.5" id="w-${ex.id}-${i}-kg" data-ex="${ex.id}" data-i="${i}" data-k="kg" value="${s.kg??''}" placeholder="${h.kg||pk||ex.kg||'kg'}" aria-label="Kilos serie ${i+1}"><input type="number" inputmode="numeric" id="w-${ex.id}-${i}-r" data-ex="${ex.id}" data-i="${i}" data-k="r" value="${s.r??''}" placeholder="${pr||(ex.u==='s'?'seg':'reps')}" aria-label="${ex.u==='s'?'Segundos':'Repeticiones'} serie ${i+1}">`}
     html+=`<section class="card">
       <div class="ex-top"><div class="grow"><h3>${ex.ss?`<span class="ss">${ex.ss}</span>`:''}${esc(ex.n)}</h3><div class="ex-meta">${n} × ${ex.lo===ex.hi?ex.lo:ex.lo+'-'+ex.hi}${unit} · ${chain?`sin descanso, pasa a ${nxt.ss}`:`descanso ${mmss(ex.r)}`}</div></div>
       ${chain?'':`<button type="button" class="restbtn" data-act="rest" data-sec="${ex.r}" data-name="${esc(ex.n)}">⏱ ${mmss(ex.r)}</button>`}</div>
       <p class="note ${ex.e?'elbow':''}">${ex.e?'<b style="color:var(--band)">CODO · </b>':''}${esc(ex.note)}</p>
+      ${(()=>{const pb=bestBefore(ex.id,d),nowM=Math.max(0,...cur.filter(x=>x&&+x.r>0).map(x=>+x.kg||0)),isPr=pb&&nowM>pb;
+        return `<div class="row small"><span class="pr-badge" data-pr="${ex.id}" ${isPr?'':'hidden'}>${isPr?`🏆 Récord nuevo: ${fmt(nowM,nowM%1?1:0)} kg`:''}</span>${pb?`<span class="muted mono">Tu récord: ${fmt(pb,pb%1?1:0)} kg</span>`:''}</div>`})()}
       <div class="row small"><span class="pill ${h.k}">${esc(h.t)}</span>${lp?`<span class="muted mono">${shortDate(lp.date)}: ${lp.sets.map(s=>`${s.kg||'–'}×${s.r}`).join(' · ')}</span>`:''}</div>
       <div class="sets"><span></span><span class="h">Kg</span><span class="h">${ex.u==='s'?'Segundos':'Reps'}</span>${rows}</div>
     </section>`;
@@ -1388,7 +1473,7 @@ function viewEntreno(){
   return html;
 }
 
-function lineChart({pts,line,xmin,xmax,dec=1}){
+function lineChart({pts,line,xmin,xmax,dec=1,marks=[]}){
   const W=340,H=180,L=38,R=12,T=14,B=24;
   const ys=[...pts,...(line||[])].map(p=>p.y);
   let y0=Math.min(...ys),y1=Math.max(...ys);
@@ -1403,7 +1488,8 @@ function lineChart({pts,line,xmin,xmax,dec=1}){
   if(src.length>1)ln=`<path d="${src.map((p,i)=>`${i?'L':'M'}${X(p.x).toFixed(1)},${Y(p.y).toFixed(1)}`).join(' ')}" fill="none" stroke="#f39a1e" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" style="filter:drop-shadow(0 0 4px #f39a1e66)"/>`;
   const last=src[src.length-1];
   const end=last?`<circle cx="${X(last.x)}" cy="${Y(last.y)}" r="5" fill="#f39a1e" stroke="#14171b" stroke-width="2"/><text x="${Math.min(X(last.x),W-R-30)}" y="${Math.max(Y(last.y)-10,T+8)}" text-anchor="middle" style="fill:#e8ecf0;font-weight:500">${fmt(last.y,dec)}</text>`:'';
-  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">${g}${dots}${ln}${end}</svg>`;
+  const mk=marks.map(p=>`<circle cx="${X(p.x)}" cy="${Y(p.y)}" r="6.5" fill="none" stroke="#ffd166" stroke-width="2"/>`).join('');
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">${g}${dots}${ln}${mk}${end}</svg>`;
 }
 /* barras por semana con línea de objetivo opcional (kilos movidos, medias de nutrición) */
 function barChart({bars,target,color='#f39a1e',dec=0,unit=''}){
@@ -1469,13 +1555,17 @@ function strengthCard(){
   const u=noKg?(secs?' s':' reps'):' kg';
   const pts=log.map(l=>({x:diffDays(START,l.d),y:val(l)}));
   const first=pts[0],last=pts[pts.length-1],ch=pts.length>1?last.y-first.y:null;
+  /* récords: entrenos en los que superaste tu mejor peso anterior */
+  const prD=new Set();if(!noKg){let best=0;log.forEach((l,i)=>{const m=Math.max(...l.sets.map(x=>x.kg));if(i&&m>best)prD.add(l.d);if(m>best)best=m})}
+  const marks=mode==='max'?pts.filter((p,i)=>prD.has(log[i].d)):[];
   const lbl=mode==='max'?(noKg?(secs?'Mejor tiempo':'Más repeticiones'):'Peso máximo'):(noKg?(secs?'Tiempo total':'Repeticiones totales'):'Kilos totales');
   return `<section class="card" id="fuerza"><h2>Fuerza por ejercicio</h2>
     <div class="field"><label for="fz-ex">Ejercicio</label><select id="fz-ex" data-act="fz-ex">${order.map(k=>`<option value="${k}" ${k===id?'selected':''}>${esc(ALL_EX.find(e=>e.id===k).n)} (${by[k].length})</option>`).join('')}</select></div>
     <div class="seg seg2" role="group" aria-label="Qué medir"><button type="button" data-act="fz-mode" data-mode="max" aria-pressed="${mode==='max'}"><b>${noKg?(secs?'Mejor tiempo':'Más reps'):'Peso máximo'}</b>la mejor serie</button><button type="button" data-act="fz-mode" data-mode="tot" aria-pressed="${mode==='tot'}"><b>${noKg?'Total':'Kilos totales'}</b>kg × reps del día</button></div>
     <div class="row between"><span class="small muted">${lbl} por entreno</span>${ch!=null?`<span class="chip" style="color:var(--${ch>0?'good':ch<0?'warn':'muted'})">${ch>0?'+':''}${fmt(Math.round(ch*10)/10,ch%1?1:0)}${u} desde el ${shortDate(first.d||log[0].d)}</span>`:''}</div>
-    ${lineChart({pts,xmin:Math.min(0,pts[0].x),xmax:Math.max(last.x,6),dec:mode==='max'&&!noKg?1:0})}
-    <div class="fz-log">${log.slice(-6).reverse().map(l=>`<div class="fz-row"><span class="mono">${shortDate(l.d)}</span><span class="grow mono small">${l.sets.map(x=>`${x.kg?fmt(x.kg,x.kg%1?1:0)+'×':''}${x.r}${secs?'s':''}`).join(' · ')}</span><span class="num small">${noKg?'':fmt(Math.round(l.sets.reduce((a,x)=>a+x.kg*x.r,0)))+' kg'}</span></div>`).join('')}</div>
+    ${lineChart({pts,marks,xmin:Math.min(0,pts[0].x),xmax:Math.max(last.x,6),dec:mode==='max'&&!noKg?1:0})}
+    ${prD.size?`<p class="small muted" style="margin:0"><span style="color:#ffd166">◯</span> ${prD.size} ${prD.size===1?'récord':'récords'} batido${prD.size===1?'':'s'}</p>`:''}
+    <div class="fz-log">${log.slice(-6).reverse().map(l=>`<div class="fz-row"><span class="mono">${prD.has(l.d)?'🏆 ':''}${shortDate(l.d)}</span><span class="grow mono small">${l.sets.map(x=>`${x.kg?fmt(x.kg,x.kg%1?1:0)+'×':''}${x.r}${secs?'s':''}`).join(' · ')}</span><span class="num small">${noKg?'':fmt(Math.round(l.sets.reduce((a,x)=>a+x.kg*x.r,0)))+' kg'}</span></div>`).join('')}</div>
     <p class="small muted">Solo cuentan las series que tú escribes en Entreno, no las sugerencias en gris. Si repites el peso de la sugerencia, escríbelo también para que cuente.</p>
   </section>`;
 }
@@ -1809,6 +1899,7 @@ $('#view').addEventListener('input',e=>{
 $('#view').addEventListener('change',e=>{
   const el=e.target;
   if(el.dataset.ex&&el.dataset.k==='r'&&el.value!==''&&st.date===todayISO())autoRest(el.dataset.ex);
+  if(el.dataset.ex&&el.value!=='')checkRecord(el.dataset.ex,st.date);
   if(el.dataset.act==='fz-ex'){const p=lsGet(FZK,{});p.id=el.value;lsSet(FZK,p);pendingRender=false;el.blur();render();return}
   if(el.dataset.act==='session'){const w=clone(S.workouts[st.date]||{});w.session=el.value;saveDoc('workouts',st.date,w);pendingRender=false;el.blur();render()}
 });
