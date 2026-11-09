@@ -1,5 +1,9 @@
 # Novedades
 
+## v1.18.0 · 2026-11-09
+- Progreso › Fuerza por ejercicio: eliges un ejercicio y ves tu peso máximo o los kilos totales de cada entreno, con tus últimas series
+- Sale solo de lo que escribes en las casillas de Entreno (las sugerencias en gris no cuentan)
+
 ## v1.17.0 · 2026-11-09
 - Progreso › Kilos movidos por semana: suma de peso × repeticiones de todas tus series, con la comparación con la semana anterior
 - Progreso › Nutrición media por semana: calorías, proteína y grasas medias al día de cada semana, con tu objetivo marcado

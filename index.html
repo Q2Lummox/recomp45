@@ -207,6 +207,10 @@ a{color:var(--accent)}
 .macroline{display:flex;gap:12px;flex-wrap:wrap;font-family:var(--f-mono);font-size:.8rem}
 .pP{color:var(--p)} .pC{color:var(--c)} .pF{color:var(--f)}
 .extra-form{display:grid;grid-template-columns:1fr 90px;gap:8px}
+.seg2{grid-template-columns:1fr 1fr!important}
+.fz-log{display:grid;gap:4px}
+.fz-row{display:flex;gap:10px;align-items:baseline;border-bottom:1px dashed #23282e;padding-bottom:4px}
+.fz-row .grow{min-width:0;overflow-wrap:anywhere}
 .nut-head{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px}
 .wo-save{width:100%;padding:14px;font-size:1.05rem}
 .wo-done{display:grid;gap:6px;border:1px solid var(--good);background:var(--good-soft);border-radius:4px;padding:12px}
@@ -419,7 +423,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.17.0';
+const APP_VERSION='1.18.0';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -1388,7 +1392,7 @@ function lineChart({pts,line,xmin,xmax,dec=1}){
   const W=340,H=180,L=38,R=12,T=14,B=24;
   const ys=[...pts,...(line||[])].map(p=>p.y);
   let y0=Math.min(...ys),y1=Math.max(...ys);
-  if(y1-y0<2){const m=(y0+y1)/2;y0=m-1;y1=m+1}
+  {const m=(y0+y1)/2,minR=dec===0?Math.max(3,Math.abs(m)*.06):2;if(y1-y0<minR){y0=m-minR/2;y1=m+minR/2}}
   const pad=(y1-y0)*.12;y0-=pad;y1+=pad;if(xmax-xmin<6)xmax=xmin+6;
   const X=x=>L+(x-xmin)/(xmax-xmin)*(W-L-R),Y=y=>T+(y1-y)/(y1-y0)*(H-T-B);
   let g='';
@@ -1440,6 +1444,39 @@ function statsCards(){
       <div class="nut-head"><b class="pF">Grasas</b><span class="num">${cur.n?fmt(cur.f)+' g/día':'–'}</span></div>${barChart({bars:B('f'),target:TARGET.f,color:'#a8bb64',unit:' g'})}`
       :'<div class="empty">Aquí verás la media diaria de calorías, proteína y grasas de cada semana.<br>Se rellena al marcar comidas como comidas.</div>'}
     <p class="small muted">Media de los días con comida apuntada (debajo de cada barra, cuántos días). La línea discontinua es tu objetivo diario.</p>
+  </section>`;
+}
+/* ===== fuerza por ejercicio (v1.18.0) =====
+   Solo series reales: las que tienen repeticiones escritas por ti. Las sugerencias en gris de las casillas no se guardan y no cuentan. */
+const FZK='recomp45-fuerza';
+function strengthData(){
+  const by={};
+  for(const [k,wo] of Object.entries(S.workouts).sort()){
+    for(const [id,sets] of Object.entries((wo&&wo.sets)||{})){
+      const real=(sets||[]).filter(x=>x&&+x.r>0);if(!real.length)continue;
+      (by[id]=by[id]||[]).push({d:k,sets:real.map(x=>({kg:+x.kg||0,r:+x.r}))});
+    }
+  }
+  return by;
+}
+function strengthCard(){
+  const by=strengthData(),ids=Object.keys(by).filter(id=>ALL_EX.find(e=>e.id===id));
+  if(!ids.length)return `<section class="card"><h2>Fuerza por ejercicio</h2><div class="empty">Aquí verás, ejercicio a ejercicio, cómo suben tus kilos.<br>Sale solo de las series que apuntas en Entreno.</div></section>`;
+  const order=ALL_EX.map(e=>e.id).filter(id=>ids.includes(id));
+  let pick=lsGet(FZK,{}),id=order.includes(pick.id)?pick.id:order[0],mode=pick.mode==='tot'?'tot':'max';
+  const ex=ALL_EX.find(e=>e.id===id),secs=ex.u==='s',log=by[id],noKg=log.every(l=>l.sets.every(x=>!x.kg));
+  const val=l=>mode==='max'?(noKg?Math.max(...l.sets.map(x=>x.r)):Math.max(...l.sets.map(x=>x.kg))):(noKg?l.sets.reduce((a,x)=>a+x.r,0):l.sets.reduce((a,x)=>a+x.kg*x.r,0));
+  const u=noKg?(secs?' s':' reps'):' kg';
+  const pts=log.map(l=>({x:diffDays(START,l.d),y:val(l)}));
+  const first=pts[0],last=pts[pts.length-1],ch=pts.length>1?last.y-first.y:null;
+  const lbl=mode==='max'?(noKg?(secs?'Mejor tiempo':'Más repeticiones'):'Peso máximo'):(noKg?(secs?'Tiempo total':'Repeticiones totales'):'Kilos totales');
+  return `<section class="card" id="fuerza"><h2>Fuerza por ejercicio</h2>
+    <div class="field"><label for="fz-ex">Ejercicio</label><select id="fz-ex" data-act="fz-ex">${order.map(k=>`<option value="${k}" ${k===id?'selected':''}>${esc(ALL_EX.find(e=>e.id===k).n)} (${by[k].length})</option>`).join('')}</select></div>
+    <div class="seg seg2" role="group" aria-label="Qué medir"><button type="button" data-act="fz-mode" data-mode="max" aria-pressed="${mode==='max'}"><b>${noKg?(secs?'Mejor tiempo':'Más reps'):'Peso máximo'}</b>la mejor serie</button><button type="button" data-act="fz-mode" data-mode="tot" aria-pressed="${mode==='tot'}"><b>${noKg?'Total':'Kilos totales'}</b>kg × reps del día</button></div>
+    <div class="row between"><span class="small muted">${lbl} por entreno</span>${ch!=null?`<span class="chip" style="color:var(--${ch>0?'good':ch<0?'warn':'muted'})">${ch>0?'+':''}${fmt(Math.round(ch*10)/10,ch%1?1:0)}${u} desde el ${shortDate(first.d||log[0].d)}</span>`:''}</div>
+    ${lineChart({pts,xmin:Math.min(0,pts[0].x),xmax:Math.max(last.x,6),dec:mode==='max'&&!noKg?1:0})}
+    <div class="fz-log">${log.slice(-6).reverse().map(l=>`<div class="fz-row"><span class="mono">${shortDate(l.d)}</span><span class="grow mono small">${l.sets.map(x=>`${x.kg?fmt(x.kg,x.kg%1?1:0)+'×':''}${x.r}${secs?'s':''}`).join(' · ')}</span><span class="num small">${noKg?'':fmt(Math.round(l.sets.reduce((a,x)=>a+x.kg*x.r,0)))+' kg'}</span></div>`).join('')}</div>
+    <p class="small muted">Solo cuentan las series que tú escribes en Entreno, no las sugerencias en gris. Si repites el peso de la sugerencia, escríbelo también para que cuente.</p>
   </section>`;
 }
 function weightSeries(){return Object.entries(S.days).filter(([k,v])=>v&&+v.weight>0).map(([k,v])=>({d:k,x:diffDays(START,k),y:+v.weight})).sort((a,b)=>a.x-b.x)}
@@ -1609,6 +1646,7 @@ function viewProgreso(){
     <p class="small muted">Los puntos son pesajes; la línea es la media de 7 días. Fíjate en la línea: el peso diario sube y baja con agua, sal y comida.</p>
   </section>
   ${statsCards()}
+  ${strengthCard()}
   <section class="card"><h2>Medidas</h2>
     <div class="mgrid">${MEDIDAS.map(m=>measureCard(m.t,measureSeries(m.k),m.u,m.up)).join('')}</div>
     <p class="small muted">Verde: va en la buena dirección (cintura hacia abajo; bíceps, muslo, glúteo y espalda hacia arriba). Objetivo de cintura a 12 semanas: bajar 5-7 cm.</p>
@@ -1746,6 +1784,7 @@ $('#view').addEventListener('click',e=>{
   else if(a==='zepp-help')openZeppHelp();
   else if(a==='watch-settings')openWatchSettings();
   else if(a==='rest')startTimer(+b.dataset.sec,b.dataset.name);
+  else if(a==='fz-mode'){const p=lsGet(FZK,{});p.mode=b.dataset.mode;lsSet(FZK,p);render()}
   else if(a==='wo-save'){const w=clone(S.workouts[d]||{});w.session=w.session||sessionFor(d);const sm=woSummary(w);
     if(!sm.n){toast('No hay ninguna serie apuntada todavía','err');return}
     w.done=true;w.doneAt=new Date().toISOString();saveDoc('workouts',d,w);if(typeof stopTimer==='function'&&T)stopTimer();
@@ -1770,6 +1809,7 @@ $('#view').addEventListener('input',e=>{
 $('#view').addEventListener('change',e=>{
   const el=e.target;
   if(el.dataset.ex&&el.dataset.k==='r'&&el.value!==''&&st.date===todayISO())autoRest(el.dataset.ex);
+  if(el.dataset.act==='fz-ex'){const p=lsGet(FZK,{});p.id=el.value;lsSet(FZK,p);pendingRender=false;el.blur();render();return}
   if(el.dataset.act==='session'){const w=clone(S.workouts[st.date]||{});w.session=el.value;saveDoc('workouts',st.date,w);pendingRender=false;el.blur();render()}
 });
 
