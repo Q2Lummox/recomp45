@@ -1,5 +1,10 @@
 # Novedades
 
+## v1.12.0 · 2026-11-09
+- Temporizador de descanso: arranca solo al apuntar las repeticiones de una serie (en superserie, al terminar la pareja)
+- Al acabar el descanso pita y sigue contando en rojo el tiempo que te pasas; botones −15 y +30 segundos
+- La pantalla no se apaga mientras corre el descanso
+
 ## v1.11.0 · 2026-11-04
 - El doble de variedad: seis desayunos, seis almuerzos, seis comidas, seis meriendas y seis cenas para elegir
 - Nuevos platos: tortilla francesa, tortitas de avena, tostadas con Burgos, bocadillos de tortilla y de lomo, wraps, lomo con patatas, arroz con gambas, pavo con boniato, bacalao, ensalada de pasta y fajitas

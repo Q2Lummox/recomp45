@@ -221,9 +221,17 @@ a{color:var(--accent)}
 .sets input{padding:7px 8px;text-align:center}
 .restbtn{border:1px solid #3b424b;background:linear-gradient(180deg,#2c3138,#1a1e23);box-shadow:var(--bevel);border-radius:3px;padding:6px 9px;font-family:var(--f-mono);font-size:.82rem;white-space:nowrap}
 .timer{position:fixed;left:0;right:0;bottom:calc(66px + env(safe-area-inset-bottom,0px));z-index:35;display:flex;justify-content:center}
-.timer-in{background:#14171bf2;border:1px solid #2a3037;border-left:4px solid var(--accent);border-radius:4px;padding:10px 14px;display:flex;gap:14px;align-items:center;max-width:640px;width:100%;box-shadow:0 10px 24px #000a}
-.timer-in .t{font-family:var(--f-mono);font-size:1.6rem;color:var(--accent)}
-.timer-in button{margin-left:auto}
+.timer-in{background:#14171b;border:1px solid #2a3037;border-left:4px solid var(--accent);border-radius:4px;padding:10px 14px;display:flex;gap:14px;align-items:center;max-width:640px;width:100%;box-shadow:0 10px 24px #000a}
+.timer-in{flex-direction:column;align-items:stretch;gap:8px}
+.timer-in .t{font-family:var(--f-mono);font-size:2rem;line-height:1;color:var(--accent)}
+.timer-in.over{border-left-color:var(--bad,#e5484d)}
+.timer-in.over .t{color:var(--bad,#e5484d)}
+.timer-row{display:flex;align-items:center;gap:8px}
+.timer-row .grow{min-width:0}
+.timer-row .small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.timer-bar{height:5px;border-radius:3px;background:#262b31;overflow:hidden}
+.timer-bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s linear}
+.timer-in.over .timer-bar i{background:var(--bad,#e5484d)}
 
 /* progreso */
 .kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -364,7 +372,9 @@ td.num{white-space:nowrap}
 </div>
 
 <div class="timer gut" id="timer" hidden>
-  <div class="timer-in"><div><div class="small muted" id="timerlbl">Descanso</div><div class="t" id="timert">2:00</div></div><button type="button" class="btn sm" id="timerstop">Parar</button></div>
+  <div class="timer-in" id="timerbox"><div class="timer-row"><div class="grow"><div class="small muted" id="timerlbl">Descanso</div><div class="t num" id="timert">2:00</div></div>
+    <button type="button" class="btn sm" id="timerminus" aria-label="Quitar 15 segundos">−15</button><button type="button" class="btn sm" id="timerplus" aria-label="Añadir 30 segundos">+30</button><button type="button" class="btn sm" id="timerstop">Parar</button></div>
+    <div class="timer-bar"><i id="timerfill"></i></div></div>
 </div>
 <div class="sheet" id="sheet" hidden>
   <div class="ovl" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
@@ -382,7 +392,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.11.0';
+const APP_VERSION='1.12.0';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -1467,18 +1477,44 @@ $('#view').addEventListener('input',e=>{
 });
 $('#view').addEventListener('change',e=>{
   const el=e.target;
+  if(el.dataset.ex&&el.dataset.k==='r'&&el.value!==''&&st.date===todayISO())autoRest(el.dataset.ex);
   if(el.dataset.act==='session'){const w=clone(S.workouts[st.date]||{});w.session=el.value;saveDoc('workouts',st.date,w);pendingRender=false;el.blur();render()}
 });
 
 /* temporizador de descanso */
-let tInt=null;
+/* Cuenta atrás del descanso; al llegar a 0 pita y sigue contando en rojo lo que te pasas.
+   Arranca solo al apuntar las repeticiones de una serie (en superserie, al apuntar la del último ejercicio de la pareja). */
+let tInt=null,T=null,actx=null,wlock=null;
+function unlockAudio(){try{if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume()}catch(e){}}
+document.addEventListener('touchend',unlockAudio,{passive:true});document.addEventListener('click',unlockAudio);
+function beep(){try{unlockAudio();if(!actx)return;const t0=actx.currentTime;
+  [0,.25,.5].forEach((dt,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=i===2?1320:880;o.type='square';
+    g.gain.setValueAtTime(0,t0+dt);g.gain.linearRampToValueAtTime(.18,t0+dt+.01);g.gain.linearRampToValueAtTime(0,t0+dt+.18);
+    o.connect(g).connect(actx.destination);o.start(t0+dt);o.stop(t0+dt+.2)})}catch(e){}
+  try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}
+async function keepAwake(on){try{if(on&&!wlock&&navigator.wakeLock)wlock=await navigator.wakeLock.request('screen');else if(!on&&wlock){await wlock.release();wlock=null}}catch(e){wlock=null}}
+function stopTimer(){clearInterval(tInt);T=null;$('#timer').hidden=true;keepAwake(false)}
 function startTimer(sec,name){
-  clearInterval(tInt);const end=Date.now()+sec*1000;$('#timer').hidden=false;$('#timerlbl').textContent='Descanso · '+name;
-  const tick=()=>{const left=Math.max(0,(end-Date.now())/1000);$('#timert').textContent=mmss(Math.ceil(left));
-    if(left<=0){clearInterval(tInt);$('#timert').textContent='¡Serie!';try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}setTimeout(()=>{$('#timer').hidden=true},4000)}};
+  clearInterval(tInt);T={end:Date.now()+sec*1000,total:sec,name,beeped:false};
+  $('#timer').hidden=false;keepAwake(true);
+  const tick=()=>{if(!T)return;const left=(T.end-Date.now())/1000,box=$('#timerbox');
+    if(left>0){box.classList.remove('over');$('#timerlbl').textContent='Descanso · '+T.name;$('#timert').textContent=mmss(Math.ceil(left));
+      $('#timerfill').style.width=Math.min(100,(1-left/T.total)*100)+'%'}
+    else{if(!T.beeped){T.beeped=true;beep()}const over=-left;box.classList.add('over');
+      $('#timerlbl').textContent='¡A por la serie!';$('#timert').textContent='+'+mmss(Math.floor(over));$('#timerfill').style.width='100%';
+      if(over>300)stopTimer()}};
   tick();tInt=setInterval(tick,250);
 }
-$('#timerstop').onclick=()=>{clearInterval(tInt);$('#timer').hidden=true};
+$('#timerstop').onclick=stopTimer;
+$('#timerplus').onclick=()=>{if(!T)return;if(T.end<Date.now()){T.end=Date.now();T.beeped=false}T.end+=30000;T.total+=30};
+$('#timerminus').onclick=()=>{if(!T)return;T.end-=15000;T.total=Math.max(15,T.total-15)};
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&T)keepAwake(true)});
+/* al apuntar las repeticiones, arranca el descanso que toca */
+function autoRest(exId){
+  const SS=SESS[sessionFor(st.date)];if(!SS)return;const xi=SS.ex.findIndex(e=>e.id===exId);if(xi<0)return;
+  const ex=SS.ex[xi],nxt=SS.ex[xi+1];if(ex.ss&&nxt&&nxt.ss&&nxt.ss[0]===ex.ss[0])return;   /* A1: sin descanso, pasa a A2 */
+  if(ex.r)startTimer(ex.r,ex.n);
+}
 
 /* menú */
 $('#btn-menu').onclick=e=>{e.stopPropagation();const m=$('#menu');m.hidden=!m.hidden;$('#btn-menu').setAttribute('aria-expanded',String(!m.hidden))};
