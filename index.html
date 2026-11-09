@@ -207,6 +207,7 @@ a{color:var(--accent)}
 .macroline{display:flex;gap:12px;flex-wrap:wrap;font-family:var(--f-mono);font-size:.8rem}
 .pP{color:var(--p)} .pC{color:var(--c)} .pF{color:var(--f)}
 .extra-form{display:grid;grid-template-columns:1fr 90px;gap:8px}
+.nut-head{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px}
 .wo-save{width:100%;padding:14px;font-size:1.05rem}
 .wo-done{display:grid;gap:6px;border:1px solid var(--good);background:var(--good-soft);border-radius:4px;padding:12px}
 .wo-done b{color:var(--good)}.wo-done .btn{justify-self:start}
@@ -418,7 +419,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.16.0';
+const APP_VERSION='1.17.0';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -1400,6 +1401,47 @@ function lineChart({pts,line,xmin,xmax,dec=1}){
   const end=last?`<circle cx="${X(last.x)}" cy="${Y(last.y)}" r="5" fill="#f39a1e" stroke="#14171b" stroke-width="2"/><text x="${Math.min(X(last.x),W-R-30)}" y="${Math.max(Y(last.y)-10,T+8)}" text-anchor="middle" style="fill:#e8ecf0;font-weight:500">${fmt(last.y,dec)}</text>`:'';
   return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">${g}${dots}${ln}${end}</svg>`;
 }
+/* barras por semana con línea de objetivo opcional (kilos movidos, medias de nutrición) */
+function barChart({bars,target,color='#f39a1e',dec=0,unit=''}){
+  const W=340,H=170,L=42,R=10,T=18,B=30,n=bars.length;
+  const vals=bars.map(b=>b.v||0),raw=(Math.max(...vals,target||0)*1.12||1)/3,mag=10**Math.floor(Math.log10(raw)),step=[1,2,2.5,5,10].map(m=>m*mag).find(x=>x>=raw),top=step*3;
+  const bw=(W-L-R)/Math.max(n,6),Y=v=>T+(1-v/top)*(H-T-B);
+  let g='';
+  for(let i=0;i<4;i++){const v=top*i/3;g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="#23282e"/><text x="${L-6}" y="${Y(v)+3}" text-anchor="end">${v>=10000?fmt(Math.round(v/1000))+'k':fmt(Math.round(v))}</text>`}
+  if(target)g+=`<line x1="${L}" x2="${W-R}" y1="${Y(target)}" y2="${Y(target)}" stroke="#e8ecf0" stroke-dasharray="4 4" opacity=".6"/><text x="${W-R}" y="${Y(target)-4}" text-anchor="end" style="fill:#e8ecf0">Objetivo ${fmt(target)}${unit}</text>`;
+  bars.forEach((b,i)=>{const x=L+i*bw+bw*.18,w=bw*.64;
+    if(b.v){g+=`<rect x="${x.toFixed(1)}" y="${Y(b.v).toFixed(1)}" width="${w.toFixed(1)}" height="${(H-B-Y(b.v)).toFixed(1)}" rx="2" fill="${color}" opacity="${b.cur?1:.75}"/>`;
+      if(n<=8||b.cur)g+=`<text x="${(x+w/2).toFixed(1)}" y="${(Y(b.v)-4).toFixed(1)}" text-anchor="middle" style="fill:#e8ecf0">${b.v>=10000?fmt(Math.round(b.v/100)/10,1)+'k':fmt(Math.round(b.v),0)}</text>`}
+    g+=`<text x="${(x+w/2).toFixed(1)}" y="${H-14}" text-anchor="middle" style="${b.cur?'fill:#e8ecf0':''}">${b.l}</text>${b.sub?`<text x="${(x+w/2).toFixed(1)}" y="${H-3}" text-anchor="middle" style="font-size:8px">${b.sub}</text>`:''}`});
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">${g}</svg>`;
+}
+/* semanas del plan con datos: kilos movidos y medias diarias de lo comido (solo días con comida apuntada) */
+function weeklyStats(){
+  const cw=Math.min(weekOf(todayISO()),52),from=Math.max(1,cw-11),out=[];
+  for(let w=from;w<=cw;w++)out.push({w,vol:0,sets:0,n:0,k:0,p:0,f:0,cur:w===cw});
+  const at=w=>out.find(o=>o.w===w);
+  for(const [k,wo] of Object.entries(S.workouts)){if(k<START)continue;const o=at(weekOf(k));if(!o)continue;const sm=woSummary(wo);o.vol+=sm.vol;o.sets+=sm.n}
+  for(const k of Object.keys(S.days)){if(k<START||k>todayISO())continue;const o=at(weekOf(k));if(!o)continue;const v=getDay(k);if(!hasLog(v))continue;const t=dayTotals(v);o.n++;o.k+=t.k;o.p+=t.p;o.f+=t.f}
+  for(const o of out)if(o.n){o.k/=o.n;o.p/=o.n;o.f/=o.n}
+  return out;
+}
+function statsCards(){
+  const ws=weeklyStats(),cur=ws[ws.length-1],prev=ws[ws.length-2];
+  const pp=ws[ws.length-3],volD=prev&&pp&&prev.vol&&pp.vol?Math.round((prev.vol/pp.vol-1)*100):null;
+  const hasVol=ws.some(o=>o.vol),hasFood=ws.some(o=>o.n);
+  const B=(key)=>ws.map(o=>({l:'S'+o.w,v:o[key],cur:o.cur,sub:key!=='vol'&&o.n?o.n+'d':''}));
+  return `<section class="card"><div class="row between"><h2 class="grow">Kilos movidos por semana</h2>${cur.vol?`<span class="chip">${fmt(Math.round(cur.vol))} kg</span>`:''}</div>
+    ${hasVol?barChart({bars:B('vol')}):'<div class="empty">Aquí verás la suma de peso × repeticiones de todas tus series de cada semana.<br>Se rellena al apuntar el entreno.</div>'}
+    <p class="small muted">Suma de kilos × repeticiones de todas las series de la semana. ${volD!=null?`La semana pasada: <b style="color:var(--${volD>=0?'good':'warn'})">${volD>0?'+':''}${volD}%</b> respecto a la anterior.`:'Si sube semana a semana, estás progresando.'} La barra más clara es la semana en curso. En la semana de descarga baja a propósito.</p>
+  </section>
+  <section class="card"><div class="row between"><h2 class="grow">Nutrición media por semana</h2>${cur.n?`<span class="chip">${cur.n} ${cur.n===1?'día':'días'}</span>`:''}</div>
+    ${hasFood?`<div class="nut-head"><b>Calorías</b><span class="num">${cur.n?fmt(cur.k)+' kcal/día':'–'}</span></div>${barChart({bars:B('k'),target:TARGET.kcal,unit:' kcal'})}
+      <div class="nut-head"><b class="pP">Proteína</b><span class="num">${cur.n?fmt(cur.p)+' g/día':'–'}</span></div>${barChart({bars:B('p'),target:TARGET.p,color:'#5aa2e6',unit:' g'})}
+      <div class="nut-head"><b class="pF">Grasas</b><span class="num">${cur.n?fmt(cur.f)+' g/día':'–'}</span></div>${barChart({bars:B('f'),target:TARGET.f,color:'#a8bb64',unit:' g'})}`
+      :'<div class="empty">Aquí verás la media diaria de calorías, proteína y grasas de cada semana.<br>Se rellena al marcar comidas como comidas.</div>'}
+    <p class="small muted">Media de los días con comida apuntada (debajo de cada barra, cuántos días). La línea discontinua es tu objetivo diario.</p>
+  </section>`;
+}
 function weightSeries(){return Object.entries(S.days).filter(([k,v])=>v&&+v.weight>0).map(([k,v])=>({d:k,x:diffDays(START,k),y:+v.weight})).sort((a,b)=>a.x-b.x)}
 function weeklyAvgs(ws){const m={};for(const p of ws){const w=Math.floor(p.x/7)+1;(m[w]=m[w]||[]).push(p.y)}return Object.entries(m).map(([w,a])=>({w:+w,n:a.length,avg:a.reduce((s,v)=>s+v,0)/a.length})).sort((a,b)=>a.w-b.w)}
 function waistSeries(){return measureSeries('waist')}
@@ -1566,6 +1608,7 @@ function viewProgreso(){
     ${ws.length?lineChart({pts:ws,line:ws.length>2?avgLine:null,xmin:Math.min(0,ws[0].x),xmax:Math.max(ws[ws.length-1].x,6)}):`<div class="empty">Aquí verás tu peso diario y la media de 7 días.<br>Apunta tu peso en ayunas en Hoy o en la revisión.</div>`}
     <p class="small muted">Los puntos son pesajes; la línea es la media de 7 días. Fíjate en la línea: el peso diario sube y baja con agua, sal y comida.</p>
   </section>
+  ${statsCards()}
   <section class="card"><h2>Medidas</h2>
     <div class="mgrid">${MEDIDAS.map(m=>measureCard(m.t,measureSeries(m.k),m.u,m.up)).join('')}</div>
     <p class="small muted">Verde: va en la buena dirección (cintura hacia abajo; bíceps, muslo, glúteo y espalda hacia arriba). Objetivo de cintura a 12 semanas: bajar 5-7 cm.</p>

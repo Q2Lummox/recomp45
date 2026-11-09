@@ -1,5 +1,9 @@
 # Novedades
 
+## v1.17.0 · 2026-11-09
+- Progreso › Kilos movidos por semana: suma de peso × repeticiones de todas tus series, con la comparación con la semana anterior
+- Progreso › Nutrición media por semana: calorías, proteína y grasas medias al día de cada semana, con tu objetivo marcado
+
 ## v1.16.0 · 2026-11-09
 - Hoy reorganizado: arriba el entreno del día, después calorías y macros, luego la tarjeta del reloj y el resto debajo
 

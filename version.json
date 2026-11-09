@@ -1,10 +1,19 @@
 {
- "version": "1.16.0",
+ "version": "1.17.0",
  "fecha": "2026-11-09",
  "notas": [
-  "Hoy reorganizado: arriba el entreno del día, después calorías y macros, luego la tarjeta del reloj y el resto debajo"
+  "Progreso › Kilos movidos por semana: suma de peso × repeticiones de todas tus series, con la comparación con la semana anterior",
+  "Progreso › Nutrición media por semana: calorías, proteína y grasas medias al día de cada semana, con tu objetivo marcado"
  ],
  "historial": [
+  {
+   "version": "1.17.0",
+   "fecha": "2026-11-09",
+   "notas": [
+    "Progreso › Kilos movidos por semana: suma de peso × repeticiones de todas tus series, con la comparación con la semana anterior",
+    "Progreso › Nutrición media por semana: calorías, proteína y grasas medias al día de cada semana, con tu objetivo marcado"
+   ]
+  },
   {
    "version": "1.16.0",
    "fecha": "2026-11-09",
