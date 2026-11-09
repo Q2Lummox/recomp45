@@ -1,10 +1,17 @@
 {
- "version": "1.15.1",
+ "version": "1.16.0",
  "fecha": "2026-11-09",
  "notas": [
-  "Quitado el aviso de actualización sin número de versión: solo queda «Hay una versión nueva: vX»"
+  "Hoy reorganizado: arriba el entreno del día, después calorías y macros, luego la tarjeta del reloj y el resto debajo"
  ],
  "historial": [
+  {
+   "version": "1.16.0",
+   "fecha": "2026-11-09",
+   "notas": [
+    "Hoy reorganizado: arriba el entreno del día, después calorías y macros, luego la tarjeta del reloj y el resto debajo"
+   ]
+  },
   {
    "version": "1.15.1",
    "fecha": "2026-11-09",

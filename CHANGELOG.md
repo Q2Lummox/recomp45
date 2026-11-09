@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.16.0 · 2026-11-09
+- Hoy reorganizado: arriba el entreno del día, después calorías y macros, luego la tarjeta del reloj y el resto debajo
+
 ## v1.15.1 · 2026-11-09
 - Quitado el aviso de actualización sin número de versión: solo queda «Hay una versión nueva: vX»
 

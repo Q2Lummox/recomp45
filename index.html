@@ -151,6 +151,7 @@ a{color:var(--accent)}
 .mcard b{font-family:var(--f-display);font-weight:600;letter-spacing:.04em;text-transform:uppercase;font-size:.95rem}
 
 /* tarjeta del reloj */
+.watch-card>.watch{border:none;background:none;padding:0}
 .watch{border:1px solid #23282e;background:#101215;border-radius:4px;padding:12px;display:grid;gap:12px;min-width:0}
 .watch-head{display:flex;align-items:center;gap:8px}
 .watch-head label{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;flex:1}
@@ -417,7 +418,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.15.1';
+const APP_VERSION='1.16.0';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -949,18 +950,19 @@ function viewHoy(){
   const nextMeal=MEALS.find(m=>!(day.meals&&day.meals[m.id]&&day.meals[m.id].done));
   const sundayDue=d===todayISO()&&parse(d).getDay()===0&&!S.checkins[d];
   return `
-  ${sundayDue?`<section class="card wz-card due"><div class="row between"><div><div class="eyebrow">Domingo</div><div class="big-title">Hoy toca revisión</div></div><button type="button" class="btn pri" data-act="wizard">Empezar</button></div><p class="small muted">Peso en ayunas, medidas y tres fotos. Unos 5 minutos.</p></section>`:''}
-  <section class="phase"><b>Semana ${Math.min(w,12)} · ${ph.n}</b><span class="small">${ph.t}</span></section>
-  <section class="card"><div class="row between"><h2 class="grow">Energía del día</h2><button type="button" class="btn sm" data-goto="comida">Registrar</button></div>
-    ${energyBlock(t)}
-    ${nextMeal?`<p class="small muted">Siguiente: <b style="color:var(--ink)">${nextMeal.n}</b> · ${esc(nextMeal.opts[(day.meals&&day.meals[nextMeal.id]&&day.meals[nextMeal.id].opt)||'A'].t)}</p>`:`<p class="small" style="color:var(--good)"><b>Todas las comidas del plan registradas.</b></p>`}
-  </section>
   <section class="card">
     ${(()=>{const wd=S.workouts[st.date],done=!!(wd&&wd.done),sm=woSummary(wd);
       return `<div class="row between"><div><div class="eyebrow">Entreno de hoy</div><div class="big-title">${SS.n}</div></div>${sk==='descanso'?'':done?`<span class="chip done-chip">✓ Hecho</span>`:`<button type="button" class="btn pri" data-goto="entreno">Empezar</button>`}</div>
       ${done?`<p class="small" style="color:var(--good)"><b>Entreno guardado${wd.doneAt?' a las '+hhmm(wd.doneAt):''}</b> · <span class="num">${sm.n} series · ${fmt(Math.round(sm.vol))} kg movidos</span> <button type="button" class="btn sm" data-goto="entreno" style="margin-left:6px">Ver</button></p>`:''}`})()}
     <p class="small muted">${sk==='descanso'?'Camina, haz la rutina de codos y 10 minutos de movilidad. Recuperar también es entrenar.':`${SS.sub} · ${SS.ex.length} ejercicios · RIR ${ph.rir}`}</p>
   </section>
+  <section class="card"><div class="row between"><h2 class="grow">Energía del día</h2><button type="button" class="btn sm" data-goto="comida">Registrar</button></div>
+    ${energyBlock(t)}
+    ${nextMeal?`<p class="small muted">Siguiente: <b style="color:var(--ink)">${nextMeal.n}</b> · ${esc(nextMeal.opts[(day.meals&&day.meals[nextMeal.id]&&day.meals[nextMeal.id].opt)||'A'].t)}</p>`:`<p class="small" style="color:var(--good)"><b>Todas las comidas del plan registradas.</b></p>`}
+  </section>
+  <section class="card watch-card">${watchCard(day)}</section>
+  ${sundayDue?`<section class="card wz-card due"><div class="row between"><div><div class="eyebrow">Domingo</div><div class="big-title">Hoy toca revisión</div></div><button type="button" class="btn pri" data-act="wizard">Empezar</button></div><p class="small muted">Peso en ayunas, medidas y tres fotos. Unos 5 minutos.</p></section>`:''}
+  <section class="phase"><b>Semana ${Math.min(w,12)} · ${ph.n}</b><span class="small">${ph.t}</span></section>
   <section class="card"><h2>Pregunta al coach</h2>
     <div class="quick">
       <button type="button" data-ask="¿Qué me queda por comer hoy y qué me recomiendas para cuadrar los macros?">¿Qué me queda por comer?</button>
@@ -974,7 +976,6 @@ function viewHoy(){
       <div class="habit"><label>Agua</label><div class="stepper"><button type="button" data-act="water" data-d="-0.25" aria-label="Menos agua">−</button><span class="v">${fmt(water,2)} L</span><button type="button" data-act="water" data-d="0.25" aria-label="Más agua">+</button></div><div class="track"><div class="fill" style="width:${Math.min(100,water/3*100)}%;background:var(--p)"></div></div><span class="goal">3 L + 0,5 L por hora de obra sudando</span></div>
       <div class="habit"><label for="in-sueno">Sueño anoche (h)</label><input type="number" inputmode="decimal" step="0.25" min="0" max="14" id="in-sueno" data-field="sleep" value="${day.sleep??''}" placeholder="7,5"><span class="goal">${day.zepp&&day.zepp.sueno?'Desde Zepp':`Objetivo ${hm(goals().sueno)}`}</span></div>
     </div>
-    ${watchCard(day)}
   </section>`;
 }
 
