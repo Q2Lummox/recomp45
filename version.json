@@ -1,10 +1,17 @@
 {
- "version": "1.14.2",
+ "version": "1.14.3",
  "fecha": "2026-11-09",
  "notas": [
-  "IA más rápida al leer etiquetas y desglosar comidas (piensa menos), con contador de segundos y aviso si tarda más de un minuto en vez de quedarse colgada"
+  "Mis alimentos: nuevo campo Sodio (se calcula solo desde la sal si la etiqueta no lo trae, y al revés) y «Fibra alimentaria»"
  ],
  "historial": [
+  {
+   "version": "1.14.3",
+   "fecha": "2026-11-09",
+   "notas": [
+    "Mis alimentos: nuevo campo Sodio (se calcula solo desde la sal si la etiqueta no lo trae, y al revés) y «Fibra alimentaria»"
+   ]
+  },
   {
    "version": "1.14.2",
    "fecha": "2026-11-09",

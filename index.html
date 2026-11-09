@@ -413,7 +413,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.14.2';
+const APP_VERSION='1.14.3';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -1134,7 +1134,7 @@ function drawRes(){
     +`<button type="button" class="ia" data-me="ia"><span>✨ Calcular con IA: «${esc(ME.q.trim())}»</span><small>separa ingredientes</small></button>`;
 }
 /* ===== mis alimentos (v1.14.0) =====
-   users/<uid>/ajustes/alimentos = {items:{id:{n,k,p,c,az,f,fib,sal,ml,def,rep}}} · valores por 100 g o 100 ml.
+   users/<uid>/ajustes/alimentos = {items:{id:{n,k,p,c,az,f,fib,sal,sod,ml,def,rep}}} · valores por 100 g o 100 ml.
    rep: alimento de la app al que sustituye (su nombre y macros pasan a ser los tuyos, también en los menús). */
 const FOODS_BASE=JSON.parse(JSON.stringify(FOODS));
 const myFoods=()=>(AJ.alimentos&&AJ.alimentos.items)||{};
@@ -1157,7 +1157,7 @@ function openMyFoods(){
   $('#sheet-body').onclick=e=>{const b=e.target.closest('[data-mf]');if(!b)return;if(b.dataset.mf==='new')openFoodForm(null);else if(b.dataset.mf==='edit')openFoodForm(b.dataset.id)};
 }
 const fmtD=v=>fmt(Math.round((+v||0)*10)/10,1);
-const MF_FIELDS=[['k','Calorías','kcal'],['p','Proteínas','g'],['c','Hidratos de carbono','g'],['az','de ellos azúcares','g'],['f','Grasas','g'],['fib','Fibra','g'],['sal','Sal','g']];
+const MF_FIELDS=[['k','Calorías','kcal'],['p','Proteínas','g'],['c','Hidratos de carbono','g'],['az','de ellos azúcares','g'],['f','Grasas','g'],['fib','Fibra alimentaria','g'],['sal','Sal','g'],['sod','Sodio','g']];
 function openFoodForm(id){
   const x=id?{...myFoods()[id]}:{n:'',ml:false};
   MF={id,x,img:null,del:false};
@@ -1192,7 +1192,7 @@ async function readLabel(file){
 Lee los valores de la columna POR 100 g (o por 100 ml si es una bebida). No uses la columna por ración salvo que no haya otra; en ese caso conviértelos a 100.
 Si la etiqueta indica una ración (p. ej. "ración 30 g"), ponla en "racion" en gramos o ml.
 Elige además, de esta lista, el alimento genérico al que más se parece este producto, o null si ninguno encaja: ${list}.
-Responde SOLO con JSON: {"nombre":"nombre corto del producto si se ve, o null","ml":false,"k":370,"p":12,"c":65,"az":8,"f":5,"fib":9,"sal":0.4,"racion":30,"parecido":"cereales","legible":true}
+Responde SOLO con JSON: {"nombre":"nombre corto del producto si se ve, o null","ml":false,"k":370,"p":12,"c":65,"az":8,"f":5,"fib":9,"sal":0.4,"sod":0.16,"racion":30,"parecido":"cereales","legible":true}
 Usa números con punto decimal. Si un valor no aparece, pon null. Si la foto no es una tabla nutricional o no se lee, pon "legible":false.`;
   try{
     let r;try{r=await gemini({contents:[{role:'user',parts:[{text:prompt},{inline_data:{mime_type:MF.img.mime,data:MF.img.data}}]}],json:true,fast:true})}finally{clearInterval(secs)}
@@ -1200,7 +1200,10 @@ Usa números con punto decimal. Si un valor no aparece, pon null. Si la foto no 
     r=flatLabel(r);
     if(r.legible===false)throw new Error('No consigo leer la tabla. Haz la foto más cerca, recta y con buena luz.');
     let filled=0;
-    for(const [k] of MF_FIELDS){const v=numLbl(r[k]);if(v!=null){const d=k==='sal'?100:10;$('#mf-'+k).value=String(Math.round(v*d)/d).replace('.',',');filled++}}
+    for(const [k] of MF_FIELDS){const v=numLbl(r[k]);if(v!=null){const d=(k==='sal'||k==='sod')?100:10;$('#mf-'+k).value=String(Math.round(v*d)/d).replace('.',',');filled++}}
+    {const sa=numIn('#mf-sal'),so=numIn('#mf-sod');
+      if(sa!=null&&so==null)$('#mf-sod').value=String(Math.round(sa/2.5*100)/100).replace('.',',');
+      else if(so!=null&&sa==null)$('#mf-sal').value=String(Math.round(so*2.5*100)/100).replace('.',',')}
     if(!filled)throw new Error('He visto la foto pero no he sacado los números. Hazla más cerca, que la tabla ocupe casi toda la foto, o escríbelos a mano.');
     if(numLbl(r.racion)>0)$('#mf-def').value=String(+r.racion).replace('.',',');
     if(!$('#mf-n').value.trim()&&r.nombre)$('#mf-n').value=r.nombre;
@@ -1215,7 +1218,7 @@ function flatLabel(r){
   if(Array.isArray(r))r=r[0]||{};
   const o={};const walk=x=>{for(const [k,v] of Object.entries(x||{})){if(v&&typeof v==='object'&&!Array.isArray(v))walk(v);else if(!(k in o))o[k]=v}};walk(r);
   const al={k:['k','kcal','energia','calorias','energy'],p:['p','proteinas','protein','proteina'],c:['c','hidratos','carbohidratos','hidratos_de_carbono','carbs'],az:['az','azucares','sugars','azucar'],
-    f:['f','grasas','grasa','fat','lipidos'],fib:['fib','fibra','fiber'],sal:['sal','salt'],racion:['racion','porcion','serving'],nombre:['nombre','name'],parecido:['parecido'],ml:['ml'],legible:['legible']};
+    f:['f','grasas','grasa','fat','lipidos'],fib:['fib','fibra','fiber'],sal:['sal','salt'],sod:['sod','sodio','sodium'],racion:['racion','porcion','serving'],nombre:['nombre','name'],parecido:['parecido'],ml:['ml'],legible:['legible']};
   const out={},nk=Object.fromEntries(Object.entries(o).map(([k,v])=>[norm(k).replace(/\s+/g,'_'),v]));
   for(const [k,names] of Object.entries(al))for(const n of names)if(nk[n]!=null){out[k]=nk[n];break}
   return out;

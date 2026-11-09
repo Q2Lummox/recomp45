@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.14.3 · 2026-11-09
+- Mis alimentos: nuevo campo Sodio (se calcula solo desde la sal si la etiqueta no lo trae, y al revés) y «Fibra alimentaria»
+
 ## v1.14.2 · 2026-11-09
 - IA más rápida al leer etiquetas y desglosar comidas (piensa menos), con contador de segundos y aviso si tarda más de un minuto en vez de quedarse colgada
 

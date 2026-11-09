@@ -2,7 +2,7 @@
    - Al instalarse guarda la app y sus iconos: funciona sin conexión desde la primera vez.
    - La app: primero la red (para ver siempre lo último); sin conexión, la copia guardada.
    - Librerías y fuentes de CDN (direcciones con versión fija): primero la caché. */
-const CACHE = 'recomp-v-1.14.2', LIBS = 'recomp-libs';
+const CACHE = 'recomp-v-1.14.3', LIBS = 'recomp-libs';
 const CORE = ['./', './index.html', './fb.js', './firebase-config.js', './manifest.webmanifest', './version.json',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'];
 const FBJ = 'https://www.gstatic.com/firebasejs/10.12.2/';
