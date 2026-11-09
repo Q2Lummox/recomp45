@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.15.1 · 2026-11-09
+- Quitado el aviso de actualización sin número de versión: solo queda «Hay una versión nueva: vX»
+
 ## v1.15.0 · 2026-11-09
 - Entreno › «Guardar entreno» al acabar la sesión: queda marcado como hecho con tus series y los kilos movidos
 - En Hoy, el entreno guardado sale como «✓ Hecho» en lugar del botón Empezar

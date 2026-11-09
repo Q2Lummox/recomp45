@@ -417,7 +417,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.15.0';
+const APP_VERSION='1.15.1';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -2133,9 +2133,8 @@ if(/[?&]v=/.test(location.search)&&!/[?&]zepp=/.test(location.search))history.re
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js').then(reg=>{
     swReg=reg;
-    const offer=async()=>{if(updToastFor)return;updToastFor='sw';
-      try{if(!hasUpdate())await fetchLatest()}catch(e){}
-      toast(hasUpdate()?`Hay una versión nueva: v${latest.version}`:'Hay una versión nueva','',{label:'Actualizar',fn:applyUpdate})};
+    /* el único aviso es el de checkUpdateSilent, siempre con el número de versión */
+    const offer=()=>{checkUpdateSilent()};
     if(reg.waiting&&navigator.serviceWorker.controller)offer();
     reg.addEventListener('updatefound',()=>{const nw=reg.installing;nw&&nw.addEventListener('statechange',()=>{if(nw.state==='installed'&&navigator.serviceWorker.controller)offer()})});
     setInterval(()=>reg.update().catch(()=>{}),30*60*1000);
