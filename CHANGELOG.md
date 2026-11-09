@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.14.5 · 2026-11-09
+- Aviso de versión nueva: un solo aviso, siempre con el número de versión
+
 ## v1.14.4 · 2026-11-09
 - Aviso de versión nueva: sale un solo aviso en vez de dos
 
