@@ -1,5 +1,9 @@
 # Novedades
 
+## v1.15.0 · 2026-11-09
+- Entreno › «Guardar entreno» al acabar la sesión: queda marcado como hecho con tus series y los kilos movidos
+- En Hoy, el entreno guardado sale como «✓ Hecho» en lugar del botón Empezar
+
 ## v1.14.5 · 2026-11-09
 - Aviso de versión nueva: un solo aviso, siempre con el número de versión
 

@@ -206,6 +206,10 @@ a{color:var(--accent)}
 .macroline{display:flex;gap:12px;flex-wrap:wrap;font-family:var(--f-mono);font-size:.8rem}
 .pP{color:var(--p)} .pC{color:var(--c)} .pF{color:var(--f)}
 .extra-form{display:grid;grid-template-columns:1fr 90px;gap:8px}
+.wo-save{width:100%;padding:14px;font-size:1.05rem}
+.wo-done{display:grid;gap:6px;border:1px solid var(--good);background:var(--good-soft);border-radius:4px;padding:12px}
+.wo-done b{color:var(--good)}.wo-done .btn{justify-self:start}
+.done-chip{border-color:var(--good);color:var(--good)}
 .mf-list{display:grid;gap:6px}
 .mf-item{display:flex;align-items:center;gap:10px;text-align:left;border:1px solid #23282e;background:#101215;color:var(--ink);border-radius:4px;padding:10px 12px}
 .mf-item small{display:block;color:var(--muted);font-family:var(--f-mono);font-size:.76rem;margin-top:2px}
@@ -413,7 +417,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.14.5';
+const APP_VERSION='1.15.0';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -952,7 +956,9 @@ function viewHoy(){
     ${nextMeal?`<p class="small muted">Siguiente: <b style="color:var(--ink)">${nextMeal.n}</b> · ${esc(nextMeal.opts[(day.meals&&day.meals[nextMeal.id]&&day.meals[nextMeal.id].opt)||'A'].t)}</p>`:`<p class="small" style="color:var(--good)"><b>Todas las comidas del plan registradas.</b></p>`}
   </section>
   <section class="card">
-    <div class="row between"><div><div class="eyebrow">Entreno de hoy</div><div class="big-title">${SS.n}</div></div>${sk!=='descanso'?`<button type="button" class="btn pri" data-goto="entreno">Empezar</button>`:''}</div>
+    ${(()=>{const wd=S.workouts[st.date],done=!!(wd&&wd.done),sm=woSummary(wd);
+      return `<div class="row between"><div><div class="eyebrow">Entreno de hoy</div><div class="big-title">${SS.n}</div></div>${sk==='descanso'?'':done?`<span class="chip done-chip">✓ Hecho</span>`:`<button type="button" class="btn pri" data-goto="entreno">Empezar</button>`}</div>
+      ${done?`<p class="small" style="color:var(--good)"><b>Entreno guardado${wd.doneAt?' a las '+hhmm(wd.doneAt):''}</b> · <span class="num">${sm.n} series · ${fmt(Math.round(sm.vol))} kg movidos</span> <button type="button" class="btn sm" data-goto="entreno" style="margin-left:6px">Ver</button></p>`:''}`})()}
     <p class="small muted">${sk==='descanso'?'Camina, haz la rutina de codos y 10 minutos de movilidad. Recuperar también es entrenar.':`${SS.sub} · ${SS.ex.length} ejercicios · RIR ${ph.rir}`}</p>
   </section>
   <section class="card"><h2>Pregunta al coach</h2>
@@ -1314,6 +1320,9 @@ function viewComida(){
   return html;
 }
 
+/* resumen de un entreno guardado: series apuntadas y kilos totales movidos */
+function woSummary(w){let n=0,vol=0;for(const sets of Object.values((w&&w.sets)||{}))for(const x of sets||[])if(x&&x.r){n++;vol+=(+x.kg||0)*(+x.r||0)}return{n,vol}}
+const hhmm=iso=>new Date(iso).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
 function lastPerf(exId,date){
   const ks=Object.keys(S.workouts).filter(k=>k<date).sort().reverse();
   for(const k of ks){const sets=S.workouts[k]&&S.workouts[k].sets&&S.workouts[k].sets[exId];if(sets&&sets.some(s=>s&&s.r))return{date:k,sets:sets.filter(s=>s&&s.r)}}
@@ -1366,6 +1375,9 @@ function viewEntreno(){
     <div class="field"><label for="w-pain">Dolor de codo en la sesión: <b class="num" id="painv">${wk.pain??0}</b>/10</label><input type="range" min="0" max="10" step="1" id="w-pain" data-act="pain" value="${wk.pain??0}"></div>
     <p class="small muted">0-3 normal, sigue. 4-5: baja el peso o el recorrido en ese ejercicio. Más de 5: quítalo esa semana.</p>
     <div class="field"><label for="w-note">Notas</label><textarea id="w-note" rows="2" data-act="wnote" placeholder="Cómo te has sentido, cambios de máquina…">${esc(wk.note||'')}</textarea></div>
+    ${(()=>{const sm=woSummary(wk);return wk.done
+      ?`<div class="wo-done"><b>✓ Entreno guardado${wk.doneAt?' a las '+hhmm(wk.doneAt):''}</b><span class="small num">${sm.n} series · ${fmt(Math.round(sm.vol))} kg movidos</span><span class="small muted">Puedes seguir corrigiendo datos: se guardan solos.</span><button type="button" class="btn sm" data-act="wo-open">Reabrir entreno</button></div>`
+      :`<button type="button" class="btn pri wo-save" data-act="wo-save">Guardar entreno</button><p class="small muted" style="margin:0">Guárdalo al acabar, aunque haya series sin apuntar. En Hoy quedará como hecho.</p>`})()}
   </section>`;
   return html;
 }
@@ -1690,6 +1702,11 @@ $('#view').addEventListener('click',e=>{
   else if(a==='zepp-help')openZeppHelp();
   else if(a==='watch-settings')openWatchSettings();
   else if(a==='rest')startTimer(+b.dataset.sec,b.dataset.name);
+  else if(a==='wo-save'){const w=clone(S.workouts[d]||{});w.session=w.session||sessionFor(d);const sm=woSummary(w);
+    if(!sm.n){toast('No hay ninguna serie apuntada todavía','err');return}
+    w.done=true;w.doneAt=new Date().toISOString();saveDoc('workouts',d,w);if(typeof stopTimer==='function'&&T)stopTimer();
+    toast(`Entreno guardado: ${sm.n} series · ${fmt(Math.round(sm.vol))} kg`);render();window.scrollTo({top:0,behavior:'smooth'})}
+  else if(a==='wo-open'){const w=clone(S.workouts[d]||{});delete w.done;delete w.doneAt;saveDoc('workouts',d,w);render()}
   else if(a==='cinta'){const w=clone(S.workouts[d]||{});w.session=w.session||sessionFor(d);w.cinta=!w.cinta;saveDoc('workouts',d,w);render()}
   else if(a==='wizard')openWizard();
   else if(a==='pview'){photoView=b.dataset.v;render()}
