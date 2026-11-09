@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.14.4 · 2026-11-09
+- Aviso de versión nueva: sale un solo aviso en vez de dos
+
 ## v1.14.3 · 2026-11-09
 - Mis alimentos: nuevo campo Sodio (se calcula solo desde la sal si la etiqueta no lo trae, y al revés) y «Fibra alimentaria»
 

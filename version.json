@@ -1,10 +1,17 @@
 {
- "version": "1.14.3",
+ "version": "1.14.4",
  "fecha": "2026-11-09",
  "notas": [
-  "Mis alimentos: nuevo campo Sodio (se calcula solo desde la sal si la etiqueta no lo trae, y al revés) y «Fibra alimentaria»"
+  "Aviso de versión nueva: sale un solo aviso en vez de dos"
  ],
  "historial": [
+  {
+   "version": "1.14.4",
+   "fecha": "2026-11-09",
+   "notas": [
+    "Aviso de versión nueva: sale un solo aviso en vez de dos"
+   ]
+  },
   {
    "version": "1.14.3",
    "fecha": "2026-11-09",

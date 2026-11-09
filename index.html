@@ -413,7 +413,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.14.3';
+const APP_VERSION='1.14.4';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -1993,7 +1993,7 @@ function hasUpdate(){return !!(latest&&vcmp(latest.version,APP_VERSION)>0)}
 function markUpdate(){const b=$('#btn-menu');if(b)b.classList.toggle('has-upd',hasUpdate());const mi=$('#mi-ver');if(mi)mi.textContent=hasUpdate()?`v${APP_VERSION} · nueva v${latest.version}`:`v${APP_VERSION}`}
 async function checkUpdateSilent(){
   try{await fetchLatest();if(swReg)swReg.update().catch(()=>{})}catch(e){return}
-  if(hasUpdate()&&updToastFor!==latest.version){updToastFor=latest.version;toast(`Hay una versión nueva: v${latest.version}`,'',{label:'Actualizar',fn:applyUpdate})}
+  if(hasUpdate()&&!updToastFor){updToastFor=latest.version;toast(`Hay una versión nueva: v${latest.version}`,'',{label:'Actualizar',fn:applyUpdate})}
 }
 function openAbout(){
   openSheet('Acerca de','Recomp 45',`
@@ -2116,7 +2116,7 @@ if(/[?&]v=/.test(location.search)&&!/[?&]zepp=/.test(location.search))history.re
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js').then(reg=>{
     swReg=reg;
-    const offer=()=>{if(updToastFor==='sw')return;updToastFor='sw';toast('Hay una versión nueva de la app.','',{label:'Actualizar',fn:applyUpdate})};
+    const offer=()=>{if(updToastFor)return;updToastFor='sw';toast('Hay una versión nueva de la app.','',{label:'Actualizar',fn:applyUpdate})};
     if(reg.waiting&&navigator.serviceWorker.controller)offer();
     reg.addEventListener('updatefound',()=>{const nw=reg.installing;nw&&nw.addEventListener('statechange',()=>{if(nw.state==='installed'&&navigator.serviceWorker.controller)offer()})});
     setInterval(()=>reg.update().catch(()=>{}),30*60*1000);
