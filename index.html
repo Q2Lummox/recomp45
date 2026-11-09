@@ -178,7 +178,7 @@ a{color:var(--accent)}
 /* hábitos */
 .habits{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .habit{border:1px solid #23282e;background:#101215;border-radius:4px;padding:10px;display:grid;gap:6px;min-width:0}
-.habit label,.field label{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.habit label,.field label,.field .flbl{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500}
 .habit .goal{font-size:.74rem;color:var(--muted)}
 .stepper{display:flex;align-items:center;gap:6px}
 .stepper button{width:36px;height:36px;border-radius:4px;border:1px solid #3b424b;background:linear-gradient(180deg,#2c3138,#1a1e23);box-shadow:var(--bevel);font-weight:700;font-size:1.1rem}
@@ -206,6 +206,13 @@ a{color:var(--accent)}
 .macroline{display:flex;gap:12px;flex-wrap:wrap;font-family:var(--f-mono);font-size:.8rem}
 .pP{color:var(--p)} .pC{color:var(--c)} .pF{color:var(--f)}
 .extra-form{display:grid;grid-template-columns:1fr 90px;gap:8px}
+.mf-list{display:grid;gap:6px}
+.mf-item{display:flex;align-items:center;gap:10px;text-align:left;border:1px solid #23282e;background:#101215;color:var(--ink);border-radius:4px;padding:10px 12px}
+.mf-item small{display:block;color:var(--muted);font-family:var(--f-mono);font-size:.76rem;margin-top:2px}
+.mf-grid{display:grid;grid-template-columns:1fr 130px;gap:8px 10px;align-items:center}
+.mf-grid label{font-size:.92rem}
+.mf-in{display:flex;align-items:center;gap:6px}.mf-in input{text-align:right}.mf-in .u{color:var(--muted);font-family:var(--f-mono);font-size:.8rem;width:30px}
+.btn.danger{border-color:var(--bad);color:var(--bad)}
 .eaten-tag{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .me-list{display:grid;gap:6px}
 .me-row{display:grid;grid-template-columns:1fr 84px 30px;gap:8px;align-items:center;border-bottom:1px dashed #2a3037;padding-bottom:6px}
@@ -396,6 +403,8 @@ td.num{white-space:nowrap}
 </div>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 <input type="file" id="f-photo" accept="image/*" hidden>
+<input type="file" id="f-lblcam" accept="image/*" capture="environment" hidden>
+<input type="file" id="f-lblgal" accept="image/*" hidden>
 <input type="file" id="f-wzcam" accept="image/*" capture="environment" hidden>
 <input type="file" id="f-wzgal" accept="image/*" hidden>
 <input type="file" id="f-chatimg" accept="image/*" hidden>
@@ -404,7 +413,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.13.0';
+const APP_VERSION='1.14.0';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -651,7 +660,7 @@ function startData(){
   }
   /* buzón del Atajo: users/<uid>/zepp/<día>, escrito en segundo plano */
   unsubs.push(window.FB.db.watch(path('zepp'),onZeppSnap));
-  unsubs.push(window.FB.db.watch(path('ajustes'),snap=>{const o={};snap.docs.forEach(d=>{o[d.id]=d.data});AJ=o;if(o.zepp&&o.zepp.k)zeppKey=o.zepp.k;requestRender()}));
+  unsubs.push(window.FB.db.watch(path('ajustes'),snap=>{const o={};snap.docs.forEach(d=>{o[d.id]=d.data});AJ=o;applyMyFoods();if(o.zepp&&o.zepp.k)zeppKey=o.zepp.k;requestRender()}));
 }
 function maybeSeed(){
   if(!COLS.every(c=>firstLoad[c]))return;
@@ -1120,9 +1129,102 @@ function drawME(){
 function drawRes(){
   const q=norm(ME.q.trim()),box=$('#me-res');if(!q){box.innerHTML='';return}
   const words=q.split(/\s+/).filter(w=>w.length>1);
-  const hits=Object.entries(FOODS).filter(([id,F])=>words.every(w=>norm(F.n).includes(w))).slice(0,8);
-  box.innerHTML=hits.map(([id,F])=>`<button type="button" data-me="add" data-id="${id}"><span>${esc(F.n)}</span><small>${F.u?esc(qty(id,F.u[0])):`${F.def||100} ${F.ml?'ml':'g'}`}</small></button>`).join('')
+  const hits=Object.entries(FOODS).filter(([id,F])=>words.every(w=>norm(F.n).includes(w))).sort((a,b)=>(b[1].mine?1:0)-(a[1].mine?1:0)).slice(0,8);
+  box.innerHTML=hits.map(([id,F])=>`<button type="button" data-me="add" data-id="${id}"><span>${F.mine?'<span class="pill" style="margin-right:6px">Mío</span>':''}${esc(F.n)}</span><small>${F.u?esc(qty(id,F.u[0])):`${F.def||100} ${F.ml?'ml':'g'}`}</small></button>`).join('')
     +`<button type="button" class="ia" data-me="ia"><span>✨ Calcular con IA: «${esc(ME.q.trim())}»</span><small>separa ingredientes</small></button>`;
+}
+/* ===== mis alimentos (v1.14.0) =====
+   users/<uid>/ajustes/alimentos = {items:{id:{n,k,p,c,az,f,fib,sal,ml,def,rep}}} · valores por 100 g o 100 ml.
+   rep: alimento de la app al que sustituye (su nombre y macros pasan a ser los tuyos, también en los menús). */
+const FOODS_BASE=JSON.parse(JSON.stringify(FOODS));
+const myFoods=()=>(AJ.alimentos&&AJ.alimentos.items)||{};
+function applyMyFoods(){
+  for(const k of Object.keys(FOODS))if(k.startsWith('u_'))delete FOODS[k];
+  for(const [k,v] of Object.entries(FOODS_BASE))FOODS[k]={...v};
+  for(const [id,x] of Object.entries(myFoods())){
+    const base=x.rep&&FOODS_BASE[x.rep],f={n:x.n,k:+x.k||0,p:+x.p||0,c:+x.c||0,f:+x.f||0,mine:id};
+    if(x.ml)f.ml=1;if(+x.def>0)f.def=+x.def;if(base&&base.u&&!f.def)f.u=base.u;
+    if(base)FOODS[x.rep]=f;else FOODS['u_'+id]=f;
+  }
+}
+let MF=null;
+function openMyFoods(){
+  const items=Object.entries(myFoods()).sort((a,b)=>a[1].n.localeCompare(b[1].n,'es'));
+  openSheet('Comida','Mis alimentos',`<p class="small muted">Tus alimentos de verdad, con los valores de su etiqueta. Salen los primeros en el buscador y, si sustituyen a uno de la app, también se usan en los menús y en la lista de la compra.</p>
+    <button type="button" class="btn pri" data-mf="new">＋ Añadir alimento</button>
+    <div class="mf-list">${items.length?items.map(([id,x])=>`<button type="button" class="mf-item" data-mf="edit" data-id="${id}"><span class="grow"><b>${esc(x.n)}</b><small>${fmt(+x.k)} kcal · P ${fmtD(x.p)} · C ${fmtD(x.c)} · G ${fmtD(x.f)} por 100 ${x.ml?'ml':'g'}</small>${x.rep&&FOODS_BASE[x.rep]?`<small>Sustituye a: ${esc(FOODS_BASE[x.rep].n)}</small>`:''}</span><span aria-hidden="true">›</span></button>`).join('')
+      :'<p class="small muted">Todavía no tienes ninguno.</p>'}</div>`);
+  $('#sheet-body').onclick=e=>{const b=e.target.closest('[data-mf]');if(!b)return;if(b.dataset.mf==='new')openFoodForm(null);else if(b.dataset.mf==='edit')openFoodForm(b.dataset.id)};
+}
+const fmtD=v=>fmt(Math.round((+v||0)*10)/10,1);
+const MF_FIELDS=[['k','Calorías','kcal'],['p','Proteínas','g'],['c','Hidratos de carbono','g'],['az','de ellos azúcares','g'],['f','Grasas','g'],['fib','Fibra','g'],['sal','Sal','g']];
+function openFoodForm(id){
+  const x=id?{...myFoods()[id]}:{n:'',ml:false};
+  MF={id,x,img:null,del:false};
+  const baseOpts=Object.entries(FOODS_BASE).sort((a,b)=>a[1].n.localeCompare(b[1].n,'es')).map(([k,F])=>`<option value="${k}" ${x.rep===k?'selected':''}>${esc(F.n)}</option>`).join('');
+  openSheet('Mis alimentos',id?'Editar alimento':'Nuevo alimento',`
+    <div class="field"><label for="mf-n">Nombre</label><input type="text" id="mf-n" value="${esc(x.n||'')}" placeholder="p. ej. Cereales de espelta"></div>
+    <div class="field"><span class="flbl">Tabla nutricional</span><p class="small muted" style="margin:0 0 6px">Haz una foto a la tabla de valores del envase y relleno los números yo.</p>
+      <div class="row"><button type="button" class="btn" data-mf="cam">📷 Hacer foto</button><button type="button" class="btn" data-mf="gal">Elegir de la galería</button></div>
+      <div id="mf-photo"></div></div>
+    <button type="button" class="toggle" data-mf="ml" aria-pressed="${!!x.ml}"><span class="box">${x.ml?'✓':''}</span><span class="grow"><span class="t">Es una bebida (valores por 100 ml)</span></span></button>
+    <div class="mf-grid" id="mf-grid">${MF_FIELDS.map(([k,l,u])=>`<label for="mf-${k}">${l}</label><div class="mf-in"><input type="text" inputmode="decimal" id="mf-${k}" value="${x[k]!=null&&x[k]!==''?String(x[k]).replace('.',','):''}" placeholder="0"><span class="u">${u}</span></div>`).join('')}</div>
+    <p class="small muted" id="mf-per">Valores por 100 ${x.ml?'ml':'g'}, como en la columna «por 100» de la etiqueta.</p>
+    <div class="field"><label for="mf-def">Ración habitual (${x.ml?'ml':'g'}, opcional)</label><input type="text" inputmode="decimal" id="mf-def" value="${x.def?String(x.def).replace('.',','):''}" placeholder="p. ej. 40"></div>
+    <div class="field"><label for="mf-rep">Sustituye a este alimento de la app (opcional)</label><select id="mf-rep"><option value="">Ninguno</option>${baseOpts}</select>
+      <p class="small muted" style="margin:4px 0 0">Si eliges uno, ese deja de salir y en su lugar se usa el tuyo, también en los menús.</p></div>
+    <div id="mf-msg"></div>
+    <div class="row"><button type="button" class="btn" data-mf="back">‹ Mis alimentos</button>${id?'<button type="button" class="btn" data-mf="del" id="mf-del">Borrar</button>':''}<span class="grow"></span><button type="button" class="btn pri" data-mf="save">Guardar</button></div>`);
+  $('#sheet-body').onclick=e=>{const b=e.target.closest('[data-mf]');if(!b||!MF)return;const a=b.dataset.mf;
+    if(a==='cam'||a==='gal'){if(!aiReady())return;const f=$(a==='cam'?'#f-lblcam':'#f-lblgal');f.value='';f.click()}
+    else if(a==='ml'){MF.x.ml=!MF.x.ml;b.setAttribute('aria-pressed',MF.x.ml);b.querySelector('.box').textContent=MF.x.ml?'✓':'';
+      $('#mf-per').textContent=`Valores por 100 ${MF.x.ml?'ml':'g'}, como en la columna «por 100» de la etiqueta.`;$('label[for=mf-def]').textContent=`Ración habitual (${MF.x.ml?'ml':'g'}, opcional)`}
+    else if(a==='back')openMyFoods();
+    else if(a==='del'){if(!MF.del){MF.del=true;b.textContent='¿Seguro? Borrar';b.classList.add('danger');return}delFood()}
+    else if(a==='save')saveFood()};
+}
+async function readLabel(file){
+  const msg=$('#mf-msg'),ph=$('#mf-photo');
+  try{MF.img=await blobToB64(file,1600)}catch(e){toast('No puedo leer esa imagen. Prueba con otra.','err');return}
+  ph.innerHTML=`<img class="preview" src="${MF.img.url}" alt="Tabla nutricional">`;msg.innerHTML='<p class="small muted">Leyendo la etiqueta…</p>';
+  const list=Object.entries(FOODS_BASE).map(([k,F])=>`${k}: ${F.n}`).join('; ');
+  const prompt=`Esta es la foto de la tabla de información nutricional de un envase de comida en España${$('#mf-n').value.trim()?` (el producto es: ${$('#mf-n').value.trim()})`:''}.
+Lee los valores de la columna POR 100 g (o por 100 ml si es una bebida). No uses la columna por ración salvo que no haya otra; en ese caso conviértelos a 100.
+Si la etiqueta indica una ración (p. ej. "ración 30 g"), ponla en "racion" en gramos o ml.
+Elige además, de esta lista, el alimento genérico al que más se parece este producto, o null si ninguno encaja: ${list}.
+Responde SOLO con JSON: {"nombre":"nombre corto del producto si se ve, o null","ml":false,"k":370,"p":12,"c":65,"az":8,"f":5,"fib":9,"sal":0.4,"racion":30,"parecido":"cereales","legible":true}
+Usa números con punto decimal. Si un valor no aparece, pon null. Si la foto no es una tabla nutricional o no se lee, pon "legible":false.`;
+  try{
+    const r=await gemini({contents:[{role:'user',parts:[{text:prompt},{inline_data:{mime_type:MF.img.mime,data:MF.img.data}}]}],json:true});
+    if(!MF)return;
+    if(r.legible===false)throw new Error('No consigo leer la tabla. Haz la foto más cerca, recta y con buena luz.');
+    for(const [k] of MF_FIELDS){const v=r[k];if(v!=null&&v!==''&&!isNaN(+v)){const d=k==='sal'?100:10;$('#mf-'+k).value=String(Math.round(+v*d)/d).replace('.',',')}}
+    if(r.racion&&+r.racion>0)$('#mf-def').value=String(+r.racion).replace('.',',');
+    if(!$('#mf-n').value.trim()&&r.nombre)$('#mf-n').value=r.nombre;
+    if(!!r.ml!==!!MF.x.ml){const t=$('[data-mf=ml]');t.click()}
+    if(!MF.id&&!$('#mf-rep').value&&r.parecido&&FOODS_BASE[r.parecido])$('#mf-rep').value=r.parecido;
+    msg.innerHTML='<p class="small" style="color:var(--good)">Valores leídos. Compruébalos con la etiqueta antes de guardar.</p>';
+  }catch(err){msg.innerHTML=`<p class="small" style="color:var(--bad)">${esc(err.message)}</p>`}
+}
+$('#f-lblcam').onchange=e=>{const f=e.target.files[0];if(f&&MF)readLabel(f)};
+$('#f-lblgal').onchange=e=>{const f=e.target.files[0];if(f&&MF)readLabel(f)};
+const numIn=id=>{const v=$(id).value.trim().replace(',','.');return v===''||isNaN(+v)?null:+v};
+function saveFood(){
+  const n=$('#mf-n').value.trim();if(!n){toast('Ponle un nombre','err');$('#mf-n').focus();return}
+  const x={n,ml:!!MF.x.ml};for(const [k] of MF_FIELDS){const v=numIn('#mf-'+k);if(v!=null)x[k]=v}
+  if(x.k==null){toast('Faltan al menos las calorías','err');$('#mf-k').focus();return}
+  const def=numIn('#mf-def');if(def)x.def=def;
+  const rep=$('#mf-rep').value;if(rep)x.rep=rep;
+  const all={...myFoods()};
+  if(rep)for(const [k,v] of Object.entries(all))if(k!==MF.id&&v.rep===rep){toast(`Ya tienes «${v.n}» sustituyendo a ese alimento`,'err');return}
+  const id=MF.id||('a'+Date.now().toString(36));all[id]=x;
+  AJ.alimentos={items:all};window.FB.db.set(path('ajustes'),'alimentos',AJ.alimentos);applyMyFoods();
+  MF=null;openMyFoods();render();toast(`Guardado: ${n}`);
+}
+function delFood(){
+  const all={...myFoods()},n=all[MF.id]&&all[MF.id].n;delete all[MF.id];
+  AJ.alimentos={items:all};window.FB.db.set(path('ajustes'),'alimentos',AJ.alimentos);applyMyFoods();
+  MF=null;openMyFoods();render();toast(`Borrado: ${n}`);
 }
 function drawTot(){
   const t=sumM(ME.items.map(x=>({k:+x.k||0,p:+x.p||0,c:+x.c||0,f:+x.f||0}))),pl=optM(ME.o);
@@ -1160,7 +1262,9 @@ function saveME(custom){
 
 function viewComida(){
   const d=st.date,day=getDay(d),t=dayTotals(day),pl=planTotals(day),fixed=!!planOf(d);
-  let html=menuCard()+`<section class="card"><div class="row between"><h2 class="grow">Control del día</h2><span class="chip">${fmt(TARGET.kcal)} kcal</span></div>${energyBlock(t)}
+  const nMy=Object.keys(myFoods()).length;
+  let html=menuCard()+`<section class="card"><div class="row between"><div><div class="eyebrow">Tus productos</div><h2 style="margin:0">Mis alimentos</h2></div><button type="button" class="btn" data-act="myfoods">${nMy?`Ver (${nMy})`:'＋ Añadir'}</button></div>
+    <p class="small muted" style="margin:0">Tus marcas con los valores de su etiqueta: haz una foto a la tabla nutricional y se rellena sola.</p></section>`+`<section class="card"><div class="row between"><h2 class="grow">Control del día</h2><span class="chip">${fmt(TARGET.kcal)} kcal</span></div>${energyBlock(t)}
   <p class="small muted">${fixed?'Menú del día fijado':'Plan completo con las opciones elegidas'}: <span class="num">${fmt(pl.k)} kcal · P ${fmt(pl.p)} · C ${fmt(pl.c)} · G ${fmt(pl.f)}</span></p></section>`;
   for(const m of MEALS){
     const sm=(day.meals&&day.meals[m.id])||{},opt=sm.opt||'A',o=m.opts[opt],cust=Array.isArray(sm.items),mm=mealM(m,sm);
@@ -1549,6 +1653,7 @@ $('#view').addEventListener('click',e=>{
   if(a==='toggle'){patchDay(d,o=>{o[b.dataset.key]=!o[b.dataset.key]});render()}
   else if(a==='water'){patchDay(d,o=>{o.water=Math.max(0,Math.round(((+o.water||0)+(+b.dataset.d))*100)/100)});render()}
   else if(a==='meal-edit')openMealEdit(d,b.dataset.meal);
+  else if(a==='myfoods')openMyFoods();
   else if(a==='meal-done'){patchDay(d,o=>{const m=o.meals[b.dataset.meal]||{opt:'A'};m.done=!m.done;o.meals[b.dataset.meal]=m});render()}
   else if(a==='diet')openDiet();
   else if(a==='shop')openShop();
@@ -1968,7 +2073,7 @@ window.addEventListener('fb-user',e=>{
   const u=e.detail;
   if(!u){uid=null;unsubs.forEach(x=>{try{x()}catch(e){}});unsubs=[];showGate('Entra con tu cuenta de Google para ver tu plan.',{login:true});return}
   if(uid===u.uid)return;
-  uid=u.uid;for(const c of COLS)S[c]={};firstLoad={};seeded=false;zeppIn=[];zeppKey=null;zeppFirst=true;zeppTouched=new Set();AJ={};
+  uid=u.uid;for(const c of COLS)S[c]={};firstLoad={};seeded=false;zeppIn=[];zeppKey=null;zeppFirst=true;zeppTouched=new Set();AJ={};applyMyFoods();
   showApp();startData();
 });
 

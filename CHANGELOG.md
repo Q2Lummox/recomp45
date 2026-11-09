@@ -1,5 +1,10 @@
 # Novedades
 
+## v1.14.0 · 2026-11-09
+- Comida › Mis alimentos: crea tus productos con nombre y una foto de la tabla nutricional; la IA lee calorías, proteínas, hidratos, azúcares, grasas, fibra y sal por 100 g
+- Tus alimentos salen los primeros en el buscador al cambiar lo que has comido
+- Un alimento tuyo puede sustituir a uno de la app (p. ej. tus cereales de espelta en vez de «Cereales de desayuno»): ese deja de salir y se usa el tuyo también en menús y lista de la compra
+
 ## v1.13.0 · 2026-11-09
 - Sin zoom al tocar dos veces seguidas (por ejemplo, +30 en el temporizador)
 - Comida › «He comido otra cosa» en cada comida: quitas lo que no has comido, cambias cantidades y añades lo que sí con el buscador
