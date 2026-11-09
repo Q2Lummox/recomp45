@@ -1,10 +1,17 @@
 {
- "version": "1.14.1",
+ "version": "1.14.2",
  "fecha": "2026-11-09",
  "notas": [
-  "Mis alimentos: la lectura de la etiqueta entiende más formas de respuesta de la IA y avisa justo debajo de la foto si no ha podido sacar los números"
+  "IA más rápida al leer etiquetas y desglosar comidas (piensa menos), con contador de segundos y aviso si tarda más de un minuto en vez de quedarse colgada"
  ],
  "historial": [
+  {
+   "version": "1.14.2",
+   "fecha": "2026-11-09",
+   "notas": [
+    "IA más rápida al leer etiquetas y desglosar comidas (piensa menos), con contador de segundos y aviso si tarda más de un minuto en vez de quedarse colgada"
+   ]
+  },
   {
    "version": "1.14.1",
    "fecha": "2026-11-09",

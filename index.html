@@ -413,7 +413,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.14.1';
+const APP_VERSION='1.14.2';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -1184,8 +1184,9 @@ function openFoodForm(id){
 }
 async function readLabel(file){
   const msg=$('#mf-msg'),ph=$('#mf-photo');
-  try{MF.img=await blobToB64(file,1600)}catch(e){toast('No puedo leer esa imagen. Prueba con otra.','err');return}
-  ph.innerHTML=`<img class="preview" src="${MF.img.url}" alt="Tabla nutricional">`;msg.innerHTML='<p class="small" style="color:var(--accent)">⏳ Leyendo la etiqueta… (unos segundos)</p>';
+  try{MF.img=await blobToB64(file,1400)}catch(e){toast('No puedo leer esa imagen. Prueba con otra.','err');return}
+  ph.innerHTML=`<img class="preview" src="${MF.img.url}" alt="Tabla nutricional">`;msg.innerHTML='<p class="small" style="color:var(--accent)">⏳ Leyendo la etiqueta… <span class="num" id="mf-secs">0 s</span></p>';
+  const t0=Date.now(),secs=setInterval(()=>{const el=$('#mf-secs');if(el)el.textContent=Math.round((Date.now()-t0)/1000)+' s';else clearInterval(secs)},1000);
   const list=Object.entries(FOODS_BASE).map(([k,F])=>`${k}: ${F.n}`).join('; ');
   const prompt=`Esta es la foto de la tabla de información nutricional de un envase de comida en España${$('#mf-n').value.trim()?` (el producto es: ${$('#mf-n').value.trim()})`:''}.
 Lee los valores de la columna POR 100 g (o por 100 ml si es una bebida). No uses la columna por ración salvo que no haya otra; en ese caso conviértelos a 100.
@@ -1194,7 +1195,7 @@ Elige además, de esta lista, el alimento genérico al que más se parece este p
 Responde SOLO con JSON: {"nombre":"nombre corto del producto si se ve, o null","ml":false,"k":370,"p":12,"c":65,"az":8,"f":5,"fib":9,"sal":0.4,"racion":30,"parecido":"cereales","legible":true}
 Usa números con punto decimal. Si un valor no aparece, pon null. Si la foto no es una tabla nutricional o no se lee, pon "legible":false.`;
   try{
-    let r=await gemini({contents:[{role:'user',parts:[{text:prompt},{inline_data:{mime_type:MF.img.mime,data:MF.img.data}}]}],json:true});
+    let r;try{r=await gemini({contents:[{role:'user',parts:[{text:prompt},{inline_data:{mime_type:MF.img.mime,data:MF.img.data}}]}],json:true,fast:true})}finally{clearInterval(secs)}
     if(!MF)return;
     r=flatLabel(r);
     if(r.legible===false)throw new Error('No consigo leer la tabla. Haz la foto más cerca, recta y con buena luz.');
@@ -1257,7 +1258,7 @@ Si un ingrediente está en esta lista de alimentos del usuario, pon su "id" y so
 Si no está en la lista, pon "id":null, un nombre corto en "n", la cantidad en "g", "ml":true si es líquido, y sus kcal ("k"), proteína ("p"), carbohidratos ("c") y grasas ("f") para ESA cantidad.
 Responde SOLO con JSON: {"items":[{"id":"lecheprot","g":200},{"id":null,"n":"Café solo","g":50,"ml":true,"k":1,"p":0.1,"c":0,"f":0}]}`;
   try{
-    const res=await gemini({contents:[{role:'user',parts:[{text:prompt}]}],json:true});
+    const res=await gemini({contents:[{role:'user',parts:[{text:prompt}]}],json:true,fast:true});
     const add=(res.items||[]).filter(x=>x&&(+x.g>0)).map(x=>{
       if(x.id&&FOODS[x.id])return{...meItem(x.id,+x.g),ia:true};
       const it={n:String(x.n||'Alimento'),g:+x.g,ml:!!x.ml,k:+x.k||0,p:+x.p||0,c:+x.c||0,f:+x.f||0,ia:true};it.base={g:it.g,k:it.k,p:it.p,c:it.c,f:it.f};return it});
@@ -1778,14 +1779,23 @@ async function blobToB64(blob,max=1280){
   const c=document.createElement('canvas');c.width=Math.round(bmp.width*sc);c.height=Math.round(bmp.height*sc);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
   const url=c.toDataURL('image/jpeg',.82);return{data:url.split(',')[1],mime:'image/jpeg',url};
 }
-async function gemini({system,contents,json=false}){
+/* fast: pide a Gemini que piense poco (lectura de etiquetas, desglose de comidas). Límite de 75 s para que nunca se quede colgado. */
+async function gemini({system,contents,json=false,fast=false,timeout=75000}){
   if(!navigator.onLine)throw new Error('Sin conexión: la IA necesita internet.');
   const key=lsGet(GKEY,'');if(!key)throw new Error('Falta la clave de Gemini.');
   let model=lsGet(GMODEL,'');if(!model){model=await pickModel(key);lsSet(GMODEL,model)}
-  const body={contents,generationConfig:json?{responseMimeType:'application/json',temperature:.2}:{temperature:.6}};
-  if(system)body.systemInstruction={parts:[{text:system}]};
-  let r=await fetch(GAPI+'models/'+model+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify(body)});
-  if(r.status===404){lsSet(GMODEL,'');model=await pickModel(key);lsSet(GMODEL,model);r=await fetch(GAPI+'models/'+model+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify(body)})}
+  const mk=(think)=>{const gc=json?{responseMimeType:'application/json',temperature:.2}:{temperature:.6};
+    if(think){if(/gemini-2\.5/.test(model))gc.thinkingConfig={thinkingBudget:0};else if(/gemini-[3-9]/.test(model))gc.thinkingConfig={thinkingLevel:'low'}}
+    const b={contents,generationConfig:gc};if(system)b.systemInstruction={parts:[{text:system}]};return JSON.stringify(b)};
+  const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),timeout);
+  const call=(think)=>fetch(GAPI+'models/'+model+':generateContent',{method:'POST',signal:ctl.signal,headers:{'Content-Type':'application/json','x-goog-api-key':key},body:mk(think)});
+  let r;
+  try{
+    r=await call(fast);
+    if(r.status===400&&fast)r=await call(false);   /* el modelo no admite el ajuste de pensamiento */
+    if(r.status===404){lsSet(GMODEL,'');model=await pickModel(key);lsSet(GMODEL,model);r=await call(fast);if(r.status===400&&fast)r=await call(false)}
+  }catch(e){if(e.name==='AbortError')throw new Error('La IA está tardando demasiado. Prueba otra vez en un momento.');throw new Error('No he podido conectar con la IA. Revisa la conexión y prueba otra vez.')}
+  finally{clearTimeout(tm)}
   if(!r.ok)throw await gErr(r);
   const j=await r.json(),cand=j.candidates&&j.candidates[0];
   const text=(cand&&cand.content&&cand.content.parts||[]).map(p=>p.text||'').join('').trim();

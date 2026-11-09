@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.14.2 · 2026-11-09
+- IA más rápida al leer etiquetas y desglosar comidas (piensa menos), con contador de segundos y aviso si tarda más de un minuto en vez de quedarse colgada
+
 ## v1.14.1 · 2026-11-09
 - Mis alimentos: la lectura de la etiqueta entiende más formas de respuesta de la IA y avisa justo debajo de la foto si no ha podido sacar los números
 
