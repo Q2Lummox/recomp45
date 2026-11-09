@@ -1,5 +1,11 @@
 # Novedades
 
+## v1.13.0 · 2026-11-09
+- Sin zoom al tocar dos veces seguidas (por ejemplo, +30 en el temporizador)
+- Comida › «He comido otra cosa» en cada comida: quitas lo que no has comido, cambias cantidades y añades lo que sí con el buscador
+- Escribe lo que has comido (café con leche, tostada integral con atún…) y la IA lo separa en ingredientes y calcula sus macros
+- Alimentos nuevos: leche con proteínas, café, azúcar, cacao, mermelada, pan de molde, galletas, cereales, zumo, yogur, cruasán, tortilla de patata, queso en lonchas y chorizo
+
 ## v1.12.0 · 2026-11-09
 - Temporizador de descanso: arranca solo al apuntar las repeticiones de una serie (en superserie, al terminar la pareja)
 - Al acabar el descanso pita y sigue contando en rojo el tiempo que te pasas; botones −15 y +30 segundos
