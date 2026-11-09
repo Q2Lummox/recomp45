@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.14.1 · 2026-11-09
+- Mis alimentos: la lectura de la etiqueta entiende más formas de respuesta de la IA y avisa justo debajo de la foto si no ha podido sacar los números
+
 ## v1.14.0 · 2026-11-09
 - Comida › Mis alimentos: crea tus productos con nombre y una foto de la tabla nutricional; la IA lee calorías, proteínas, hidratos, azúcares, grasas, fibra y sal por 100 g
 - Tus alimentos salen los primeros en el buscador al cambiar lo que has comido

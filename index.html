@@ -413,7 +413,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.14.0';
+const APP_VERSION='1.14.1';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -1166,14 +1166,13 @@ function openFoodForm(id){
     <div class="field"><label for="mf-n">Nombre</label><input type="text" id="mf-n" value="${esc(x.n||'')}" placeholder="p. ej. Cereales de espelta"></div>
     <div class="field"><span class="flbl">Tabla nutricional</span><p class="small muted" style="margin:0 0 6px">Haz una foto a la tabla de valores del envase y relleno los números yo.</p>
       <div class="row"><button type="button" class="btn" data-mf="cam">📷 Hacer foto</button><button type="button" class="btn" data-mf="gal">Elegir de la galería</button></div>
-      <div id="mf-photo"></div></div>
+      <div id="mf-photo"></div><div id="mf-msg"></div></div>
     <button type="button" class="toggle" data-mf="ml" aria-pressed="${!!x.ml}"><span class="box">${x.ml?'✓':''}</span><span class="grow"><span class="t">Es una bebida (valores por 100 ml)</span></span></button>
     <div class="mf-grid" id="mf-grid">${MF_FIELDS.map(([k,l,u])=>`<label for="mf-${k}">${l}</label><div class="mf-in"><input type="text" inputmode="decimal" id="mf-${k}" value="${x[k]!=null&&x[k]!==''?String(x[k]).replace('.',','):''}" placeholder="0"><span class="u">${u}</span></div>`).join('')}</div>
     <p class="small muted" id="mf-per">Valores por 100 ${x.ml?'ml':'g'}, como en la columna «por 100» de la etiqueta.</p>
     <div class="field"><label for="mf-def">Ración habitual (${x.ml?'ml':'g'}, opcional)</label><input type="text" inputmode="decimal" id="mf-def" value="${x.def?String(x.def).replace('.',','):''}" placeholder="p. ej. 40"></div>
     <div class="field"><label for="mf-rep">Sustituye a este alimento de la app (opcional)</label><select id="mf-rep"><option value="">Ninguno</option>${baseOpts}</select>
       <p class="small muted" style="margin:4px 0 0">Si eliges uno, ese deja de salir y en su lugar se usa el tuyo, también en los menús.</p></div>
-    <div id="mf-msg"></div>
     <div class="row"><button type="button" class="btn" data-mf="back">‹ Mis alimentos</button>${id?'<button type="button" class="btn" data-mf="del" id="mf-del">Borrar</button>':''}<span class="grow"></span><button type="button" class="btn pri" data-mf="save">Guardar</button></div>`);
   $('#sheet-body').onclick=e=>{const b=e.target.closest('[data-mf]');if(!b||!MF)return;const a=b.dataset.mf;
     if(a==='cam'||a==='gal'){if(!aiReady())return;const f=$(a==='cam'?'#f-lblcam':'#f-lblgal');f.value='';f.click()}
@@ -1186,7 +1185,7 @@ function openFoodForm(id){
 async function readLabel(file){
   const msg=$('#mf-msg'),ph=$('#mf-photo');
   try{MF.img=await blobToB64(file,1600)}catch(e){toast('No puedo leer esa imagen. Prueba con otra.','err');return}
-  ph.innerHTML=`<img class="preview" src="${MF.img.url}" alt="Tabla nutricional">`;msg.innerHTML='<p class="small muted">Leyendo la etiqueta…</p>';
+  ph.innerHTML=`<img class="preview" src="${MF.img.url}" alt="Tabla nutricional">`;msg.innerHTML='<p class="small" style="color:var(--accent)">⏳ Leyendo la etiqueta… (unos segundos)</p>';
   const list=Object.entries(FOODS_BASE).map(([k,F])=>`${k}: ${F.n}`).join('; ');
   const prompt=`Esta es la foto de la tabla de información nutricional de un envase de comida en España${$('#mf-n').value.trim()?` (el producto es: ${$('#mf-n').value.trim()})`:''}.
 Lee los valores de la columna POR 100 g (o por 100 ml si es una bebida). No uses la columna por ración salvo que no haya otra; en ese caso conviértelos a 100.
@@ -1195,16 +1194,30 @@ Elige además, de esta lista, el alimento genérico al que más se parece este p
 Responde SOLO con JSON: {"nombre":"nombre corto del producto si se ve, o null","ml":false,"k":370,"p":12,"c":65,"az":8,"f":5,"fib":9,"sal":0.4,"racion":30,"parecido":"cereales","legible":true}
 Usa números con punto decimal. Si un valor no aparece, pon null. Si la foto no es una tabla nutricional o no se lee, pon "legible":false.`;
   try{
-    const r=await gemini({contents:[{role:'user',parts:[{text:prompt},{inline_data:{mime_type:MF.img.mime,data:MF.img.data}}]}],json:true});
+    let r=await gemini({contents:[{role:'user',parts:[{text:prompt},{inline_data:{mime_type:MF.img.mime,data:MF.img.data}}]}],json:true});
     if(!MF)return;
+    r=flatLabel(r);
     if(r.legible===false)throw new Error('No consigo leer la tabla. Haz la foto más cerca, recta y con buena luz.');
-    for(const [k] of MF_FIELDS){const v=r[k];if(v!=null&&v!==''&&!isNaN(+v)){const d=k==='sal'?100:10;$('#mf-'+k).value=String(Math.round(+v*d)/d).replace('.',',')}}
-    if(r.racion&&+r.racion>0)$('#mf-def').value=String(+r.racion).replace('.',',');
+    let filled=0;
+    for(const [k] of MF_FIELDS){const v=numLbl(r[k]);if(v!=null){const d=k==='sal'?100:10;$('#mf-'+k).value=String(Math.round(v*d)/d).replace('.',',');filled++}}
+    if(!filled)throw new Error('He visto la foto pero no he sacado los números. Hazla más cerca, que la tabla ocupe casi toda la foto, o escríbelos a mano.');
+    if(numLbl(r.racion)>0)$('#mf-def').value=String(+r.racion).replace('.',',');
     if(!$('#mf-n').value.trim()&&r.nombre)$('#mf-n').value=r.nombre;
     if(!!r.ml!==!!MF.x.ml){const t=$('[data-mf=ml]');t.click()}
     if(!MF.id&&!$('#mf-rep').value&&r.parecido&&FOODS_BASE[r.parecido])$('#mf-rep').value=r.parecido;
     msg.innerHTML='<p class="small" style="color:var(--good)">Valores leídos. Compruébalos con la etiqueta antes de guardar.</p>';
   }catch(err){msg.innerHTML=`<p class="small" style="color:var(--bad)">${esc(err.message)}</p>`}
+}
+/* la IA a veces responde con otra forma: lista, valores anidados, claves en español o números como texto */
+function numLbl(v){if(v==null||v==='')return null;if(typeof v==='number')return isFinite(v)?v:null;const m=String(v).replace(',','.').match(/-?\d+(\.\d+)?/);return m?+m[0]:null}
+function flatLabel(r){
+  if(Array.isArray(r))r=r[0]||{};
+  const o={};const walk=x=>{for(const [k,v] of Object.entries(x||{})){if(v&&typeof v==='object'&&!Array.isArray(v))walk(v);else if(!(k in o))o[k]=v}};walk(r);
+  const al={k:['k','kcal','energia','calorias','energy'],p:['p','proteinas','protein','proteina'],c:['c','hidratos','carbohidratos','hidratos_de_carbono','carbs'],az:['az','azucares','sugars','azucar'],
+    f:['f','grasas','grasa','fat','lipidos'],fib:['fib','fibra','fiber'],sal:['sal','salt'],racion:['racion','porcion','serving'],nombre:['nombre','name'],parecido:['parecido'],ml:['ml'],legible:['legible']};
+  const out={},nk=Object.fromEntries(Object.entries(o).map(([k,v])=>[norm(k).replace(/\s+/g,'_'),v]));
+  for(const [k,names] of Object.entries(al))for(const n of names)if(nk[n]!=null){out[k]=nk[n];break}
+  return out;
 }
 $('#f-lblcam').onchange=e=>{const f=e.target.files[0];if(f&&MF)readLabel(f)};
 $('#f-lblgal').onchange=e=>{const f=e.target.files[0];if(f&&MF)readLabel(f)};
