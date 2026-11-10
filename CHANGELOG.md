@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.20.0 · 2026-11-10
+- Hoy: quitadas las tarjetas «Hábitos» y «Pregunta al coach» (el coach sigue en el botón IA de arriba)
+
 ## v1.19.0 · 2026-11-09
 - Comidas habituales: guarda lo que repites (p. ej. tu café con leche de la obra) y añádelo con un toque al cambiar una comida
 - Mis alimentos: escanea el código de barras (o escribe el número) y se rellena desde Open Food Facts

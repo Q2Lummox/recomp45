@@ -431,7 +431,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.19.0';
+const APP_VERSION='1.20.0';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -976,20 +976,7 @@ function viewHoy(){
   <section class="card watch-card">${watchCard(day)}</section>
   ${sundayDue?`<section class="card wz-card due"><div class="row between"><div><div class="eyebrow">Domingo</div><div class="big-title">Hoy toca revisión</div></div><button type="button" class="btn pri" data-act="wizard">Empezar</button></div><p class="small muted">Peso en ayunas, medidas y tres fotos. Unos 5 minutos.</p></section>`:''}
   <section class="phase"><b>Semana ${Math.min(w,12)} · ${ph.n}</b><span class="small">${ph.t}</span></section>
-  <section class="card"><h2>Pregunta al coach</h2>
-    <div class="quick">
-      <button type="button" data-ask="¿Qué me queda por comer hoy y qué me recomiendas para cuadrar los macros?">¿Qué me queda por comer?</button>
-      <button type="button" data-ask="¿Cómo voy esta semana? Sé concreto con mis datos.">¿Cómo voy?</button>
-      <button type="button" data-ask="Hoy me molesta el codo. ¿Qué cambio en el entreno de hoy?">Me duele el codo</button>
-    </div></section>
-  <section class="card"><h2>Hábitos</h2>
-    <div class="habits">
-      <div class="habit"><label for="in-peso">Peso en ayunas (kg)</label><input type="number" inputmode="decimal" step="0.1" min="40" max="200" id="in-peso" data-field="weight" value="${day.weight??''}" placeholder="80,0"><span class="goal">Tras ir al baño, antes de desayunar</span></div>
-      <div class="habit"><label for="in-pasos">Pasos</label><input type="number" inputmode="numeric" step="100" min="0" id="in-pasos" data-field="steps" value="${day.steps??''}" placeholder="10000"><span class="goal">${day.zepp?`Desde Zepp · ${new Date(day.zepp.at).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}`:`Objetivo ${fmt(goals().pasos)}`}</span></div>
-      <div class="habit"><label>Agua</label><div class="stepper"><button type="button" data-act="water" data-d="-0.25" aria-label="Menos agua">−</button><span class="v">${fmt(water,2)} L</span><button type="button" data-act="water" data-d="0.25" aria-label="Más agua">+</button></div><div class="track"><div class="fill" style="width:${Math.min(100,water/3*100)}%;background:var(--p)"></div></div><span class="goal">3 L + 0,5 L por hora de obra sudando</span></div>
-      <div class="habit"><label for="in-sueno">Sueño anoche (h)</label><input type="number" inputmode="decimal" step="0.25" min="0" max="14" id="in-sueno" data-field="sleep" value="${day.sleep??''}" placeholder="7,5"><span class="goal">${day.zepp&&day.zepp.sueno?'Desde Zepp':`Objetivo ${hm(goals().sueno)}`}</span></div>
-    </div>
-  </section>`;
+`;
 }
 
 /* ===== asistente de dieta y lista de la compra (v1.10.0) =====
