@@ -1,5 +1,12 @@
 # Novedades
 
+## v1.21.0 · 2026-11-10
+- Rutina: el martes queda solo con 4 ejercicios de pierna (hip thrust, prensa, femoral y gemelo)
+- El core pasa al final del lunes (elevación de piernas y plancha) y del viernes (crunch y plancha lateral)
+- El sábado alterna pierna y hombro para que el pulso baje entre ejercicios de pierna; entran los abductores y salen el curl con barra recta y la patada de tríceps
+- Tu historial de todos los ejercicios se conserva
+- Entreno: si un día tiene series de ejercicios que ya no están en la sesión, salen en «También apuntaste» y siguen contando
+
 ## v1.20.5 · 2026-11-10
 - Temporizador: al acabar el descanso pita aunque bloquees el iPhone o cambies de app (mientras Recomp 45 siga abierta en segundo plano)
 - Aviso «Descanso terminado, continúa la serie» al acabar el descanso si la app está en segundo plano (la primera vez que pulses ⏱ te pide permiso para notificaciones)
