@@ -433,7 +433,7 @@ body.kb .tabs,body.kb .timer{visibility:hidden}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.20.5';
+const APP_VERSION='1.22.0';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -1502,7 +1502,7 @@ function barChart({bars,target,color='#f39a1e',dec=0,unit=''}){
   if(target)g+=`<line x1="${L}" x2="${W-R}" y1="${Y(target)}" y2="${Y(target)}" stroke="#e8ecf0" stroke-dasharray="4 4" opacity=".6"/><text x="${W-R}" y="${Y(target)-4}" text-anchor="end" style="fill:#e8ecf0">Objetivo ${fmt(target)}${unit}</text>`;
   bars.forEach((b,i)=>{const x=L+i*bw+bw*.18,w=bw*.64;
     if(b.v){g+=`<rect x="${x.toFixed(1)}" y="${Y(b.v).toFixed(1)}" width="${w.toFixed(1)}" height="${(H-B-Y(b.v)).toFixed(1)}" rx="2" fill="${color}" opacity="${b.cur?1:.75}"/>`;
-      if(n<=8||b.cur)g+=`<text x="${(x+w/2).toFixed(1)}" y="${(Y(b.v)-4).toFixed(1)}" text-anchor="middle" style="fill:#e8ecf0">${b.v>=10000?fmt(Math.round(b.v/100)/10,1)+'k':fmt(Math.round(b.v),0)}</text>`}
+      if(n<=8||b.cur)g+=`<text x="${(x+w/2).toFixed(1)}" y="${(Y(b.v)-4).toFixed(1)}" text-anchor="middle" style="fill:#e8ecf0">${b.v>=10000?fmt(Math.round(b.v/100)/10,1)+'k':dec?fmt(Math.round(b.v*10)/10,1):fmt(Math.round(b.v),0)}</text>`}
     g+=`<text x="${(x+w/2).toFixed(1)}" y="${H-14}" text-anchor="middle" style="${b.cur?'fill:#e8ecf0':''}">${b.l}</text>${b.sub?`<text x="${(x+w/2).toFixed(1)}" y="${H-3}" text-anchor="middle" style="font-size:8px">${b.sub}</text>`:''}`});
   return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">${g}</svg>`;
 }
@@ -1514,6 +1514,13 @@ function weeklyStats(){
   for(const [k,wo] of Object.entries(S.workouts)){if(k<START)continue;const o=at(weekOf(k));if(!o)continue;const sm=woSummary(wo);o.vol+=sm.vol;o.sets+=sm.n}
   for(const k of Object.keys(S.days)){if(k<START||k>todayISO())continue;const o=at(weekOf(k));if(!o)continue;const v=getDay(k);if(!hasLog(v))continue;const t=dayTotals(v);o.n++;o.k+=t.k;o.p+=t.p;o.f+=t.f}
   for(const o of out)if(o.n){o.k/=o.n;o.p/=o.n;o.f/=o.n}
+  /* reloj: pasos y kcal activas sin contar hoy (el día no ha acabado); sueño sí, porque ya es la noche pasada */
+  for(const o of out){o.st=0;o.nst=0;o.ak=0;o.nak=0;o.sl=0;o.nsl=0}
+  for(const [k,v] of Object.entries(S.days)){if(k<START||k>todayISO())continue;const o=at(weekOf(k));if(!o||!v)continue;
+    if(k<todayISO()&&+v.steps>0){o.st+=+v.steps;o.nst++}
+    if(k<todayISO()&&v.zepp&&+v.zepp.kcal>0){o.ak+=+v.zepp.kcal;o.nak++}
+    if(+v.sleep>0){o.sl+=+v.sleep;o.nsl++}}
+  for(const o of out){if(o.nst)o.st/=o.nst;if(o.nak)o.ak/=o.nak;if(o.nsl)o.sl/=o.nsl}
   return out;
 }
 function statsCards(){
@@ -1531,7 +1538,15 @@ function statsCards(){
       <div class="nut-head"><b class="pF">Grasas</b><span class="num">${cur.n?fmt(cur.f)+' g/día':'–'}</span></div>${barChart({bars:B('f'),target:TARGET.f,color:'#a8bb64',unit:' g'})}`
       :'<div class="empty">Aquí verás la media diaria de calorías, proteína y grasas de cada semana.<br>Se rellena al marcar comidas como comidas.</div>'}
     <p class="small muted">Media de los días con comida apuntada (debajo de cada barra, cuántos días). La línea discontinua es tu objetivo diario.</p>
-  </section>`;
+  </section>
+  ${(()=>{const g=goals(),has=ws.some(o=>o.nst||o.nak||o.nsl),A=(key,n)=>ws.map(o=>({l:'S'+o.w,v:o[key],cur:o.cur,sub:o[n]?o[n]+'d':''}));
+    return `<section class="card"><h2>Actividad del reloj por semana</h2>
+    ${has?`<div class="nut-head"><b>Pasos</b><span class="num">${cur.nst?fmtG(cur.st)+' al día':'–'}</span></div>${barChart({bars:A('st','nst'),target:g.pasos,color:'#f39a1e'})}
+      <div class="nut-head"><b>Calorías activas</b><span class="num">${cur.nak?fmt(cur.ak)+' kcal/día':'–'}</span></div>${barChart({bars:A('ak','nak'),target:g.kcal,color:'#e5484d',unit:' kcal'})}
+      <div class="nut-head"><b>Sueño</b><span class="num">${cur.nsl?hm(cur.sl)+' por noche':'–'}</span></div>${barChart({bars:A('sl','nsl'),target:g.sueno,color:'#3fc79a',dec:1,unit:' h'})}`
+      :'<div class="empty">Aquí verás tus pasos, calorías activas y horas de sueño medias de cada semana.<br>Se rellena con los datos que llegan de Zepp.</div>'}
+    <p class="small muted">Media diaria de cada semana con los datos de Zepp (debajo de cada barra, cuántos días). Los pasos y las calorías de hoy no cuentan hasta mañana, porque el día aún no ha acabado. La línea discontinua es tu objetivo del reloj.</p>
+  </section>`})()}`;
 }
 /* ===== fuerza por ejercicio (v1.18.0) =====
    Solo series reales: las que tienen repeticiones escritas por ti. Las sugerencias en gris de las casillas no se guardan y no cuentan. */

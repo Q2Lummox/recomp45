@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.22.0 · 2026-11-10
+- Progreso › Actividad del reloj por semana: pasos, calorías activas y horas de sueño medias de cada semana, con tus objetivos
+
 ## v1.21.2 · 2026-11-10
 - El coach y el Plan saben que entrenas siempre a primera hora de la mañana, antes del hospital o después de dejar a tu hijo en el colegio
 
