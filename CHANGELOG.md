@@ -1,5 +1,9 @@
 # Novedades
 
+## v1.20.1 · 2026-11-10
+- Entreno: al apuntar repeticiones la pantalla ya no salta al final ni pierde la casilla en la que escribes
+- Temporizador: no desaparece si el iPhone cierra la app en segundo plano, y sigue contando hasta 15 minutos de más
+
 ## v1.20.0 · 2026-11-10
 - Hoy: quitadas las tarjetas «Hábitos» y «Pregunta al coach» (el coach sigue en el botón IA de arriba)
 

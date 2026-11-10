@@ -431,7 +431,7 @@ td.num{white-space:nowrap}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.20.0';
+const APP_VERSION='1.20.1';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -665,6 +665,7 @@ function startData(){
     unsubs.push(window.FB.db.watch(path(col),snap=>{
       const o={};snap.docs.forEach(d=>{o[d.id]=d.data});
       for(const k of Object.keys(dirty)){const [c,id]=k.split('/');if(c===col&&S[col][id])o[id]=S[col][id]}
+      const same=state[col]&&JSON.stringify(o)===JSON.stringify(S[col]);   /* tu propia escritura que vuelve, o solo cambia el estado de sincronización */
       S[col]=o;state[col]=snap;
       if(!snap.fromCache)firstLoad[col]=true;
       const all=COLS.map(c=>state[c]).filter(Boolean);
@@ -673,7 +674,7 @@ function startData(){
         else if(all.some(s=>s.pending))setStatus('wait','Guardando…');
         else setStatus('ok','Sincronizado con tu cuenta');
       }
-      maybeSeed();requestRender();
+      maybeSeed();if(!same)requestRender();
     }));
   }
   /* buzón del Atajo: users/<uid>/zepp/<día>, escrito en segundo plano */
@@ -912,12 +913,14 @@ window.addEventListener('fb-error',e=>{
   if(e.detail==='permission-denied')toast('Firebase no deja guardar: revisa las reglas de Firestore (firestore.rules).','err');
   else if(e.detail!=='unavailable')setStatus('err','Error con la base de datos ('+e.detail+')');
 });
+const editing=()=>{const a=document.activeElement;return a&&$('#view').contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)};
 function requestRender(){
   const a=document.activeElement;
-  if(a&&$('#view').contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)){pendingRender=true;return}
+  if(editing()){pendingRender=true;return}
   render();
 }
-document.addEventListener('focusout',()=>{setTimeout(()=>{if(!pendingRender)return;const a=document.activeElement;if(a&&$('#view').contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return;pendingRender=false;render()},0)});
+/* al pasar de una casilla a otra con el teclado abierto no se repinta: se espera a que el foco se asiente */
+document.addEventListener('focusout',()=>{setTimeout(()=>{if(!pendingRender||editing())return;pendingRender=false;render()},350)});
 
 /* Si el día tiene menú fijado por el asistente de dieta, esa opción manda. */
 const planOf=d=>(AJ.menu&&AJ.menu.plan&&AJ.menu.plan[d])||null;
@@ -1822,7 +1825,9 @@ function render(){
   $('#datenav').hidden=!['hoy','comida','entreno'].includes(st.tab);
   document.querySelectorAll('.tabs button').forEach(b=>{if(b.dataset.tab===st.tab)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
   const v={hoy:viewHoy,comida:viewComida,entreno:viewEntreno,progreso:viewProgreso,plan:viewPlan}[st.tab];
-  const sy=window.scrollY;$('#view').innerHTML=v();window.scrollTo(0,sy);
+  const sy=window.scrollY,fa=document.activeElement,fid=fa&&$('#view').contains(fa)&&fa.id;
+  $('#view').innerHTML=v();window.scrollTo(0,sy);
+  if(fid){const n=document.getElementById(fid);if(n)try{n.focus({preventScroll:true})}catch(e){}}
 }
 function goTab(t){st.tab=t;try{history.replaceState(null,'','#'+t)}catch(e){location.hash=t}render();window.scrollTo(0,0)}
 
@@ -1903,21 +1908,25 @@ function beep(){try{unlockAudio();if(!actx)return;const t0=actx.currentTime;
     o.connect(g).connect(actx.destination);o.start(t0+dt);o.stop(t0+dt+.2)})}catch(e){}
   try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}
 async function keepAwake(on){try{if(on&&!wlock&&navigator.wakeLock)wlock=await navigator.wakeLock.request('screen');else if(!on&&wlock){await wlock.release();wlock=null}}catch(e){wlock=null}}
-function stopTimer(){clearInterval(tInt);T=null;$('#timer').hidden=true;keepAwake(false)}
-function startTimer(sec,name){
-  clearInterval(tInt);T={end:Date.now()+sec*1000,total:sec,name,beeped:false};
+const TK='recomp45-timer';
+function stopTimer(){clearInterval(tInt);T=null;$('#timer').hidden=true;keepAwake(false);try{localStorage.removeItem(TK)}catch(e){}}
+function saveT(){try{T&&localStorage.setItem(TK,JSON.stringify(T))}catch(e){}}
+function startTimer(sec,name,restore){
+  clearInterval(tInt);T=restore||{end:Date.now()+sec*1000,total:sec,name,beeped:false};saveT();
   $('#timer').hidden=false;keepAwake(true);
   const tick=()=>{if(!T)return;const left=(T.end-Date.now())/1000,box=$('#timerbox');
     if(left>0){box.classList.remove('over');$('#timerlbl').textContent='Descanso · '+T.name;$('#timert').textContent=mmss(Math.ceil(left));
       $('#timerfill').style.width=Math.min(100,(1-left/T.total)*100)+'%'}
-    else{if(!T.beeped){T.beeped=true;beep()}const over=-left;box.classList.add('over');
+    else{if(!T.beeped){T.beeped=true;saveT();beep()}const over=-left;box.classList.add('over');
       $('#timerlbl').textContent='¡A por la serie!';$('#timert').textContent='+'+mmss(Math.floor(over));$('#timerfill').style.width='100%';
-      if(over>300)stopTimer()}};
+      if(over>900)stopTimer()}};
   tick();tInt=setInterval(tick,250);
 }
 $('#timerstop').onclick=stopTimer;
-$('#timerplus').onclick=()=>{if(!T)return;if(T.end<Date.now()){T.end=Date.now();T.beeped=false}T.end+=30000;T.total+=30};
-$('#timerminus').onclick=()=>{if(!T)return;T.end-=15000;T.total=Math.max(15,T.total-15)};
+$('#timerplus').onclick=()=>{if(!T)return;if(T.end<Date.now()){T.end=Date.now();T.beeped=false}T.end+=30000;T.total+=30;saveT()};
+$('#timerminus').onclick=()=>{if(!T)return;T.end-=15000;T.total=Math.max(15,T.total-15);saveT()};
+/* si el iPhone cerró la app en segundo plano, el descanso sigue donde iba */
+try{const t=JSON.parse(localStorage.getItem(TK)||'null');if(t&&t.end&&Date.now()-t.end<900000)startTimer(0,t.name,t);else localStorage.removeItem(TK)}catch(e){}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&T)keepAwake(true)});
 /* al apuntar las repeticiones, arranca el descanso que toca */
 function autoRest(exId){
