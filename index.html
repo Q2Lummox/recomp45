@@ -433,7 +433,7 @@ body.kb .tabs,body.kb .timer{visibility:hidden}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.20.2';
+const APP_VERSION='1.20.3';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -598,6 +598,8 @@ const SESS={
 const WEEKMAP={1:'pechoA',2:'pierna',3:'hombrosA',4:'descanso',5:'pechoB',6:'sabado',0:'descanso'};
 /* ejercicios de versiones anteriores: para que su historial siga teniendo nombre */
 const LEGACY_EX=[{id:'t1',n:'Press banca con mancuernas, agarre neutro',s:3,lo:8,hi:12,r:90,note:''},{id:'e1',n:'Press inclinado con mancuernas, agarre neutro',s:3,lo:8,hi:12,r:90,note:''},{id:'e2',n:'Press de pecho en máquina convergente',s:3,lo:8,hi:12,r:90,note:''},{id:'e5',n:'Aperturas en polea o contractora',s:3,lo:8,hi:12,r:90,note:''},{id:'e6',n:'Extensión de tríceps en polea con cuerda',s:3,lo:8,hi:12,r:90,note:''},{id:'p6',n:'Patada de tríceps en polea a una mano',s:3,lo:8,hi:12,r:90,note:''},{id:'a1',n:'Sentadilla hack o péndulo',s:3,lo:8,hi:12,r:90,note:''},{id:'a2',n:'Peso muerto rumano con barra',s:3,lo:8,hi:12,r:90,note:''},{id:'b1',n:'Hip thrust con barra o máquina',s:3,lo:8,hi:12,r:90,note:''},{id:'a3',n:'Prensa de piernas',s:3,lo:8,hi:12,r:90,note:''},{id:'a4',n:'Curl femoral sentado',s:3,lo:8,hi:12,r:90,note:''},{id:'a5',n:'Gemelo de pie en máquina',s:3,lo:8,hi:12,r:90,note:''},{id:'r1',n:'Jalón con agarre neutro o máquina',s:3,lo:8,hi:12,r:90,note:''},{id:'t2',n:'Remo en máquina con pecho apoyado',s:3,lo:8,hi:12,r:90,note:''},{id:'r2',n:'Remo en polea baja, agarre neutro',s:3,lo:8,hi:12,r:90,note:''},{id:'r4',n:'Pájaros en máquina (contractora inversa)',s:3,lo:8,hi:12,r:90,note:''},{id:'r5',n:'Curl martillo con mancuernas',s:3,lo:8,hi:12,r:90,note:''},{id:'q6',n:'Curl en polea baja con cuerda',s:3,lo:8,hi:12,r:90,note:''},{id:'r6',n:'Isometría de extensores de muñeca',s:3,lo:8,hi:12,r:90,note:''},{id:'e3',n:'Landmine press a una mano',s:3,lo:8,hi:12,r:90,note:''},{id:'e4',n:'Elevaciones laterales con mancuernas',s:3,lo:8,hi:12,r:90,note:''},{id:'t5',n:'Elevaciones laterales en polea, a una mano',s:3,lo:8,hi:12,r:90,note:''},{id:'t6',n:'Face pull con cuerda',s:3,lo:8,hi:12,r:90,note:''},{id:'h5',n:'Rotación externa en polea',s:3,lo:8,hi:12,r:90,note:''},{id:'a6',n:'Dead bug',s:3,lo:8,hi:12,r:90,note:''},{id:'b6',n:'Pallof press en polea',s:3,lo:8,hi:12,r:90,note:''},{id:'c1',n:'Crunch en máquina',s:3,lo:8,hi:12,r:90,note:''},{id:'b2',n:'Sentadilla búlgara en multipower',s:3,lo:8,hi:12,r:90,note:''},{id:'t3',n:'Press inclinado en máquina',s:3,lo:8,hi:12,r:90,note:''},{id:'r3',n:'Remo a una mano con mancuerna',s:3,lo:8,hi:12,r:90,note:''},{id:'b3',n:'Extensión de cuádriceps',s:3,lo:8,hi:12,r:90,note:''},{id:'b4',n:'Curl femoral tumbado',s:3,lo:8,hi:12,r:90,note:''},{id:'b5',n:'Gemelo sentado',s:3,lo:8,hi:12,r:90,note:''},{id:'t4',n:'Jalón al pecho, agarre neutro',s:3,lo:8,hi:12,r:90,note:''}];
+/* descanso entre series: 2:00 en todos los ejercicios, que es lo que sueles esperar */
+for(const ss of Object.values(SESS))for(const e of (ss.ex||[]))if(e.r)e.r=120;
 const ALL_EX=(()=>{const m=new Map();for(const e of [...Object.values(SESS).flatMap(s=>s.ex),...LEGACY_EX])if(!m.has(e.id))m.set(e.id,e);return[...m.values()]})();
 
 /* ================== UTILIDADES ================== */

@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.20.3 · 2026-11-10
+- Descanso entre series de 2:00 en todos los ejercicios
+
 ## v1.20.2 · 2026-11-10
 - Con el teclado abierto se esconden la barra de pestañas y el temporizador, para que el iPhone no los deje descolocados a media pantalla
 
