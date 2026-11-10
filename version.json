@@ -1,10 +1,17 @@
 {
- "version": "1.21.1",
+ "version": "1.21.2",
  "fecha": "2026-11-10",
  "notas": [
-  "El coach tiene en cuenta que tus pruebas del corazón están bien, que sudas mucho y que prefieres hacer menos y encontrarte bien"
+  "El coach y el Plan saben que entrenas siempre a primera hora de la mañana, antes del hospital o después de dejar a tu hijo en el colegio"
  ],
  "historial": [
+  {
+   "version": "1.21.2",
+   "fecha": "2026-11-10",
+   "notas": [
+    "El coach y el Plan saben que entrenas siempre a primera hora de la mañana, antes del hospital o después de dejar a tu hijo en el colegio"
+   ]
+  },
   {
    "version": "1.21.1",
    "fecha": "2026-11-10",

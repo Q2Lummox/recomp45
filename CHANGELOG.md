@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.21.2 · 2026-11-10
+- El coach y el Plan saben que entrenas siempre a primera hora de la mañana, antes del hospital o después de dejar a tu hijo en el colegio
+
 ## v1.21.1 · 2026-11-10
 - El coach tiene en cuenta que tus pruebas del corazón están bien, que sudas mucho y que prefieres hacer menos y encontrarte bien
 
