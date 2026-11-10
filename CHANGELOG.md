@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.21.1 · 2026-11-10
+- El coach tiene en cuenta que tus pruebas del corazón están bien, que sudas mucho y que prefieres hacer menos y encontrarte bien
+
 ## v1.21.0 · 2026-11-10
 - Rutina: el martes queda solo con 4 ejercicios de pierna (hip thrust, prensa, femoral y gemelo)
 - El core pasa al final del lunes (elevación de piernas y plancha) y del viernes (crunch y plancha lateral)
