@@ -2,7 +2,7 @@
    - Al instalarse guarda la app y sus iconos: funciona sin conexión desde la primera vez.
    - La app: primero la red (para ver siempre lo último); sin conexión, la copia guardada.
    - Librerías y fuentes de CDN (direcciones con versión fija): primero la caché. */
-const CACHE = 'recomp-v-1.20.4', LIBS = 'recomp-libs';
+const CACHE = 'recomp-v-1.20.5', LIBS = 'recomp-libs';
 const CORE = ['./', './index.html', './fb.js', './firebase-config.js', './manifest.webmanifest', './version.json',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'];
 const FBJ = 'https://www.gstatic.com/firebasejs/10.12.2/';
@@ -18,6 +18,15 @@ self.addEventListener('activate', e => e.waitUntil((async () => {
   await self.clients.claim();
   caches.open(LIBS).then(l => Promise.allSettled(CDN.map(async u => { if (!(await l.match(u))) await l.add(u); })));
 })()));
+/* Al tocar el aviso «Descanso terminado», vuelve a la app */
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil((async () => {
+    const cs = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const c of cs) if ('focus' in c) return c.focus();
+    if (self.clients.openWindow) return self.clients.openWindow('./');
+  })());
+});
 self.addEventListener('message', e => { if (e.data === 'SKIP_WAITING') self.skipWaiting(); });
 self.addEventListener('fetch', e => {
   const req = e.request; if (req.method !== 'GET') return;

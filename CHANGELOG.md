@@ -1,5 +1,9 @@
 # Novedades
 
+## v1.20.5 · 2026-11-10
+- Temporizador: al acabar el descanso pita aunque bloquees el iPhone o cambies de app (mientras Recomp 45 siga abierta en segundo plano)
+- Aviso «Descanso terminado, continúa la serie» al acabar el descanso si la app está en segundo plano (la primera vez que pulses ⏱ te pide permiso para notificaciones)
+
 ## v1.20.4 · 2026-11-10
 - Temporizador: ya no arranca solo al apuntar repeticiones; arranca al pulsar el botón ⏱ 2:00 de cada ejercicio (también en los A1 de superserie)
 

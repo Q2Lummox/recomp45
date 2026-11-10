@@ -433,7 +433,7 @@ body.kb .tabs,body.kb .timer{visibility:hidden}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.20.4';
+const APP_VERSION='1.20.5';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -1875,7 +1875,7 @@ $('#view').addEventListener('click',e=>{
   else if(a==='zepp-run')runShortcut();
   else if(a==='zepp-help')openZeppHelp();
   else if(a==='watch-settings')openWatchSettings();
-  else if(a==='rest')startTimer(+b.dataset.sec,b.dataset.name);
+  else if(a==='rest'){askNotif();startTimer(+b.dataset.sec,b.dataset.name);playRestAudio()}
   else if(a==='fz-mode'){const p=lsGet(FZK,{});p.mode=b.dataset.mode;lsSet(FZK,p);render()}
   else if(a==='wo-save'){const w=clone(S.workouts[d]||{});w.session=w.session||sessionFor(d);const sm=woSummary(w);
     if(!sm.n){toast('No hay ninguna serie apuntada todavía','err');return}
@@ -1907,7 +1907,7 @@ $('#view').addEventListener('change',e=>{
 
 /* temporizador de descanso */
 /* Cuenta atrás del descanso; al llegar a 0 pita y sigue contando en rojo lo que te pasas.
-   Arranca solo al apuntar las repeticiones de una serie (en superserie, al apuntar la del último ejercicio de la pareja). */
+   Arranca al pulsar el botón ⏱ de cada ejercicio. */
 let tInt=null,T=null,actx=null,wlock=null;
 function unlockAudio(){try{if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume()}catch(e){}}
 document.addEventListener('touchend',unlockAudio,{passive:true});document.addEventListener('click',unlockAudio);
@@ -1917,8 +1917,40 @@ function beep(){try{unlockAudio();if(!actx)return;const t0=actx.currentTime;
     o.connect(g).connect(actx.destination);o.start(t0+dt);o.stop(t0+dt+.2)})}catch(e){}
   try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}
 async function keepAwake(on){try{if(on&&!wlock&&navigator.wakeLock)wlock=await navigator.wakeLock.request('screen');else if(!on&&wlock){await wlock.release();wlock=null}}catch(e){wlock=null}}
+/* Aviso con la pantalla bloqueada o la app en segundo plano: al pulsar ⏱ (o −15/+30) arranca un audio
+   que dura justo lo que queda de descanso, silencio y los tres pitidos al final. Un audio que ya suena
+   sigue con el iPhone bloqueado; un setTimeout no. Al acabar, notificación si hay permiso. */
+let tAud=null,tUrl=null;const SR=8000,BP=[[0,880],[.25,880],[.5,1320]];
+function restWav(sec){
+  const n=Math.round((sec+.9)*SR),buf=new ArrayBuffer(44+n*2),v=new DataView(buf),s=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i))};
+  s(0,'RIFF');v.setUint32(4,36+n*2,true);s(8,'WAVE');s(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,SR,true);v.setUint32(28,SR*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);s(36,'data');v.setUint32(40,n*2,true);
+  for(const [dt,f] of BP){const a=Math.round((sec+dt)*SR),len=Math.round(.18*SR);
+    for(let i=0;i<len&&a+i<n;i++){const env=Math.min(1,i/40,(len-i)/40);v.setInt16(44+(a+i)*2,Math.round(Math.sin(2*Math.PI*f*i/SR)*env*22000),true)}}
+  return new Blob([buf],{type:'audio/wav'});
+}
+function stopRestAudio(){if(tAud){try{tAud.pause()}catch(e){}tAud.removeAttribute('src');try{tAud.load()}catch(e){}tAud=null}if(tUrl){URL.revokeObjectURL(tUrl);tUrl=null}}
+function playRestAudio(){   /* solo desde un toque: el iPhone no deja empezar un audio sin él */
+  stopRestAudio();if(!T)return;const left=(T.end-Date.now())/1000;if(left<=.5)return;
+  try{tUrl=URL.createObjectURL(restWav(left));const a=new Audio(tUrl);tAud=a;a.setAttribute('playsinline','');
+    a.addEventListener('timeupdate',()=>{if(a===tAud&&a.currentTime>=left)restDone()});
+    a.addEventListener('ended',()=>{if(a===tAud)stopRestAudio()});
+    const p=a.play();if(p&&p.catch)p.catch(()=>{if(a===tAud)stopRestAudio()});
+    if('mediaSession' in navigator&&window.MediaMetadata)navigator.mediaSession.metadata=new MediaMetadata({title:'Descanso · '+T.name,artist:'Recomp 45'});
+  }catch(e){stopRestAudio()}
+}
+function askNotif(){try{if('Notification' in window&&Notification.permission==='default'){const p=Notification.requestPermission();p&&p.catch&&p.catch(()=>{})}}catch(e){}}
+async function notifyRest(name){
+  try{if(!document.hidden||!('Notification' in window)||Notification.permission!=='granted')return;
+    const title='Descanso terminado, continúa la serie',o={body:name?'Siguiente serie · '+name:'Siguiente serie',tag:'descanso',renotify:true,icon:'icons/icon-192.png'};
+    const reg=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();
+    if(reg&&reg.showNotification)await reg.showNotification(title,o);else new Notification(title,o)}catch(e){}
+}
+function restDone(){if(!T||T.beeped)return;T.beeped=true;saveT();
+  if(tAud&&!tAud.paused){try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}else beep();
+  notifyRest(T.name)}
 const TK='recomp45-timer';
-function stopTimer(){clearInterval(tInt);T=null;$('#timer').hidden=true;keepAwake(false);try{localStorage.removeItem(TK)}catch(e){}}
+function stopTimer(){clearInterval(tInt);T=null;stopRestAudio();$('#timer').hidden=true;keepAwake(false);try{localStorage.removeItem(TK)}catch(e){}}
 function saveT(){try{T&&localStorage.setItem(TK,JSON.stringify(T))}catch(e){}}
 function startTimer(sec,name,restore){
   clearInterval(tInt);T=restore||{end:Date.now()+sec*1000,total:sec,name,beeped:false};saveT();
@@ -1926,14 +1958,14 @@ function startTimer(sec,name,restore){
   const tick=()=>{if(!T)return;const left=(T.end-Date.now())/1000,box=$('#timerbox');
     if(left>0){box.classList.remove('over');$('#timerlbl').textContent='Descanso · '+T.name;$('#timert').textContent=mmss(Math.ceil(left));
       $('#timerfill').style.width=Math.min(100,(1-left/T.total)*100)+'%'}
-    else{if(!T.beeped){T.beeped=true;saveT();beep()}const over=-left;box.classList.add('over');
+    else{restDone();const over=-left;box.classList.add('over');
       $('#timerlbl').textContent='¡A por la serie!';$('#timert').textContent='+'+mmss(Math.floor(over));$('#timerfill').style.width='100%';
       if(over>900)stopTimer()}};
   tick();tInt=setInterval(tick,250);
 }
 $('#timerstop').onclick=stopTimer;
-$('#timerplus').onclick=()=>{if(!T)return;if(T.end<Date.now()){T.end=Date.now();T.beeped=false}T.end+=30000;T.total+=30;saveT()};
-$('#timerminus').onclick=()=>{if(!T)return;T.end-=15000;T.total=Math.max(15,T.total-15);saveT()};
+$('#timerplus').onclick=()=>{if(!T)return;if(T.end<Date.now()){T.end=Date.now();T.beeped=false}T.end+=30000;T.total+=30;saveT();playRestAudio()};
+$('#timerminus').onclick=()=>{if(!T)return;T.end-=15000;T.total=Math.max(15,T.total-15);saveT();if(!T.beeped)playRestAudio()};
 /* si el iPhone cerró la app en segundo plano, el descanso sigue donde iba */
 try{const t=JSON.parse(localStorage.getItem(TK)||'null');if(t&&t.end&&Date.now()-t.end<900000)startTimer(0,t.name,t);else localStorage.removeItem(TK)}catch(e){}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&T)keepAwake(true)});

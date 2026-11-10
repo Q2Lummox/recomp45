@@ -1,10 +1,19 @@
 {
- "version": "1.20.4",
+ "version": "1.20.5",
  "fecha": "2026-11-10",
  "notas": [
-  "Temporizador: ya no arranca solo al apuntar repeticiones; arranca al pulsar el botón ⏱ 2:00 de cada ejercicio (también en los A1 de superserie)"
+  "Temporizador: al acabar el descanso pita aunque bloquees el iPhone o cambies de app (mientras Recomp 45 siga abierta en segundo plano)",
+  "Aviso «Descanso terminado, continúa la serie» al acabar el descanso si la app está en segundo plano (la primera vez que pulses ⏱ te pide permiso para notificaciones)"
  ],
  "historial": [
+  {
+   "version": "1.20.5",
+   "fecha": "2026-11-10",
+   "notas": [
+    "Temporizador: al acabar el descanso pita aunque bloquees el iPhone o cambies de app (mientras Recomp 45 siga abierta en segundo plano)",
+    "Aviso «Descanso terminado, continúa la serie» al acabar el descanso si la app está en segundo plano (la primera vez que pulses ⏱ te pide permiso para notificaciones)"
+   ]
+  },
   {
    "version": "1.20.4",
    "fecha": "2026-11-10",
