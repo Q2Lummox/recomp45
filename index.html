@@ -433,7 +433,7 @@ body.kb .tabs,body.kb .timer{visibility:hidden}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.20.3';
+const APP_VERSION='1.20.4';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -1451,8 +1451,8 @@ function viewEntreno(){
     for(let i=0;i<n;i++){const s=cur[i]||{},pk=lp&&lp.sets[i]?lp.sets[i].kg:'',pr=lp&&lp.sets[i]?lp.sets[i].r:'';
       rows+=`<span class="n">${i+1}</span><input type="number" inputmode="decimal" step="0.5" id="w-${ex.id}-${i}-kg" data-ex="${ex.id}" data-i="${i}" data-k="kg" value="${s.kg??''}" placeholder="${h.kg||pk||ex.kg||'kg'}" aria-label="Kilos serie ${i+1}"><input type="number" inputmode="numeric" id="w-${ex.id}-${i}-r" data-ex="${ex.id}" data-i="${i}" data-k="r" value="${s.r??''}" placeholder="${pr||(ex.u==='s'?'seg':'reps')}" aria-label="${ex.u==='s'?'Segundos':'Repeticiones'} serie ${i+1}">`}
     html+=`<section class="card">
-      <div class="ex-top"><div class="grow"><h3>${ex.ss?`<span class="ss">${ex.ss}</span>`:''}${esc(ex.n)}</h3><div class="ex-meta">${n} × ${ex.lo===ex.hi?ex.lo:ex.lo+'-'+ex.hi}${unit} · ${chain?`sin descanso, pasa a ${nxt.ss}`:`descanso ${mmss(ex.r)}`}</div></div>
-      ${chain?'':`<button type="button" class="restbtn" data-act="rest" data-sec="${ex.r}" data-name="${esc(ex.n)}">⏱ ${mmss(ex.r)}</button>`}</div>
+      <div class="ex-top"><div class="grow"><h3>${ex.ss?`<span class="ss">${ex.ss}</span>`:''}${esc(ex.n)}</h3><div class="ex-meta">${n} × ${ex.lo===ex.hi?ex.lo:ex.lo+'-'+ex.hi}${unit} · ${chain?`sin descanso, pasa a ${nxt.ss}`:'descanso 2:00'}</div></div>
+      <button type="button" class="restbtn" data-act="rest" data-sec="120" data-name="${esc(ex.n)}">⏱ 2:00</button></div>
       <p class="note ${ex.e?'elbow':''}">${ex.e?'<b style="color:var(--band)">CODO · </b>':''}${esc(ex.note)}</p>
       ${(()=>{const pb=bestBefore(ex.id,d),nowM=Math.max(0,...cur.filter(x=>x&&+x.r>0).map(x=>+x.kg||0)),isPr=pb&&nowM>pb;
         return `<div class="row small"><span class="pr-badge" data-pr="${ex.id}" ${isPr?'':'hidden'}>${isPr?`🏆 Récord nuevo: ${fmt(nowM,nowM%1?1:0)} kg`:''}</span>${pb?`<span class="muted mono">Tu récord: ${fmt(pb,pb%1?1:0)} kg</span>`:''}</div>`})()}
@@ -1900,7 +1900,6 @@ $('#view').addEventListener('input',e=>{
 });
 $('#view').addEventListener('change',e=>{
   const el=e.target;
-  if(el.dataset.ex&&el.dataset.k==='r'&&el.value!==''&&st.date===todayISO())autoRest(el.dataset.ex);
   if(el.dataset.ex&&el.value!=='')checkRecord(el.dataset.ex,st.date);
   if(el.dataset.act==='fz-ex'){const p=lsGet(FZK,{});p.id=el.value;lsSet(FZK,p);pendingRender=false;el.blur();render();return}
   if(el.dataset.act==='session'){const w=clone(S.workouts[st.date]||{});w.session=el.value;saveDoc('workouts',st.date,w);pendingRender=false;el.blur();render()}

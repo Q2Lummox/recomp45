@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.20.4 · 2026-11-10
+- Temporizador: ya no arranca solo al apuntar repeticiones; arranca al pulsar el botón ⏱ 2:00 de cada ejercicio (también en los A1 de superserie)
+
 ## v1.20.3 · 2026-11-10
 - Descanso entre series de 2:00 en todos los ejercicios
 
