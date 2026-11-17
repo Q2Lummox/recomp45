@@ -36,7 +36,7 @@ html,body{margin:0;background:var(--bg)}
 /* La página no se desplaza: se desplaza #scroller. Así el iPhone no puede mover la barra de pestañas
    ni el temporizador (con la página desplazándose, a veces los soltaba y subían con el contenido). */
 html,body{height:100%;overflow:hidden;overscroll-behavior:none}
-#scroller{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding-top:env(safe-area-inset-top,0px)}
+#scroller{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;bottom:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
 body{color:var(--ink);font:15px/1.45 var(--f-body);-webkit-text-size-adjust:100%;min-height:100vh;
   background:radial-gradient(1100px 520px at 55% -8%,#1b1f25 0%,transparent 70%),var(--bg)}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--surface)}
@@ -48,7 +48,7 @@ button{cursor:pointer}
 .gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 
 /* ===== cabecera ===== */
-.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:linear-gradient(180deg,#1b1e23,#111316);border-bottom:1px solid #000;box-shadow:0 1px 0 #ffffff0a,0 6px 18px #0009}
+.top{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,#1b1e23,#111316);border-bottom:1px solid #000;box-shadow:0 1px 0 #ffffff0a,0 6px 18px #0009}
 .tape{height:5px;background:repeating-linear-gradient(-45deg,var(--accent) 0 10px,#111316 10px 20px)}
 .top-in{max-width:640px;margin:0 auto;padding-block:10px 8px;display:grid;gap:8px}
 .brand{display:flex;align-items:center;gap:10px}
@@ -438,7 +438,7 @@ body.kb .tabs,body.kb .timer{visibility:hidden}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.23.1';
+const APP_VERSION='1.23.2';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};

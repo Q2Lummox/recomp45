@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.23.2 · 2026-11-17
+- La cabecera vuelve a quedarse pegada arriba al desplazarte
+
 ## v1.23.1 · 2026-11-17
 - La barra de pestañas y el temporizador ya no se sueltan ni suben con la pantalla al desplazarte
 

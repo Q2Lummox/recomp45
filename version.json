@@ -1,10 +1,17 @@
 {
- "version": "1.23.1",
+ "version": "1.23.2",
  "fecha": "2026-11-17",
  "notas": [
-  "La barra de pestañas y el temporizador ya no se sueltan ni suben con la pantalla al desplazarte"
+  "La cabecera vuelve a quedarse pegada arriba al desplazarte"
  ],
  "historial": [
+  {
+   "version": "1.23.2",
+   "fecha": "2026-11-17",
+   "notas": [
+    "La cabecera vuelve a quedarse pegada arriba al desplazarte"
+   ]
+  },
   {
    "version": "1.23.1",
    "fecha": "2026-11-17",
