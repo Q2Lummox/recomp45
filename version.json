@@ -1,12 +1,17 @@
 {
- "version": "1.23.0",
- "fecha": "2026-11-11",
+ "version": "1.23.1",
+ "fecha": "2026-11-17",
  "notas": [
-  "Miércoles más corto: solo 6 ejercicios (elevación lateral, hombro posterior, predicador + barra V, martillo + fondos)",
-  "La elevación frontal y los curls de muñeca pasan al sábado; salen los abductores",
-  "Recordatorio en el Plan: en las superseries, el descanso va después de los dos ejercicios"
+  "La barra de pestañas y el temporizador ya no se sueltan ni suben con la pantalla al desplazarte"
  ],
  "historial": [
+  {
+   "version": "1.23.1",
+   "fecha": "2026-11-17",
+   "notas": [
+    "La barra de pestañas y el temporizador ya no se sueltan ni suben con la pantalla al desplazarte"
+   ]
+  },
   {
    "version": "1.23.0",
    "fecha": "2026-11-11",

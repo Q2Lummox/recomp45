@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.23.1 · 2026-11-17
+- La barra de pestañas y el temporizador ya no se sueltan ni suben con la pantalla al desplazarte
+
 ## v1.23.0 · 2026-11-11
 - Miércoles más corto: solo 6 ejercicios (elevación lateral, hombro posterior, predicador + barra V, martillo + fondos)
 - La elevación frontal y los curls de muñeca pasan al sábado; salen los abductores

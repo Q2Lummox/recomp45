@@ -32,8 +32,11 @@
   color-scheme:dark;
 }
 *{box-sizing:border-box}
-html{padding-top:env(safe-area-inset-top,0px)}
 html,body{margin:0;background:var(--bg)}
+/* La página no se desplaza: se desplaza #scroller. Así el iPhone no puede mover la barra de pestañas
+   ni el temporizador (con la página desplazándose, a veces los soltaba y subían con el contenido). */
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+#scroller{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding-top:env(safe-area-inset-top,0px)}
 body{color:var(--ink);font:15px/1.45 var(--f-body);-webkit-text-size-adjust:100%;min-height:100vh;
   background:radial-gradient(1100px 520px at 55% -8%,#1b1f25 0%,transparent 70%),var(--bg)}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--surface)}
@@ -337,7 +340,7 @@ body.kb .tabs,body.kb .timer{visibility:hidden}
 .toast button{border:1px solid var(--accent);background:none;color:var(--accent);border-radius:3px;padding:3px 8px;font-family:var(--f-display);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
 
 /* acceso */
-.gate{min-height:100vh;display:grid;place-items:center;padding:24px max(16px,env(safe-area-inset-left,0px))}
+.gate{min-height:100%;height:100%;overflow-y:auto;box-sizing:border-box;display:grid;place-items:center;padding:24px max(16px,env(safe-area-inset-left,0px))}
 .gate-in{max-width:420px;width:100%;display:grid;gap:16px;text-align:center;justify-items:center}
 .lmark{width:58px;height:58px;border:2px solid var(--accent);transform:rotate(45deg);display:grid;place-items:center;box-shadow:0 0 24px #f39a1e55}
 .lmark span{transform:rotate(-45deg);font-family:var(--f-display);font-weight:700;font-size:1.3rem;color:var(--accent)}
@@ -368,6 +371,7 @@ body.kb .tabs,body.kb .timer{visibility:hidden}
 
 <!-- ===== App ===== -->
 <div id="app" hidden>
+<div id="scroller">
 <header class="top">
   <div class="tape" aria-hidden="true"></div>
   <div class="top-in gut">
@@ -397,6 +401,7 @@ body.kb .tabs,body.kb .timer{visibility:hidden}
 </header>
 
 <main id="view" class="gut" aria-live="polite"></main>
+</div>
 
 <nav class="tabs" aria-label="Secciones">
   <div class="tabs-in">
@@ -433,7 +438,7 @@ body.kb .tabs,body.kb .timer{visibility:hidden}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.23.0';
+const APP_VERSION='1.23.1';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -913,7 +918,7 @@ const editing=()=>{const a=document.activeElement;return a&&$('#view').contains(
 const isField=el=>el&&(/^(TEXTAREA|SELECT)$/.test(el.tagName)||(el.tagName==='INPUT'&&!/^(checkbox|radio|range|button|submit|file)$/.test(el.type)));
 let kbT=null;
 document.addEventListener('focusin',e=>{if(isField(e.target)){clearTimeout(kbT);document.body.classList.add('kb')}});
-document.addEventListener('focusout',()=>{clearTimeout(kbT);kbT=setTimeout(()=>{if(isField(document.activeElement))return;document.body.classList.remove('kb');window.scrollTo(window.scrollX,window.scrollY)},120)});
+document.addEventListener('focusout',()=>{clearTimeout(kbT);kbT=setTimeout(()=>{if(isField(document.activeElement))return;document.body.classList.remove('kb');window.scrollTo(0,0)},120)});
 if(window.visualViewport)visualViewport.addEventListener('resize',()=>{if(visualViewport.height>window.innerHeight*.85&&!isField(document.activeElement)){document.body.classList.remove('kb')}});
 function requestRender(){
   const a=document.activeElement;
@@ -1846,11 +1851,11 @@ function render(){
   $('#datenav').hidden=!['hoy','comida','entreno'].includes(st.tab);
   document.querySelectorAll('.tabs button').forEach(b=>{if(b.dataset.tab===st.tab)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
   const v={hoy:viewHoy,comida:viewComida,entreno:viewEntreno,progreso:viewProgreso,plan:viewPlan}[st.tab];
-  const sy=window.scrollY,fa=document.activeElement,fid=fa&&$('#view').contains(fa)&&fa.id;
-  $('#view').innerHTML=v();window.scrollTo(0,sy);
+  const sc=$('#scroller'),sy=sc.scrollTop,fa=document.activeElement,fid=fa&&$('#view').contains(fa)&&fa.id;
+  $('#view').innerHTML=v();sc.scrollTop=sy;
   if(fid){const n=document.getElementById(fid);if(n)try{n.focus({preventScroll:true})}catch(e){}}
 }
-function goTab(t){st.tab=t;try{history.replaceState(null,'','#'+t)}catch(e){location.hash=t}render();window.scrollTo(0,0)}
+function goTab(t){st.tab=t;try{history.replaceState(null,'','#'+t)}catch(e){location.hash=t}render();$('#scroller').scrollTop=0}
 
 /* ================== EVENTOS ================== */
 document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-tab]');if(b)goTab(b.dataset.tab)});
@@ -1891,7 +1896,7 @@ $('#view').addEventListener('click',e=>{
   else if(a==='wo-save'){const w=clone(S.workouts[d]||{});w.session=w.session||sessionFor(d);const sm=woSummary(w);
     if(!sm.n){toast('No hay ninguna serie apuntada todavía','err');return}
     w.done=true;w.doneAt=new Date().toISOString();saveDoc('workouts',d,w);if(typeof stopTimer==='function'&&T)stopTimer();
-    toast(`Entreno guardado: ${sm.n} series · ${fmt(Math.round(sm.vol))} kg`);render();window.scrollTo({top:0,behavior:'smooth'})}
+    toast(`Entreno guardado: ${sm.n} series · ${fmt(Math.round(sm.vol))} kg`);render();$('#scroller').scrollTo({top:0,behavior:'smooth'})}
   else if(a==='wo-open'){const w=clone(S.workouts[d]||{});delete w.done;delete w.doneAt;saveDoc('workouts',d,w);render()}
   else if(a==='cinta'){const w=clone(S.workouts[d]||{});w.session=w.session||sessionFor(d);w.cinta=!w.cinta;saveDoc('workouts',d,w);render()}
   else if(a==='wizard')openWizard();
