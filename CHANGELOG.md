@@ -1,5 +1,9 @@
 # Novedades
 
+## v1.25.0 · 2026-11-21
+- Asistente de dieta › «🎲 Elígelo tú»: la app rellena la semana entera con variedad (del Menú 1, del Menú 2 o de los dos) y luego cambias lo que quieras antes de guardar
+- En el resumen, «Otra propuesta» para que te proponga otra semana distinta
+
 ## v1.24.0 · 2026-11-21
 - Menú 2: 30 recetas nuevas, 6 por comida, con las mismas calorías y proteína que el Menú 1 (porridge de cacao, tostadas de salmón ahumado, crepes de avena, pollo al curry, garbanzos con pollo, caballa al horno, sardinas, pizza casera de pollo, crema de verduras…)
 - Desplegable Menú 1 / Menú 2 en cada comida y en el asistente de dieta; lo que ya tenías elegido se conserva

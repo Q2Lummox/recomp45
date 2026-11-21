@@ -217,6 +217,8 @@ a{color:var(--accent)}
 .hab.del{border-color:var(--bad)}.hab.del b{color:var(--bad)}
 .hab-form{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center}
 .bar-in{display:grid;grid-template-columns:1fr auto;gap:6px;margin-top:6px}
+.dw-auto{display:grid;gap:8px;border:1px solid var(--accent);border-radius:5px;padding:12px;background:#f39a1e0f}
+.dw-auto select{width:auto;flex:1;min-width:0}
 .menu-pick{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .menu-pick select,.dw-set{width:auto;min-width:120px;padding:6px 10px;font-family:var(--f-display);letter-spacing:.05em;text-transform:uppercase}
 .seg2{grid-template-columns:1fr 1fr!important}
@@ -440,7 +442,7 @@ body.kb .tabs,body.kb .timer{visibility:hidden}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.24.0';
+const APP_VERSION='1.25.0';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -1075,8 +1077,11 @@ function drawDiet(){
   if(i===0){
     body=`<div><div class="eyebrow">Semana que viene</div><div class="big-title">${shortDate(mon)} – ${shortDate(addDays(mon,6))}</div></div>
       <p class="small">Para cada día te propongo seis desayunos, seis almuerzos, seis comidas, seis meriendas y seis cenas de cada menú (arriba eliges Menú 1 o Menú 2). Tú eliges uno de cada.</p>
-      <ul class="small wz-list"><li>El menú de esta semana no se toca.</li><li>Al terminar, esos días quedan fijados en Comida y ya no tendrás que elegir.</li><li>La lista de la compra anterior se borra y se crea una nueva con todo lo de esa semana.</li>${DW.had?'<li>Esa semana ya tenía menú: verás marcado lo que elegiste y puedes cambiarlo.</li>':''}<li>Si cierras antes de terminar, no cambia nada.</li></ul>`;
-    nav=`<span class="grow"></span><button type="button" class="btn pri" data-dw="next">Empezar</button>`;
+      <ul class="small wz-list"><li>Puedes elegir tú comida a comida o dejar que la app proponga la semana entera.</li><li>El menú de esta semana no se toca.</li><li>Al terminar, esos días quedan fijados en Comida y ya no tendrás que elegir.</li><li>La lista de la compra anterior se borra y se crea una nueva con todo lo de esa semana.</li>${DW.had?'<li>Esa semana ya tenía menú: verás marcado lo que elegiste y puedes cambiarlo.</li>':''}<li>Si cierras antes de terminar, no cambia nada.</li></ul>`;
+    body+=`<div class="dw-auto"><b>¿Prefieres que la elija la app?</b><span class="small muted">Rellena los 7 días con variedad (sin repetir plato dos días seguidos) y luego cambias lo que quieras antes de guardar.</span>
+      <div class="row"><select data-dw-src aria-label="De qué menú">${MENU_SETS.map((x,j)=>`<option value="${j}" ${DW.src===j?'selected':''}>Del ${x.n}</option>`).join('')}<option value="mix" ${DW.src==null||DW.src==='mix'?'selected':''}>De los dos mezclados</option></select>
+      <button type="button" class="btn pri" data-dw="auto">🎲 Elígelo tú</button></div></div>`;
+    nav=`<span class="grow"></span><button type="button" class="btn" data-dw="next">Elegir yo, uno a uno</button>`;
   }else if(i<=N){
     const di=Math.floor((i-1)/MEALS.length),m=MEALS[(i-1)%MEALS.length],d=days[di],cur=sel[d][m.id],prev=di>0?sel[days[di-1]][m.id]:null;
     DW.mv=DW.mv||{};const vs=DW.view!=null?DW.view:cur?setOf(cur):(DW.mv[m.id]??DW.lastSet??0);if(DW.view!=null)DW.lastSet=DW.view;DW.view=null;DW.vs=vs;
@@ -1092,16 +1097,20 @@ function drawDiet(){
       const os=MEALS.map(m=>m.opts[sel[d][m.id]]),t=sumM(os.map(optM));
       return `<div class="dw-day"><div class="row between"><b>${cap(longDate(d))}</b><button type="button" class="btn sm" data-dw="goto" data-i="${1+di*MEALS.length}">Cambiar</button></div>
         <p class="small muted" style="margin:0">${os.map(o=>esc(o.t)).join(' · ')}</p><span class="small num">${fmt(t.k)} kcal · P ${fmt(t.p)} g</span></div>`}).join('');
+    if(DW.auto)body=`<div class="row between"><span class="small">Propuesta de la app${DW.src==='mix'||DW.src==null?' con los dos menús':' del '+MENU_SETS[DW.src].n}.</span><button type="button" class="btn sm" data-dw="auto">🎲 Otra propuesta</button></div>`+body;
     nav=`<button type="button" class="btn" data-dw="back">‹ Atrás</button><span class="grow"></span><button type="button" class="btn pri" data-dw="save">Guardar y crear lista</button>`;
   }
   openSheet('Menú','Asistente de dieta',`<div class="wz">${body}</div><div class="row wz-nav">${nav}</div>`,()=>{DW=null});
   $('#sheet-body').scrollTop=0;
-  $('#sheet-body').onchange=e=>{if(!DW||!e.target.matches('[data-dw-set]'))return;DW.view=+e.target.value;drawDiet()};
+  $('#sheet-body').onchange=e=>{if(!DW)return;
+    if(e.target.matches('[data-dw-src]')){DW.src=e.target.value==='mix'?'mix':+e.target.value;return}
+    if(e.target.matches('[data-dw-set]')){DW.view=+e.target.value;drawDiet()}};
   $('#sheet-body').onclick=e=>{const b=e.target.closest('[data-dw]');if(!b||!DW||DW.busy)return;const a=b.dataset.dw;
     if(a==='next'){DW.i++;drawDiet()}
     else if(a==='back'){DW.i=Math.max(0,DW.i-1);drawDiet()}
     else if(a==='goto'){DW.i=+b.dataset.i;DW.edit=true;drawDiet()}
     else if(a==='save')saveDiet();
+    else if(a==='auto'){autoDiet();DW.auto=true;DW.i=N+1;drawDiet()}
     else if(a==='pick'){
       const di=Math.floor((DW.i-1)/MEALS.length),m=MEALS[(DW.i-1)%MEALS.length];DW.sel[DW.days[di]][m.id]=b.dataset.opt;DW.mv=DW.mv||{};DW.mv[m.id]=setOf(b.dataset.opt);DW.lastSet=setOf(b.dataset.opt);
       b.parentNode.querySelectorAll('.dw-opt').forEach(x=>x.setAttribute('aria-pressed',x===b));
@@ -1109,6 +1118,20 @@ function drawDiet(){
         /* al corregir un día desde el resumen, vuelve al resumen al terminar ese día */
         if(DW.edit&&DW.i%MEALS.length===0){DW.i=N+1;DW.edit=false}else DW.i++;drawDiet()},200);
     }};
+}
+/* la app elige la semana: por cada comida baraja las opciones del menú escogido y las reparte en los 7 días
+   sin repetir el mismo plato dos días seguidos (con 6 opciones, como mucho una se repite en la semana) */
+function autoDiet(){
+  const src=DW.src==null?'mix':DW.src;
+  for(const m of MEALS){
+    let pool=src==='mix'?MENU_SETS.flatMap(x=>x.keys):MENU_SETS[src].keys.slice();
+    pool=pool.filter(k=>m.opts[k]);
+    const shuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+    let seq=[];while(seq.length<DW.days.length)seq=seq.concat(shuf(pool));
+    seq=seq.slice(0,DW.days.length);
+    for(let i=1;i<seq.length;i++)if(seq[i]===seq[i-1]){const j=seq.findIndex((k,x)=>x>i&&k!==seq[i-1]&&(x+1>=seq.length||seq[x+1]!==seq[i])&&seq[i+1]!==k);if(j>0)[seq[i],seq[j]]=[seq[j],seq[i]];else seq[i]=pool.find(k=>k!==seq[i-1]&&k!==seq[i+1])||seq[i]}
+    DW.days.forEach((d,i)=>{DW.sel[d][m.id]=seq[i]});
+  }
 }
 function saveDiet(){
   const menu=clone(AJ.menu||{});menu.plan=menu.plan||{};
