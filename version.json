@@ -1,10 +1,21 @@
 {
- "version": "1.23.2",
- "fecha": "2026-11-17",
+ "version": "1.24.0",
+ "fecha": "2026-11-21",
  "notas": [
-  "La cabecera vuelve a quedarse pegada arriba al desplazarte"
+  "Menú 2: 30 recetas nuevas, 6 por comida, con las mismas calorías y proteína que el Menú 1 (porridge de cacao, tostadas de salmón ahumado, crepes de avena, pollo al curry, garbanzos con pollo, caballa al horno, sardinas, pizza casera de pollo, crema de verduras…)",
+  "Desplegable Menú 1 / Menú 2 en cada comida y en el asistente de dieta; lo que ya tenías elegido se conserva",
+  "Alimentos nuevos: salmón ahumado, sardinas (frescas y en lata), caballa, tortitas de arroz, kiwi y mozzarella light"
  ],
  "historial": [
+  {
+   "version": "1.24.0",
+   "fecha": "2026-11-21",
+   "notas": [
+    "Menú 2: 30 recetas nuevas, 6 por comida, con las mismas calorías y proteína que el Menú 1 (porridge de cacao, tostadas de salmón ahumado, crepes de avena, pollo al curry, garbanzos con pollo, caballa al horno, sardinas, pizza casera de pollo, crema de verduras…)",
+    "Desplegable Menú 1 / Menú 2 en cada comida y en el asistente de dieta; lo que ya tenías elegido se conserva",
+    "Alimentos nuevos: salmón ahumado, sardinas (frescas y en lata), caballa, tortitas de arroz, kiwi y mozzarella light"
+   ]
+  },
   {
    "version": "1.23.2",
    "fecha": "2026-11-17",

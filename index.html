@@ -217,6 +217,8 @@ a{color:var(--accent)}
 .hab.del{border-color:var(--bad)}.hab.del b{color:var(--bad)}
 .hab-form{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center}
 .bar-in{display:grid;grid-template-columns:1fr auto;gap:6px;margin-top:6px}
+.menu-pick{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.menu-pick select,.dw-set{width:auto;min-width:120px;padding:6px 10px;font-family:var(--f-display);letter-spacing:.05em;text-transform:uppercase}
 .seg2{grid-template-columns:1fr 1fr!important}
 .fz-log{display:grid;gap:4px}
 .fz-row{display:flex;gap:10px;align-items:baseline;border-bottom:1px dashed #23282e;padding-bottom:4px}
@@ -438,7 +440,7 @@ body.kb .tabs,body.kb .timer{visibility:hidden}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.23.2';
+const APP_VERSION='1.24.0';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -507,6 +509,13 @@ const FOODS={
   tortillapatata:{n:'Tortilla de patata (de bar)',k:190,p:6.5,c:15,f:12,def:120},
   quesolonchas:{n:'Queso en lonchas',k:330,p:22,c:1,f:27,u:[20,'loncha','lonchas']},
   chorizo:{n:'Chorizo',k:455,p:24,c:2,f:39,def:30},
+  salmonahum:{n:'Salmón ahumado',k:180,p:22,c:0,f:10},
+  sardinas:{n:'Sardinas frescas (limpias)',k:140,p:21,c:0,f:6},
+  sardinaslata:{n:'Sardinas en lata (escurridas)',k:200,p:24,c:0,f:11.5},
+  caballa:{n:'Caballa (limpia)',k:190,p:19,c:0,f:12.5},
+  tortitas:{n:'Tortitas de arroz',k:387,p:8,c:81,f:3,u:[8,'tortita','tortitas']},
+  kiwi:{n:'Kiwi',k:61,p:1.1,c:15,f:0.5,u:[75,'kiwi','kiwis']},
+  mozzarella:{n:'Mozzarella light',k:165,p:20,c:2,f:9},
 };
 
 const MEALS=[
@@ -516,36 +525,72 @@ const MEALS=[
     C:{t:'Bol de skyr',items:[['skyr',250],['avena',50],['frutosrojos',150],['whey',15],['nueces',10],['miel',10]]},
     D:{t:'Tortilla francesa y jamón',items:[['panint',80],['huevo',120],['claras',100],['jamon',20],['tomate',60],['naranja',200]]},
     E:{t:'Tortitas de avena y plátano',items:[['avena',60],['claras',200],['platano',120],['whey',15],['miel',10],['leche',100]]},
-    F:{t:'Tostadas con Burgos y pavo',items:[['panint',100],['quesoburgos',125],['pavo',80],['aguacate',40],['naranja',200]]}}},
+    F:{t:'Tostadas con Burgos y pavo',items:[['panint',100],['quesoburgos',125],['pavo',80],['aguacate',40],['naranja',200]]},
+    G:{t:'Porridge de cacao y plátano',items:[['avena',50],['lecheprot',300],['cacao',10],['platano',100],['whey',20]]},
+    H:{t:'Tostadas de aguacate y huevos revueltos',items:[['panint',80],['huevo',120],['claras',150],['aguacate',40],['tomate',60],['kiwi',75]]},
+    I:{t:'Cereales con leche y fruta',items:[['cereales',45],['lecheprot',300],['whey',25],['platano',120]]},
+    J:{t:'Tostadas de salmón ahumado',items:[['panint',100],['salmonahum',80],['quesoburgos',100],['naranja',200]]},
+    K:{t:'Crepes de avena con fresas',items:[['avena',60],['claras',150],['huevo',60],['quesofresco',200],['frutosrojos',100],['miel',10]]},
+    L:{t:'Bocadillo de jamón y café con leche',items:[['pan',100],['jamon',60],['tomate',60],['aove',5],['lecheprot',250]]}}},
   {id:'alm',n:'Almuerzo',h:'10:30',opts:{
     A:{t:'Bocadillo de pavo',items:[['pan',80],['pavo',80],['tomate',60],['aove',5]]},
     B:{t:'Bocadillo de atún',items:[['pan',80],['atun',112],['tomate',60]]},
     C:{t:'Batido rápido',items:[['leche',300],['whey',30],['platano',120]]},
     D:{t:'Bocadillo de tortilla',items:[['pan',80],['huevo',60],['claras',100],['tomate',40]]},
     E:{t:'Bocadillo de lomo',items:[['pan',80],['cerdo',90],['tomate',40]]},
-    F:{t:'Wrap de pavo y Burgos',items:[['tortillatrigo',60],['pavo',90],['quesoburgos',80],['tomate',60]]}}},
+    F:{t:'Wrap de pavo y Burgos',items:[['tortillatrigo',60],['pavo',90],['quesoburgos',80],['tomate',60]]},
+    G:{t:'Bocadillo de pollo a la plancha',items:[['pan',80],['pollo',100],['verdura',50],['aove',5]]},
+    H:{t:'Sándwich de pavo y queso',items:[['panmolde',60],['pavo',90],['quesolonchas',20],['kiwi',75]]},
+    I:{t:'Skyr con cereales y frutos rojos',items:[['skyr',250],['cereales',30],['frutosrojos',100]]},
+    J:{t:'Bocadillo de sardinas',items:[['pan',70],['sardinaslata',85],['tomate',40]]},
+    K:{t:'Wrap de huevo y atún',items:[['tortillatrigo',60],['huevo',60],['atun',80],['tomate',40]]},
+    L:{t:'Tortitas de arroz con pavo y fruta',items:[['tortitas',32],['pavo',90],['quesoburgos',60],['manzana',150]]}}},
   {id:'com',n:'Comida',h:'14:00',opts:{
     A:{t:'Pollo con arroz',items:[['pollo',170],['arroz',80],['verdura',200],['aove',10]]},
     B:{t:'Pasta con ternera',items:[['ternera',160],['pasta',80],['tomatetrit',100],['aove',10]]},
     C:{t:'Lentejas con pollo',items:[['lentejas',80],['pollo',120],['verdura',150],['aove',10],['pan',30]]},
     D:{t:'Lomo con patatas',items:[['cerdo',170],['patata',300],['verdura',150],['aove',10]]},
     E:{t:'Arroz con gambas y pollo',items:[['arroz',80],['pollo',110],['gambas',100],['verdura',150],['aove',10]]},
-    F:{t:'Pavo con boniato',items:[['pavocarne',190],['boniato',300],['verdura',150],['aove',10]]}}},
+    F:{t:'Pavo con boniato',items:[['pavocarne',190],['boniato',300],['verdura',150],['aove',10]]},
+    G:{t:'Pollo al curry con arroz',items:[['pollo',170],['arroz',80],['verdura',100],['yogur',125],['aove',5]]},
+    H:{t:'Garbanzos con pollo y espinacas',items:[['garbanzos',230],['pollo',150],['verdura',150],['aove',10]]},
+    I:{t:'Espaguetis con atún y tomate',items:[['pasta',90],['atun',160],['tomatetrit',150],['aove',10]]},
+    J:{t:'Hamburguesa casera con patata al horno',items:[['ternera',190],['patata',300],['verdura',100],['aove',10]]},
+    K:{t:'Caballa al horno con arroz',items:[['caballa',190],['arroz',60],['verdura',150]]},
+    L:{t:'Salteado de cerdo con verduras y arroz',items:[['cerdo',180],['arroz',70],['verdura',200],['aove',5]]}}},
   {id:'mer',n:'Merienda',h:'17:30',opts:{
     A:{t:'Skyr, nueces y fruta',items:[['skyr',250],['nueces',15],['manzana',150]]},
     B:{t:'Bocadillo de jamón',items:[['pan',60],['jamon',50],['naranja',200]]},
     C:{t:'Batido de whey',items:[['leche',250],['whey',30],['platano',120]]},
     D:{t:'Tostadas de pavo y Burgos',items:[['panint',80],['pavo',60],['quesoburgos',100],['tomate',40]]},
     E:{t:'Queso batido con frutos rojos',items:[['quesofresco',300],['frutosrojos',150],['avena',30],['whey',10]]},
-    F:{t:'Skyr con plátano y cacahuete',items:[['skyr',200],['platano',120],['cacahuete',15]]}}},
+    F:{t:'Skyr con plátano y cacahuete',items:[['skyr',200],['platano',120],['cacahuete',15]]},
+    G:{t:'Batido de cacao y plátano',items:[['lecheprot',250],['whey',20],['cacao',10],['platano',100]]},
+    H:{t:'Tostada de cacahuete con skyr',items:[['panint',60],['cacahuete',15],['skyr',150]]},
+    I:{t:'Yogur proteico con cereales',items:[['skyr',250],['cereales',35],['miel',10]]},
+    J:{t:'Sándwich de atún',items:[['panmolde',90],['atun',80],['tomate',40],['quesoburgos',50]]},
+    K:{t:'Huevos cocidos con pan y tomate',items:[['huevo',120],['claras',100],['panint',40],['tomate',60]]},
+    L:{t:'Queso fresco con nueces y miel',items:[['quesoburgos',200],['nueces',15],['miel',10],['manzana',150]]}}},
   {id:'cen',n:'Cena',h:'21:00',opts:{
     A:{t:'Salmón con patata',items:[['salmon',140],['patata',250],['verdura',150],['aove',5]]},
     B:{t:'Tortilla de patata',items:[['huevo',180],['claras',100],['patata',200],['verdura',150],['aove',5]]},
     C:{t:'Merluza con arroz',items:[['merluza',200],['arroz',70],['verdura',200],['aove',10]]},
     D:{t:'Bacalao con patata',items:[['bacalao',230],['patata',300],['verdura',150],['aove',10]]},
     E:{t:'Ensalada de pasta y atún',items:[['pasta',70],['atun',112],['huevo',60],['tomate',100],['verdura',100],['aove',10]]},
-    F:{t:'Fajitas de pollo',items:[['tortillatrigo',120],['pollo',150],['verdura',150],['aguacate',20]]}}},
+    F:{t:'Fajitas de pollo',items:[['tortillatrigo',120],['pollo',150],['verdura',150],['aguacate',20]]},
+    G:{t:'Sardinas a la plancha con patata',items:[['sardinas',200],['patata',250],['verdura',150],['aove',5]]},
+    H:{t:'Revuelto de gambas con pan',items:[['huevo',120],['claras',100],['gambas',120],['verdura',150],['panint',60],['aove',5]]},
+    I:{t:'Pavo a la plancha con boniato',items:[['pavocarne',170],['boniato',300],['verdura',150],['aove',10]]},
+    J:{t:'Pizza casera de pollo',items:[['tortillatrigo',100],['tomatetrit',80],['pollo',130],['mozzarella',30],['verdura',100]]},
+    K:{t:'Crema de verduras con pollo',items:[['verdura',300],['patata',150],['pollo',150],['panint',50],['aove',10]]},
+    L:{t:'Hamburguesa de pollo con ensalada',items:[['pollo',180],['pan',80],['verdura',150],['aove',10],['tomate',60]]}}},
 ];
+/* Menús: cada uno agrupa 6 opciones por comida. Las opciones guardadas (A-L) no cambian al añadir menús nuevos. */
+const MENU_SETS=[{n:'Menú 1',keys:['A','B','C','D','E','F']},{n:'Menú 2',keys:['G','H','I','J','K','L']}];
+const setOf=k=>Math.max(0,MENU_SETS.findIndex(x=>x.keys.includes(k)));
+const optIn=k=>'ABCDEF'[Math.max(0,MENU_SETS[setOf(k)].keys.indexOf(k))];
+const optLbl=k=>MENU_SETS[setOf(k)].n+' · Opción '+optIn(k);
+const MV={};   /* menú que estás viendo en cada comida de la pestaña Comida */
 
 /* Rutina de 5 días con los ejercicios que hace en su gimnasio (v1.5.0).
    ss: superserie (A1 y A2 seguidas, descanso al terminar la pareja) · kg: peso de referencia · e: vigilar el codo · low: tren inferior (+5 kg) */
@@ -993,12 +1038,12 @@ function viewHoy(){
    Van en ajustes para que «Empezar de cero» no los borre. */
 const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
 const SHOP_CATS=[
-  ['Fruta y verdura',['platano','manzana','naranja','frutosrojos','aguacate','tomate','verdura','patata','boniato']],
-  ['Carne y pescado',['pollo','pavocarne','ternera','cerdo','salmon','merluza','bacalao','gambas']],
-  ['Charcutería y queso',['pavo','jamon','quesocurado']],
-  ['Lácteos y huevos',['leche','skyr','quesofresco','quesoburgos','huevo','claras']],
-  ['Pan',['pan','panint','tortillatrigo']],
-  ['Despensa',['avena','arroz','pasta','lentejas','garbanzos','tomatetrit','atun','nueces','cacahuete','miel','chocolate','aove','whey']],
+  ['Fruta y verdura',['platano','manzana','naranja','kiwi','frutosrojos','aguacate','tomate','verdura','patata','boniato']],
+  ['Carne y pescado',['pollo','pavocarne','ternera','cerdo','salmon','merluza','bacalao','gambas','sardinas','caballa']],
+  ['Charcutería y queso',['pavo','jamon','salmonahum','quesocurado','quesolonchas','mozzarella']],
+  ['Lácteos y huevos',['leche','lecheprot','skyr','yogur','quesofresco','quesoburgos','huevo','claras']],
+  ['Pan',['pan','panint','panmolde','tortillatrigo','tortitas']],
+  ['Despensa',['avena','cereales','arroz','pasta','lentejas','garbanzos','tomatetrit','atun','sardinaslata','nueces','cacahuete','miel','cacao','chocolate','aove','whey']],
 ];
 const shopName=id=>FOODS[id].n.replace(/ \((en crudo|en seco)\)/,'');
 function shopQty(id,g){
@@ -1029,14 +1074,17 @@ function drawDiet(){
   let body,nav='';
   if(i===0){
     body=`<div><div class="eyebrow">Semana que viene</div><div class="big-title">${shortDate(mon)} – ${shortDate(addDays(mon,6))}</div></div>
-      <p class="small">Para cada día te propongo seis desayunos, seis almuerzos, seis comidas, seis meriendas y seis cenas. Tú eliges uno de cada.</p>
+      <p class="small">Para cada día te propongo seis desayunos, seis almuerzos, seis comidas, seis meriendas y seis cenas de cada menú (arriba eliges Menú 1 o Menú 2). Tú eliges uno de cada.</p>
       <ul class="small wz-list"><li>El menú de esta semana no se toca.</li><li>Al terminar, esos días quedan fijados en Comida y ya no tendrás que elegir.</li><li>La lista de la compra anterior se borra y se crea una nueva con todo lo de esa semana.</li>${DW.had?'<li>Esa semana ya tenía menú: verás marcado lo que elegiste y puedes cambiarlo.</li>':''}<li>Si cierras antes de terminar, no cambia nada.</li></ul>`;
     nav=`<span class="grow"></span><button type="button" class="btn pri" data-dw="next">Empezar</button>`;
   }else if(i<=N){
     const di=Math.floor((i-1)/MEALS.length),m=MEALS[(i-1)%MEALS.length],d=days[di],cur=sel[d][m.id],prev=di>0?sel[days[di-1]][m.id]:null;
+    DW.mv=DW.mv||{};const vs=DW.view!=null?DW.view:cur?setOf(cur):(DW.mv[m.id]??DW.lastSet??0);if(DW.view!=null)DW.lastSet=DW.view;DW.view=null;DW.vs=vs;
     body=`<div class="dw-prog"><div class="track grow"><div class="fill" style="width:${i/N*100}%;background:var(--accent)"></div></div><span class="small muted num">${i} / ${N}</span></div>
-      <div><div class="eyebrow">${cap(longDate(d))}</div><div class="big-title">${m.n}</div></div>
-      <div class="dw-opts">${Object.entries(m.opts).map(([k,o])=>{const mm=optM(o);
+      <div class="row between"><div><div class="eyebrow">${cap(longDate(d))}</div><div class="big-title">${m.n}</div></div>
+        <select class="dw-set" data-dw-set aria-label="Menú">${MENU_SETS.map((x,j)=>`<option value="${j}" ${j===vs?'selected':''}>${x.n}</option>`).join('')}</select></div>
+      ${cur&&setOf(cur)!==vs?`<p class="small muted" style="margin:0">Elegida: ${esc(optLbl(cur))} · ${esc(m.opts[cur].t)}</p>`:''}
+      <div class="dw-opts">${MENU_SETS[vs].keys.map(k=>[k,m.opts[k]]).map(([k,o])=>{const mm=optM(o);
         return `<button type="button" class="dw-opt" data-dw="pick" data-opt="${k}" aria-pressed="${cur===k}"><span class="row between"><span class="t">${esc(o.t)}</span>${prev===k?'<span class="pill">Ayer</span>':''}</span><span class="d">${o.items.map(([id])=>esc(shopName(id))).join(' · ')}</span><span class="m">${fmt(mm.k)} kcal · P ${fmt(mm.p)} g</span></button>`}).join('')}</div>`;
     nav=`<button type="button" class="btn" data-dw="back">‹ Atrás</button><span class="grow"></span>${cur?'<button type="button" class="btn" data-dw="next">Siguiente ›</button>':''}`;
   }else{
@@ -1048,13 +1096,14 @@ function drawDiet(){
   }
   openSheet('Menú','Asistente de dieta',`<div class="wz">${body}</div><div class="row wz-nav">${nav}</div>`,()=>{DW=null});
   $('#sheet-body').scrollTop=0;
+  $('#sheet-body').onchange=e=>{if(!DW||!e.target.matches('[data-dw-set]'))return;DW.view=+e.target.value;drawDiet()};
   $('#sheet-body').onclick=e=>{const b=e.target.closest('[data-dw]');if(!b||!DW||DW.busy)return;const a=b.dataset.dw;
     if(a==='next'){DW.i++;drawDiet()}
     else if(a==='back'){DW.i=Math.max(0,DW.i-1);drawDiet()}
     else if(a==='goto'){DW.i=+b.dataset.i;DW.edit=true;drawDiet()}
     else if(a==='save')saveDiet();
     else if(a==='pick'){
-      const di=Math.floor((DW.i-1)/MEALS.length),m=MEALS[(DW.i-1)%MEALS.length];DW.sel[DW.days[di]][m.id]=b.dataset.opt;
+      const di=Math.floor((DW.i-1)/MEALS.length),m=MEALS[(DW.i-1)%MEALS.length];DW.sel[DW.days[di]][m.id]=b.dataset.opt;DW.mv=DW.mv||{};DW.mv[m.id]=setOf(b.dataset.opt);DW.lastSet=setOf(b.dataset.opt);
       b.parentNode.querySelectorAll('.dw-opt').forEach(x=>x.setAttribute('aria-pressed',x===b));
       DW.busy=true;setTimeout(()=>{if(!DW)return;DW.busy=false;
         /* al corregir un día desde el resumen, vuelve al resumen al terminar ese día */
@@ -1367,7 +1416,9 @@ function viewComida(){
     html+=`<section class="card meal ${sm.done?'done':''}">
       <div class="meal-head"><div><div class="eyebrow">${m.h}</div><h3>${m.n}</h3></div>
       <button type="button" class="done-btn" data-act="meal-done" data-meal="${m.id}" aria-pressed="${!!sm.done}">${sm.done?'✓ Comido':'Marcar comido'}</button></div>
-      ${cust?'':fixed?`<div class="fixed-meal"><b>${esc(o.t)}</b><span class="chip">Menú de la semana</span></div>`:`<div class="seg" role="group" aria-label="Opciones de ${m.n}">${Object.entries(m.opts).map(([k,v])=>`<button type="button" data-act="meal-opt" data-meal="${m.id}" data-opt="${k}" aria-pressed="${k===opt}"><b>Opción ${k}</b>${esc(v.t)}</button>`).join('')}</div>`}
+      ${cust?'':fixed?`<div class="fixed-meal"><b>${esc(o.t)}</b><span class="chip">Menú de la semana · ${MENU_SETS[setOf(opt)].n}</span></div>`:(()=>{const vs=MV[m.id]??setOf(opt);
+        return `<div class="menu-pick"><select data-act="menu-set" data-meal="${m.id}" aria-label="Menú para ${m.n}">${MENU_SETS.map((x,i)=>`<option value="${i}" ${i===vs?'selected':''}>${x.n}</option>`).join('')}</select>${setOf(opt)!==vs?`<span class="small muted">Elegida: ${esc(optLbl(opt))}</span>`:''}</div>
+        <div class="seg" role="group" aria-label="Opciones de ${m.n}">${MENU_SETS[vs].keys.map(k=>`<button type="button" data-act="meal-opt" data-meal="${m.id}" data-opt="${k}" aria-pressed="${k===opt}"><b>Opción ${optIn(k)}</b>${esc(m.opts[k].t)}</button>`).join('')}</div>`})()}
       ${cust?`<div class="eaten-tag"><span class="chip">Lo que has comido</span><span class="small muted">en vez de: ${esc(o.t)}</span></div>
       <ul class="items">${sm.items.map(x=>`<li><span>${x.ia?'<span class="pill" style="margin-right:6px">IA</span>':''}${esc(x.n)}</span><span>${x.id&&FOODS[x.id]?qty(x.id,x.g):`${fmt(x.g)} ${x.ml?'ml':'g'}`}</span></li>`).join('')||'<li><span class="muted">Nada</span><span></span></li>'}</ul>`
       :`<ul class="items">${o.items.map(([id,g])=>`<li><span>${esc(FOODS[id].n)}</span><span>${qty(id,g)}</span></li>`).join('')}</ul>`}
@@ -1811,7 +1862,7 @@ function viewPlan(){
   </section>
   <section class="card"><div class="eyebrow">4 · Nutrición</div><h2>Cómo comer</h2>
     <ul class="small">
-      <li><b>Cumple el total diario.</b> Las 6 opciones de cada comida tienen macros parecidas: cambia cuando quieras y la app recalcula.</li>
+      <li><b>Cumple el total diario.</b> Todas las opciones de cada comida, en los dos menús, tienen macros parecidas: cambia cuando quieras y la app recalcula.</li>
       <li><b>Proteína repartida:</b> 30-45 g en cada comida. Lo que más importa es llegar a 175 g; repartirla ayuda un poco más.</li>
       <li><b>Alrededor del entreno:</b> 30-40 g de proteína en las 2 h antes o después. Si entrenas de noche, la cena es tu comida post-entreno.</li>
       <li><b>Antes de dormir</b> funciona bien un skyr o queso fresco batido: proteína de digestión lenta.</li>
@@ -1917,6 +1968,7 @@ $('#view').addEventListener('input',e=>{
 $('#view').addEventListener('change',e=>{
   const el=e.target;
   if(el.dataset.ex&&el.value!=='')checkRecord(el.dataset.ex,st.date);
+  if(el.dataset.act==='menu-set'){MV[el.dataset.meal]=+el.value;pendingRender=false;el.blur();render();return}
   if(el.dataset.act==='fz-ex'){const p=lsGet(FZK,{});p.id=el.value;lsSet(FZK,p);pendingRender=false;el.blur();render();return}
   if(el.dataset.act==='session'){const w=clone(S.workouts[st.date]||{});w.session=el.value;saveDoc('workouts',st.date,w);pendingRender=false;el.blur();render()}
 });
@@ -2061,7 +2113,7 @@ function coachContext(){
   L.push('Rutina (solo ejercicios que hace en su gimnasio): lunes Pecho + Espalda en superseries + 2 de core, martes Piernas (solo 4 ejercicios: hip thrust, prensa, femoral, gemelo), miércoles Hombros + Brazos (solo 6: elevación lateral, posterior, predicador + barra V, martillo + fondos), jueves descanso, viernes Pecho + Espalda + 2 de core, sábado hip thrust, elevación lateral-frontal, extensión de cuádriceps, elevación frontal, bayesian + tras nuca, curl de muñeca en pronación + supinación, domingo descanso. Sesiones de máximo 6-8 ejercicios para que quepan en 1 h con 2 min de descanso; si no le da tiempo, puede partir la sesión en dos o dejar el final sin problema. IMPORTANTE: con varios ejercicios de pierna seguidos suda mucho, se le dispara el pulso y se marea; tolera mucho mejor el tren superior. Tiene pruebas de esfuerzo, electrocardiogramas y estudio cardíaco normales; la tensión le varía un poco. Es muy caluroso y suda con facilidad. Su filosofía: prefiere hacer menos y encontrarse bien que forzarse; nunca le metas presión por no completar la sesión. No le propongas más volumen de pierna seguido; si cuenta mareos, que pare, se siente, beba agua con sales y lo deje por ese día. Cinta opcional 20 min inclinación máxima a 5,5 km/h al final de algunos días.');
   const day=getDay(t),tt=dayTotals(day);
   L.push(`HOY llevo ${fmt(tt.k)} kcal, P ${fmt(tt.p)} g, C ${fmt(tt.c)} g, G ${fmt(tt.f)} g. Me quedan ${fmt(TARGET.kcal-tt.k)} kcal y ${fmt(TARGET.p-tt.p)} g de proteína.`);
-  L.push('Comidas del plan hoy: '+MEALS.map(m=>{const s=(day.meals||{})[m.id]||{},o=m.opts[s.opt||'A'],mm=optM(o);if(Array.isArray(s.items)){const x=mealM(m,s);return `${m.n} ${m.h} CAMBIADA: comió ${s.items.map(i=>i.n+' '+i.g+(i.ml?' ml':' g')).join(', ')} (${fmt(x.k)} kcal, P ${fmt(x.p)}) ${s.done?'COMIDA':'pendiente'}`}return `${m.n} ${m.h} opción ${s.opt||'A'} "${o.t}" (${fmt(mm.k)} kcal, P ${fmt(mm.p)}) ${s.done?'COMIDA':'pendiente'}`}).join('; ')+'.');
+  L.push('Comidas del plan hoy: '+MEALS.map(m=>{const s=(day.meals||{})[m.id]||{},o=m.opts[s.opt||'A'],mm=optM(o);if(Array.isArray(s.items)){const x=mealM(m,s);return `${m.n} ${m.h} CAMBIADA: comió ${s.items.map(i=>i.n+' '+i.g+(i.ml?' ml':' g')).join(', ')} (${fmt(x.k)} kcal, P ${fmt(x.p)}) ${s.done?'COMIDA':'pendiente'}`}return `${m.n} ${m.h} ${optLbl(s.opt||'A')} "${o.t}" (${fmt(mm.k)} kcal, P ${fmt(mm.p)}) ${s.done?'COMIDA':'pendiente'}`}).join('; ')+'.');
   if((day.extras||[]).length)L.push('Fuera de plan hoy: '+day.extras.map(x=>`${x.n} ${x.k} kcal`).join(', ')+'.');
   L.push(`Entreno de hoy: ${SESS[sessionFor(t)].n}.`);
   {const g=goals();L.push(`Objetivos del reloj: ${g.pasos} pasos, ${g.kcal} kcal activas y ${g.sueno} h de sueño al día.`)}
