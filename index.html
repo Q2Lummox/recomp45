@@ -217,6 +217,17 @@ a{color:var(--accent)}
 .hab.del{border-color:var(--bad)}.hab.del b{color:var(--bad)}
 .hab-form{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center}
 .bar-in{display:grid;grid-template-columns:1fr auto;gap:6px;margin-top:6px}
+.wks{display:grid;gap:0}
+.wk{display:grid;grid-template-columns:34px 1fr;gap:10px;padding:10px 0;border-bottom:1px dashed #2a3037}
+.wk:last-child{border-bottom:0}
+.wk-n{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1px solid #39404a;color:var(--muted);font-weight:700}
+.wk-b{display:grid;gap:4px;min-width:0}
+.wk.done .wk-n{background:var(--good);border-color:var(--good);color:#0b0d10}
+.wk.done .wk-b>span:not(.wk-data){color:var(--muted)}
+.wk.now{background:#f39a1e12;margin:0 -10px;padding:10px;border-radius:5px;border-bottom-color:transparent}
+.wk.now .wk-n{background:var(--accent);border-color:var(--accent);color:#0b0d10}
+.wk-data{color:var(--good)}
+.wk-now{justify-self:start;border-color:var(--accent);color:var(--accent)}
 .dw-auto{display:grid;gap:8px;border:1px solid var(--accent);border-radius:5px;padding:12px;background:#f39a1e0f}
 .dw-auto select{width:auto;flex:1;min-width:0}
 .menu-pick{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -442,7 +453,7 @@ body.kb .tabs,body.kb .timer{visibility:hidden}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.25.0';
+const APP_VERSION='1.26.0';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -1031,7 +1042,7 @@ function viewHoy(){
   </section>
   <section class="card watch-card">${watchCard(day)}</section>
   ${sundayDue?`<section class="card wz-card due"><div class="row between"><div><div class="eyebrow">Domingo</div><div class="big-title">Hoy toca revisión</div></div><button type="button" class="btn pri" data-act="wizard">Empezar</button></div><p class="small muted">Peso en ayunas, medidas y tres fotos. Unos 5 minutos.</p></section>`:''}
-  <section class="phase"><b>Semana ${Math.min(w,12)} · ${ph.n}</b><span class="small">${ph.t}</span></section>
+  <section class="phase"><b>Semana ${Math.min(w,12)} · ${ph.n}</b><span class="small">${ph.t}</span><button type="button" class="btn sm" data-goto="plan" style="justify-self:start;margin-top:4px">Ver las 12 semanas ›</button></section>
 `;
 }
 
@@ -1833,8 +1844,41 @@ function viewProgreso(){
   </section>
   <section class="card"><h2>Fotos</h2>${photoCompare()}</section>`;
 }
+/* ===== las 12 semanas del plan, una a una (v1.26.0) ===== */
+const WEEK_NOTES={
+  1:'Punto de partida: peso, medidas y fotos el domingo. Aprende los pesos de cada máquina.',
+  2:'Mismos pesos o un poco más si te sobra mucho. Ajusta asientos y anota todo.',
+  3:'Última de adaptación. Ya deberías tener claros tus pesos de trabajo.',
+  4:'Empieza a apretar: la última serie tiene que costar. Primera revisión de calorías con 3 semanas de datos.',
+  5:'Doble progresión: sube peso cuando completes todas las series en el número alto.',
+  6:'Semana más dura del bloque. Vigila codos y sueño antes de la descarga.',
+  7:'Descarga: 2 series por ejercicio con el mismo peso. Coincide con Navidad: disfruta con cabeza y apunta las comidas fuera en «Fuera de plan».',
+  8:'Vuelves con fuerza tras la descarga. Fin de año: mantén la proteína aunque haya comidas especiales.',
+  9:'Intensificación: 1-2 en reserva en los ejercicios grandes. Nunca al fallo en los del codo.',
+  10:'Mitad de la intensificación. Revisa en Progreso si tu fuerza sigue subiendo.',
+  11:'Semana de cargas más altas del plan. Apunta bien: la semana 12 las repite.',
+  12:'Evaluación: repite las cargas de la semana 11, mide, haz fotos y compara con la semana 1.'};
+function weeksCard(){
+  const cw=weekOf(todayISO()),before=todayISO()<START;
+  const rows=[];
+  for(let w=1;w<=12;w++){
+    const a=addDays(START,(w-1)*7),b=addDays(a,6),ph=phase(w),st=before?'next':w<cw?'done':w===cw?'now':'next';
+    const ck=Object.entries(S.checkins||{}).filter(([k])=>k>=a&&k<=b).map(([,v])=>v).pop();
+    const kgw=Object.entries(S.workouts||{}).filter(([k])=>k>=a&&k<=b).reduce((t,[,wo])=>t+woSummary(wo).vol,0);
+    rows.push(`<div class="wk ${st}"><div class="wk-n num">${w}</div><div class="wk-b">
+      <div class="row between"><b>${ph.n}${ph.deload?'':''} <span class="muted small">· RIR ${ph.rir}</span></b><span class="small muted mono">${shortDate(a)} – ${shortDate(b)}</span></div>
+      <span class="small">${esc(WEEK_NOTES[w])}</span>
+      ${st!=='next'&&(ck||kgw)?`<span class="small mono wk-data">${ck&&ck.peso?`${fmt(+ck.peso,1)} kg`:''}${ck&&ck.waist?` · cintura ${fmt(+ck.waist,1)} cm`:''}${kgw?`${ck&&(ck.peso||ck.waist)?' · ':''}${fmt(Math.round(kgw))} kg movidos`:''}</span>`:''}
+      ${st==='now'?'<span class="chip wk-now">Estás aquí</span>':''}</div></div>`);
+  }
+  return `<section class="card" id="semanas"><div class="eyebrow">Tu plan</div><h2>Las 12 semanas</h2>
+    <p class="small muted">${before?'Empiezas el '+longDate(START)+'.':cw>12?'Has terminado las 12 semanas.':`Vas por la semana ${cw} de 12. Te quedan ${12-cw} después de esta.`}</p>
+    <div class="wks">${rows.join('')}</div>
+    <p class="small muted">RIR = repeticiones que te quedan en reserva al terminar la serie. Debajo de cada semana pasada verás tu peso y cintura del domingo y los kilos que moviste.</p></section>`;
+}
 function viewPlan(){
   return `<div class="plan" style="display:grid;gap:14px">
+  ${weeksCard()}
   <section class="card"><div class="eyebrow">1 · Diagnóstico</div><h2>Tus números</h2>
     <div class="tbl-wrap"><table><tbody>
       <tr><th>Metabolismo basal</th><td class="num">~${fmt(BASE.bmr)} kcal</td></tr>

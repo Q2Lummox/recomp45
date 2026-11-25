@@ -1,5 +1,9 @@
 # Novedades
 
+## v1.26.0 · 2026-11-25
+- Plan › Las 12 semanas: cada semana con sus fechas, su fase, qué toca hacer y en cuál estás; en las pasadas, tu peso, cintura y kilos movidos
+- En Hoy, botón «Ver las 12 semanas» debajo de la semana actual
+
 ## v1.25.0 · 2026-11-21
 - Asistente de dieta › «🎲 Elígelo tú»: la app rellena la semana entera con variedad (del Menú 1, del Menú 2 o de los dos) y luego cambias lo que quieras antes de guardar
 - En el resumen, «Otra propuesta» para que te proponga otra semana distinta
