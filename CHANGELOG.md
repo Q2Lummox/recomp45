@@ -1,5 +1,9 @@
 # Novedades
 
+## v1.26.1 · 2026-11-25
+- Menús reajustados: menos proteína (unos 180-185 g al día en vez de más de 200) y más hidratos para entrenar, con las mismas calorías
+- Menos whey, claras, pollo, pavo o atún en las recetas que se pasaban, y algo más de pan, arroz, pasta, avena, patata o fruta
+
 ## v1.26.0 · 2026-11-25
 - Plan › Las 12 semanas: cada semana con sus fechas, su fase, qué toca hacer y en cuál estás; en las pasadas, tu peso, cintura y kilos movidos
 - En Hoy, botón «Ver las 12 semanas» debajo de la semana actual
