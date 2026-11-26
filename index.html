@@ -217,6 +217,16 @@ a{color:var(--accent)}
 .hab.del{border-color:var(--bad)}.hab.del b{color:var(--bad)}
 .hab-form{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center}
 .bar-in{display:grid;grid-template-columns:1fr auto;gap:6px;margin-top:6px}
+.rv-head{font-size:.8rem;font-weight:700;padding:4px 8px;border-radius:4px;border:1px solid currentColor;text-align:right}
+.rv-head.good{color:var(--good)}.rv-head.warn{color:var(--warn)}.rv-head.bad{color:var(--bad)}
+.rv-list{display:grid;gap:2px}
+.rv{display:grid;grid-template-columns:26px 82px 1fr 10px;gap:8px;align-items:center;padding:7px 0;border-bottom:1px dashed #23282e;font-size:.92rem}
+.rv:last-child{border-bottom:0}
+.rv-v{min-width:0;color:var(--muted);font-size:.86rem}
+.rv-dot{width:10px;height:10px;border-radius:50%;background:#39404a}
+.rv.good .rv-dot{background:var(--good)}.rv.warn .rv-dot{background:var(--warn)}.rv.bad .rv-dot{background:var(--bad)}
+.rv-tips{border-left:3px solid var(--accent);padding:4px 0 4px 12px}
+.rv-tips ol{margin:6px 0 0;padding-left:18px;display:grid;gap:4px;font-size:.92rem}
 .wks{display:grid;gap:0}
 .wk{display:grid;grid-template-columns:34px 1fr;gap:10px;padding:10px 0;border-bottom:1px dashed #2a3037}
 .wk:last-child{border-bottom:0}
@@ -453,7 +463,7 @@ body.kb .tabs,body.kb .timer{visibility:hidden}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.26.1';
+const APP_VERSION='1.27.0';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -1024,12 +1034,74 @@ function energyBlock(t){
     </div>
     <div style="display:grid;gap:10px;min-width:0"><div class="small"><span class="num">${fmt(t.k)}</span> de <span class="num">${fmt(TARGET.kcal)}</span> kcal</div>${macroBars(t)}</div></div>`;
 }
+/* ===== cómo va tu día (v1.27.0) =====
+   Junta entreno, comida, pasos, actividad y sueño, y lo compara con lo que tocaría llevar a esta hora. */
+function dayReview(d){
+  const day=getDay(d),isToday=d===todayISO(),past=d<todayISO();
+  const now=new Date(),hrs=isToday?now.getHours()+now.getMinutes()/60:past?24:0;
+  const H=s=>{const [a,b]=s.split(':');return +a+(+b||0)/60};
+  const g=goals(),t=dayTotals(day),sk=sessionFor(d),wo=S.workouts[d],out=[],tips=[];
+  /* comida: lo planificado de las comidas cuya hora ya pasó (con media hora de margen) */
+  const dueMeals=MEALS.filter(m=>H(m.h)+0.5<=hrs);
+  const due=sumM(dueMeals.map(m=>{const s=(day.meals&&day.meals[m.id])||{};return s.done?mealM(m,s):optM(m.opts[s.opt||'A'])}));
+  const pending=dueMeals.filter(m=>!(day.meals&&day.meals[m.id]&&day.meals[m.id].done));
+  const kPct=TARGET.kcal?t.k/TARGET.kcal:0,pLeft=Math.max(0,TARGET.p-t.p),fLeft=TARGET.f-t.f;
+  /* 1. entreno */
+  if(sk==='descanso')out.push({i:'🛌',l:'Entreno',s:'info',v:'Día de descanso'});
+  else if(wo&&wo.done){const n=woSummary(wo).n;out.push({i:'🏋️',l:'Entreno',s:'good',v:'Hecho · '+n+(n===1?' serie':' series')})}
+  else if(wo&&woSummary(wo).n){out.push({i:'🏋️',l:'Entreno',s:'warn',v:'A medias · '+woSummary(wo).n+' series'});tips.push({w:2,t:'Tienes el entreno a medias: termínalo si puedes o guárdalo como hecho.'})}
+  else if(past||hrs>=13){out.push({i:'🏋️',l:'Entreno',s:'bad',v:'Sin hacer'});tips.push({w:3,t:`Hoy toca ${SESS[sk].n.replace(/ \(.*\)/,'')}. Si no has podido ir por la mañana, una sesión corta por la tarde vale más que nada.`})}
+  else out.push({i:'🏋️',l:'Entreno',s:'info',v:'Pendiente: '+SESS[sk].n.replace(/ \(.*\)/,'')});
+  /* 2. comida */
+  if(pending.length&&!past){out.push({i:'🍽️',l:'Comida',s:'warn',v:`${fmt(t.k)} kcal · sin marcar: ${pending.map(m=>m.n.toLowerCase()).join(', ')}`});tips.push({w:3,t:`Marca ${pending.length===1?'la comida':'las comidas'} que ya hayas hecho (${pending.map(m=>m.n.toLowerCase()).join(', ')}) para que las cuentas sean reales.`})}
+  else if(t.k>TARGET.kcal*1.07){out.push({i:'🍽️',l:'Comida',s:'bad',v:`${fmt(t.k)} de ${fmt(TARGET.kcal)} kcal · te pasas ${fmt(t.k-TARGET.kcal)}`});tips.push({w:3,t:past?`Te pasaste ${fmt(t.k-TARGET.kcal)} kcal. Un día suelto no estropea nada: mañana sigue el menú tal cual.`:'Ya vas por encima de las calorías del día: lo que quede, que sea verdura y proteína magra.'})}
+  else if(!hrs)out.push({i:'🍽️',l:'Comida',s:'info',v:'Aún no ha empezado el día'});
+  else{const ok=due.k?Math.abs(t.k-due.k)/due.k<0.15:true;out.push({i:'🍽️',l:'Comida',s:ok?'good':'warn',v:`${fmt(t.k)} de ${fmt(TARGET.kcal)} kcal${due.k&&!past?' · a esta hora tocaban ~'+fmt(due.k):''}`})}
+  /* 3. proteína y grasa */
+  const pDue=TARGET.p*Math.min(1,dueMeals.length/MEALS.length);
+  if(t.p>TARGET.p*1.25)out.push({i:'🥩',l:'Proteína',s:'warn',v:`${fmt(t.p)} g · bastante por encima de ${TARGET.p}`}),tips.push({w:1,t:'Vas sobrado de proteína: en lo que queda, cambia whey o lácteos por fruta, pan o arroz.'});
+  else if(t.p>=TARGET.p*0.92)out.push({i:'🥩',l:'Proteína',s:'good',v:`${fmt(t.p)} de ${TARGET.p} g`});
+  else{const behind=t.p<pDue*0.85&&hrs;out.push({i:'🥩',l:'Proteína',s:past?'bad':behind?'warn':'good',v:`${fmt(t.p)} de ${TARGET.p} g · faltan ${fmt(pLeft)}`});
+    if((past||behind||hrs>=19)&&!(pending.length&&!past))tips.push({w:past?1:2,t:`Te faltan ${fmt(pLeft)} g de proteína: ${pLeft>40?'asegúrate de que la cena lleve su ración entera y añade un skyr o un vaso de leche con proteínas':'con un skyr, un vaso de leche con proteínas o unas lonchas de pavo llegas'}.`})}
+  if((past||hrs>=20)&&t.f<50&&t.k>800)tips.push({w:1,t:`Vas con ${fmt(t.f)} g de grasa: añade un chorrito de aceite o un puñado de nueces para no bajar de 50.`});
+  /* 4. pasos y actividad */
+  const zat=day.zepp&&day.zepp.at,stale=isToday&&(!zat||(Date.now()-new Date(zat))/36e5>2);
+  const f=past?1:Math.min(1,Math.max(0,(hrs-7)/14)),stepsDue=g.pasos*f,steps=+day.steps||0;
+  if(!steps&&isToday)out.push({i:'👣',l:'Pasos',s:'info',v:'Sin datos de Zepp todavía'});
+  else if(steps>=g.pasos)out.push({i:'👣',l:'Pasos',s:'good',v:`${fmtG(steps)} · objetivo cumplido`});
+  else{const okS=steps>=stepsDue*0.85;out.push({i:'👣',l:'Pasos',s:past?'bad':okS?'good':'warn',v:`${fmtG(steps)} de ${fmtG(g.pasos)}${!past&&stepsDue?' · a esta hora ~'+fmtG(Math.round(stepsDue/100)*100):''}`});
+    if(!okS||past)tips.push({w:past?1:2,t:past?`Te quedaste en ${fmtG(steps)} pasos.`:`Te faltan ${fmtG(g.pasos-steps)} pasos: un paseo de ${Math.min(60,Math.max(10,Math.round((g.pasos-steps)/110/5)*5))} minutos y lo tienes.`})}
+  if(stale&&steps)tips.push({w:1,t:'Los datos del reloj tienen más de 2 horas: abre Zepp y pulsa «Actualizar desde Zepp» para verlos al día.'});
+  const ak=day.zepp&&+day.zepp.kcal;if(ak)out.push({i:'🔥',l:'Actividad',s:ak>=g.kcal*f*0.85||ak>=g.kcal?'good':'warn',v:`${fmtG(ak)} kcal activas${ak>=g.kcal?' · cumplido':''}`});
+  /* 5. sueño de anoche */
+  const sl=+day.sleep||0;
+  if(!sl)out.push({i:'🌙',l:'Sueño',s:'info',v:'Sin dato de anoche'});
+  else{const sOk=sl>=g.sueno-0.25,sBad=sl<6;out.push({i:'🌙',l:'Sueño',s:sOk?'good':sBad?'bad':'warn',v:`${hm(sl)} de ${hm(g.sueno)}`});
+    if(!sOk&&!past)tips.push({w:sBad?3:2,t:`Anoche dormiste ${hm(sl)}. Hoy intenta acostarte ${sBad?'una hora':'media hora'} antes: el sueño es lo que más ayuda a perder grasa sin perder músculo.`})}
+  /* titular */
+  const bad=out.filter(o=>o.s==='bad').length,warn=out.filter(o=>o.s==='warn').length;
+  const head=bad?'Hay cosas que mejorar hoy':warn?'Vas bien, con algún detalle':out.every(o=>o.s==='info')?'El día acaba de empezar':'¡Vas genial!';
+  const hs=bad?'bad':warn?'warn':'good';
+  tips.sort((a,b)=>b.w-a.w);
+  return{out,tips:tips.slice(0,3),head,hs,past,isToday};
+}
+/* la tarjeta se recalcula sola cada 5 minutos mientras miras Hoy */
+setInterval(()=>{try{if(st.tab==='hoy'&&!document.hidden&&!editing()&&$('#sheet').hidden)render()}catch(e){}},300000);
+function reviewCard(d){
+  if(d>todayISO())return '';
+  const r=dayReview(d);
+  return `<section class="card review"><div class="row between"><div><div class="eyebrow">${r.isToday?'Ahora mismo':r.past?'Resumen del día':'Previsión'}</div><h2 style="margin:0">Cómo va tu día</h2></div><span class="rv-head ${r.hs}">${r.head}</span></div>
+    <div class="rv-list">${r.out.map(o=>`<div class="rv ${o.s}"><span class="rv-i" aria-hidden="true">${o.i}</span><b>${o.l}</b><span class="rv-v">${esc(o.v)}</span><span class="rv-dot" aria-hidden="true"></span></div>`).join('')}</div>
+    ${r.tips.length?`<div class="rv-tips"><span class="flbl">${r.past?'Para mañana':'En qué centrarte'}</span><ol>${r.tips.map(x=>`<li>${esc(x.t)}</li>`).join('')}</ol></div>`:''}
+  </section>`;
+}
 function viewHoy(){
   const d=st.date,day=getDay(d),t=dayTotals(day),w=weekOf(d),ph=phase(w),sk=sessionFor(d),SS=SESS[sk],water=+day.water||0;
   const tog=(key,title,desc)=>`<button type="button" class="toggle" data-act="toggle" data-key="${key}" aria-pressed="${!!day[key]}"><span class="box">${day[key]?'✓':''}</span><span class="grow"><span class="t">${title}</span><br><span class="d">${desc}</span></span></button>`;
   const nextMeal=MEALS.find(m=>!(day.meals&&day.meals[m.id]&&day.meals[m.id].done));
   const sundayDue=d===todayISO()&&parse(d).getDay()===0&&!S.checkins[d];
   return `
+  ${reviewCard(d)}
   <section class="card">
     ${(()=>{const wd=S.workouts[st.date],done=!!(wd&&wd.done),sm=woSummary(wd);
       return `<div class="row between"><div><div class="eyebrow">Entreno de hoy</div><div class="big-title">${SS.n}</div></div>${sk==='descanso'?'':done?`<span class="chip done-chip">✓ Hecho</span>`:`<button type="button" class="btn pri" data-goto="entreno">Empezar</button>`}</div>

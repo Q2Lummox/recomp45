@@ -1,11 +1,19 @@
 {
- "version": "1.26.1",
- "fecha": "2026-11-25",
+ "version": "1.27.0",
+ "fecha": "2026-11-26",
  "notas": [
-  "Menús reajustados: menos proteína (unos 180-185 g al día en vez de más de 200) y más hidratos para entrenar, con las mismas calorías",
-  "Menos whey, claras, pollo, pavo o atún en las recetas que se pasaban, y algo más de pan, arroz, pasta, avena, patata o fruta"
+  "Hoy › «Cómo va tu día»: junta entreno, comida, proteína, pasos, actividad y sueño, lo compara con lo que tocaría llevar a esta hora y te dice en qué centrarte",
+  "En días pasados hace el resumen del día y te da los consejos para mañana"
  ],
  "historial": [
+  {
+   "version": "1.27.0",
+   "fecha": "2026-11-26",
+   "notas": [
+    "Hoy › «Cómo va tu día»: junta entreno, comida, proteína, pasos, actividad y sueño, lo compara con lo que tocaría llevar a esta hora y te dice en qué centrarte",
+    "En días pasados hace el resumen del día y te da los consejos para mañana"
+   ]
+  },
   {
    "version": "1.26.1",
    "fecha": "2026-11-25",
