@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.29.1 · 2026-11-27
+- «⇄ Cambiar plato» sale también en las comidas cambiadas con «He comido otra cosa»: elegir un plato del menú sustituye a lo apuntado a mano
+
 ## v1.29.0 · 2026-11-27
 - Comida › «⇄ Cambiar plato» en los días con menú fijado: eliges otra de las opciones (del Menú 1 o del Menú 2) solo para ese día, y puedes volver al del menú
 

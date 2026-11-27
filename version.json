@@ -1,10 +1,17 @@
 {
- "version": "1.29.0",
+ "version": "1.29.1",
  "fecha": "2026-11-27",
  "notas": [
-  "Comida › «⇄ Cambiar plato» en los días con menú fijado: eliges otra de las opciones (del Menú 1 o del Menú 2) solo para ese día, y puedes volver al del menú"
+  "«⇄ Cambiar plato» sale también en las comidas cambiadas con «He comido otra cosa»: elegir un plato del menú sustituye a lo apuntado a mano"
  ],
  "historial": [
+  {
+   "version": "1.29.1",
+   "fecha": "2026-11-27",
+   "notas": [
+    "«⇄ Cambiar plato» sale también en las comidas cambiadas con «He comido otra cosa»: elegir un plato del menú sustituye a lo apuntado a mano"
+   ]
+  },
   {
    "version": "1.29.0",
    "fecha": "2026-11-27",
