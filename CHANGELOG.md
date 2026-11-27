@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.29.0 · 2026-11-27
+- Comida › «⇄ Cambiar plato» en los días con menú fijado: eliges otra de las opciones (del Menú 1 o del Menú 2) solo para ese día, y puedes volver al del menú
+
 ## v1.28.2 · 2026-11-27
 - La app ya no se recarga sola al volver de otra aplicación cuando hay una versión nueva: solo se actualiza cuando pulsas «Actualizar»
 - Si el iPhone cierra la app en segundo plano, al volver se abre en la misma pestaña, el mismo día y a la misma altura

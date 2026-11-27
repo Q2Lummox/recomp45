@@ -242,6 +242,8 @@ a{color:var(--accent)}
 .dw-auto select{width:auto;flex:1;min-width:0}
 .menu-pick{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .menu-pick select,.dw-set{width:auto;min-width:120px;padding:6px 10px;font-family:var(--f-display);letter-spacing:.05em;text-transform:uppercase}
+.fixed-meal{min-width:0}.fixed-meal>*{min-width:0}.fixed-meal .swapbtn{margin-left:auto}
+.swap-chip{border-color:var(--accent);color:var(--accent)}
 .ex-btns{display:grid;gap:6px;justify-items:end}
 .swapbtn{border:1px solid #2a3037;background:#101215;color:var(--muted);border-radius:4px;padding:5px 9px;font-size:.78rem;font-family:var(--f-display);letter-spacing:.05em;text-transform:uppercase}
 .swap-note{color:var(--accent);margin:0}
@@ -466,7 +468,7 @@ body.kb .tabs,body.kb .timer{visibility:hidden}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.28.2';
+const APP_VERSION='1.29.0';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -1003,7 +1005,8 @@ document.addEventListener('focusout',()=>{setTimeout(()=>{if(!pendingRender||edi
 const planOf=d=>(AJ.menu&&AJ.menu.plan&&AJ.menu.plan[d])||null;
 function getDay(d){
   const o=clone(S.days[d]||{}),p=planOf(d);
-  if(p){o.meals=o.meals||{};for(const m of MEALS)if(p[m.id]&&m.opts[p[m.id]])o.meals[m.id]={...(o.meals[m.id]||{}),opt:p[m.id]}}
+  /* «ovr»: plato cambiado solo ese día; manda sobre el menú fijado */
+  if(p){o.meals=o.meals||{};for(const m of MEALS){const cur=o.meals[m.id]||{};if(cur.ovr&&m.opts[cur.ovr])o.meals[m.id]={...cur,opt:cur.ovr};else if(p[m.id]&&m.opts[p[m.id]])o.meals[m.id]={...cur,opt:p[m.id]}}}
   return o;
 }
 function patchDay(d,fn){const o=getDay(d);o.meals=o.meals||{};o.extras=o.extras||[];fn(o);saveDoc('days',d,o)}
@@ -1514,6 +1517,20 @@ function saveME(custom){
   closeSheet();render();toast(custom?'Apuntado lo que has comido':'Vuelve a contar el menú del día');
 }
 
+/* cambiar el plato de un día con menú fijado, eligiendo entre las opciones de los menús */
+function openMealSwap(d,mid,view){
+  const m=MEALS.find(x=>x.id===mid),day=getDay(d),sm=(day.meals&&day.meals[mid])||{},planK=(planOf(d)||{})[mid],cur=sm.opt||planK;
+  const vs=view!=null?view:setOf(cur);
+  openSheet('Cambiar plato',m.n+' · '+cap(longDate(d)),`<p class="small muted">Elige otro plato <b>solo para este día</b>. El resto de la semana sigue con tu menú. Ojo: la lista de la compra no cambia.</p>
+    ${sm.ovr?`<button type="button" class="btn pri" data-ms="${planK}">↩ Volver al del menú: ${esc(m.opts[planK].t)}</button>`:''}
+    <div class="row between"><span class="flbl">Opciones</span><select data-ms-set aria-label="Menú">${MENU_SETS.map((x,j)=>`<option value="${j}" ${j===vs?'selected':''}>${x.n}</option>`).join('')}</select></div>
+    <div class="dw-opts">${MENU_SETS[vs].keys.map(k=>{const o=m.opts[k],mm=optM(o);return `<button type="button" class="dw-opt" data-ms="${k}" aria-pressed="${k===cur}"><span class="row between"><span class="t">${esc(o.t)}</span>${k===planK?'<span class="pill">Del menú</span>':''}</span><span class="d">${o.items.map(([id])=>esc(shopName(id))).join(' · ')}</span><span class="m">${fmt(mm.k)} kcal · P ${fmt(mm.p)} g</span></button>`}).join('')}</div>`);
+  $('#sheet-body').onchange=e=>{if(e.target.matches('[data-ms-set]'))openMealSwap(d,mid,+e.target.value)};
+  $('#sheet-body').onclick=e=>{const b=e.target.closest('[data-ms]');if(!b)return;const k=b.dataset.ms;
+    const o=clone(S.days[d]||{});o.meals=o.meals||{};const x={...(o.meals[mid]||{})};
+    if(k===planK){delete x.ovr;x.opt=planK}else{x.ovr=k;x.opt=k}
+    o.meals[mid]=x;saveDoc('days',d,o);closeSheet();render();toast(k===planK?'Vuelves al plato del menú':'Hoy: '+m.opts[k].t)};
+}
 function viewComida(){
   const d=st.date,day=getDay(d),t=dayTotals(day),pl=planTotals(day),fixed=!!planOf(d);
   const nMy=Object.keys(myFoods()).length;
@@ -1525,7 +1542,7 @@ function viewComida(){
     html+=`<section class="card meal ${sm.done?'done':''}">
       <div class="meal-head"><div><div class="eyebrow">${m.h}</div><h3>${m.n}</h3></div>
       <button type="button" class="done-btn" data-act="meal-done" data-meal="${m.id}" aria-pressed="${!!sm.done}">${sm.done?'✓ Comido':'Marcar comido'}</button></div>
-      ${cust?'':fixed?`<div class="fixed-meal"><b>${esc(o.t)}</b><span class="chip">Menú de la semana · ${MENU_SETS[setOf(opt)].n}</span></div>`:(()=>{const vs=MV[m.id]??setOf(opt);
+      ${cust?'':fixed?`<div class="fixed-meal"><b>${esc(o.t)}</b>${sm.ovr?`<span class="chip swap-chip">⇄ Cambiado hoy</span><span class="small muted" style="flex-basis:100%">En vez de: ${esc(m.opts[planOf(d)[m.id]]?m.opts[planOf(d)[m.id]].t:'')}</span>`:`<span class="chip">Menú de la semana · ${MENU_SETS[setOf(opt)].n}</span>`}<button type="button" class="swapbtn" data-act="meal-swap" data-meal="${m.id}">⇄ Cambiar plato</button></div>`:(()=>{const vs=MV[m.id]??setOf(opt);
         return `<div class="menu-pick"><select data-act="menu-set" data-meal="${m.id}" aria-label="Menú para ${m.n}">${MENU_SETS.map((x,i)=>`<option value="${i}" ${i===vs?'selected':''}>${x.n}</option>`).join('')}</select>${setOf(opt)!==vs?`<span class="small muted">Elegida: ${esc(optLbl(opt))}</span>`:''}</div>
         <div class="seg" role="group" aria-label="Opciones de ${m.n}">${MENU_SETS[vs].keys.map(k=>`<button type="button" data-act="meal-opt" data-meal="${m.id}" data-opt="${k}" aria-pressed="${k===opt}"><b>Opción ${optIn(k)}</b>${esc(m.opts[k].t)}</button>`).join('')}</div>`})()}
       ${cust?`<div class="eaten-tag"><span class="chip">Lo que has comido</span><span class="small muted">en vez de: ${esc(o.t)}</span></div>
@@ -2097,6 +2114,7 @@ $('#view').addEventListener('click',e=>{
   else if(a==='meal-done'){patchDay(d,o=>{const m=o.meals[b.dataset.meal]||{opt:'A'};m.done=!m.done;o.meals[b.dataset.meal]=m});render()}
   else if(a==='diet')openDiet();
   else if(a==='shop')openShop();
+  else if(a==='meal-swap')openMealSwap(d,b.dataset.meal);
   else if(a==='meal-opt'){if(planOf(d))return;patchDay(d,o=>{const m=o.meals[b.dataset.meal]||{};m.opt=b.dataset.opt;o.meals[b.dataset.meal]=m});render()}
   else if(a==='del-extra'){patchDay(d,o=>{o.extras.splice(+b.dataset.i,1)});render()}
   else if(a==='add-extra'){
