@@ -1,5 +1,9 @@
 # Novedades
 
+## v1.27.1 · 2026-11-27
+- Viernes: las dominadas pasan a jalón al pecho con agarre supino (carga menos el codo), y el jalón neutro del final pasa a remo en polea con agarre cerrado
+- Tus dominadas apuntadas se conservan en el historial
+
 ## v1.27.0 · 2026-11-26
 - Hoy › «Cómo va tu día»: junta entreno, comida, proteína, pasos, actividad y sueño, lo compara con lo que tocaría llevar a esta hora y te dice en qué centrarte
 - En días pasados hace el resumen del día y te da los consejos para mañana
