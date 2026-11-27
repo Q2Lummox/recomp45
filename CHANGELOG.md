@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.28.1 · 2026-11-27
+- Nuevo ejercicio disponible para «⇄ Cambiar»: jalón al pecho con agarre ancho y barra
+
 ## v1.28.0 · 2026-11-27
 - Entreno › «⇄ Cambiar» en cada ejercicio: si un día no puedes hacer uno, eliges otro de tu lista (primero los del mismo grupo muscular) solo para ese día
 - El cambiado mantiene su sitio en la superserie, y sus series cuentan en el historial, la gráfica de fuerza y los récords del ejercicio que haces de verdad
