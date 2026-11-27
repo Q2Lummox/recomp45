@@ -242,6 +242,9 @@ a{color:var(--accent)}
 .dw-auto select{width:auto;flex:1;min-width:0}
 .menu-pick{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .menu-pick select,.dw-set{width:auto;min-width:120px;padding:6px 10px;font-family:var(--f-display);letter-spacing:.05em;text-transform:uppercase}
+.ex-btns{display:grid;gap:6px;justify-items:end}
+.swapbtn{border:1px solid #2a3037;background:#101215;color:var(--muted);border-radius:4px;padding:5px 9px;font-size:.78rem;font-family:var(--f-display);letter-spacing:.05em;text-transform:uppercase}
+.swap-note{color:var(--accent);margin:0}
 .seg2{grid-template-columns:1fr 1fr!important}
 .fz-log{display:grid;gap:4px}
 .fz-row{display:flex;gap:10px;align-items:baseline;border-bottom:1px dashed #23282e;padding-bottom:4px}
@@ -463,7 +466,7 @@ body.kb .tabs,body.kb .timer{visibility:hidden}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.27.1';
+const APP_VERSION='1.28.0';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -1580,6 +1583,32 @@ function hintFor(ex,lp,ph){
     return top?{k:'up',t:`↑ Sube a ${fmt(top+inc,(top+inc)%1?1:0)} kg y vuelve a ${ex.lo} reps${ex.e?' (si el codo va bien)':''}`,kg:top+inc}:{k:'up',t:`Sube +${inc} kg y vuelve a ${ex.lo} reps`}}
   return{k:'hold',t:'Mismo peso, suma repeticiones'};
 }
+/* ===== cambiar un ejercicio solo para ese día (v1.28.0) =====
+   workouts/<fecha>.swap = {ejercicio_del_plan: ejercicio_elegido}. Las series se guardan con el ejercicio que haces de verdad. */
+const EX_GROUPS={pe:'Pecho',es:'Espalda',ho:'Hombro',bi:'Bíceps',tr:'Tríceps',an:'Antebrazo',pi:'Pierna',co:'Core'};
+const exGroup=id=>EX_GROUPS[id.split('_')[0]]||'Otros';
+function sessionExs(d){
+  const SS=SESS[sessionFor(d)],sw=((S.workouts[d]||{}).swap)||{};
+  return SS.ex.map(e=>{const nid=sw[e.id],n=nid&&ALL_EX.find(x=>x.id===nid);return n?{...n,ss:e.ss,orig:e.id,origN:e.n}:e});
+}
+function openSwap(d,origId){
+  const SS=SESS[sessionFor(d)],orig=SS.ex.find(e=>e.id===origId);if(!orig)return;
+  const cur=sessionExs(d),curIds=new Set(cur.map(e=>e.id)),now=cur.find(e=>(e.orig||e.id)===origId);
+  const cands=ALL_EX.filter(e=>!curIds.has(e.id)&&e.id!==origId&&EX_GROUPS[e.id.split('_')[0]]);   /* solo ejercicios de tu gimnasio (los del primer plan genérico no salen) */
+  const g=exGroup(origId),same=cands.filter(e=>exGroup(e.id)===g),other=cands.filter(e=>exGroup(e.id)!==g);
+  const item=e=>`<button type="button" class="mf-item" data-sw="${e.id}"><span class="grow"><b>${esc(e.n)}</b><small>${exGroup(e.id)} · ${e.s} × ${e.lo===e.hi?e.lo:e.lo+'-'+e.hi}${e.u==='s'?' s':(e.u||'')}${e.e?' · carga el codo':''}</small></span><span aria-hidden="true">›</span></button>`;
+  const byG={};for(const e of other)(byG[exGroup(e.id)]=byG[exGroup(e.id)]||[]).push(e);
+  openSheet('Cambiar ejercicio',now&&now.orig?esc(now.n):esc(orig.n),`<p class="small muted">Elige con qué lo sustituyes <b>solo hoy</b>. El resto de semanas sigue el plan. Mantiene su sitio en la superserie y las series que apuntes cuentan para el ejercicio que hagas.</p>
+    ${now&&now.orig?`<button type="button" class="btn pri" data-sw="${origId}">↩ Volver a: ${esc(orig.n)}</button>`:''}
+    <div class="flbl">Mismo grupo · ${g}</div><div class="mf-list">${same.map(item).join('')||'<p class="small muted">No hay otro ejercicio de este grupo en tu lista.</p>'}</div>
+    ${Object.entries(byG).map(([k,l])=>`<div class="flbl">${k}</div><div class="mf-list">${l.map(item).join('')}</div>`).join('')}`);
+  $('#sheet-body').onclick=e=>{const b=e.target.closest('[data-sw]');if(!b)return;
+    const w=clone(S.workouts[d]||{});w.session=w.session||sessionFor(d);w.swap={...(w.swap||{})};
+    if(b.dataset.sw===origId)delete w.swap[origId];else w.swap[origId]=b.dataset.sw;
+    if(!Object.keys(w.swap).length)delete w.swap;
+    saveDoc('workouts',d,w);closeSheet();render();
+    const n=ALL_EX.find(x=>x.id===b.dataset.sw);toast(b.dataset.sw===origId?'Vuelves al ejercicio del plan':`Hoy haces: ${n?n.n:''}`)};
+}
 function viewEntreno(){
   const d=st.date,w=weekOf(d),ph=phase(w),sk=sessionFor(d),SS=SESS[sk],wk=clone(S.workouts[d]||{});
   const sel=Object.entries(SESS).map(([k,v])=>`<option value="${k}" ${k===sk?'selected':''}>${v.n}</option>`).join('');
@@ -1597,16 +1626,18 @@ function viewEntreno(){
     return html;
   }
   html+=`<section class="card"><h2>Calentamiento · 6-8 min</h2><p class="small muted">5 min de bici o elíptica, 20 rotaciones de muñeca y antebrazo, y 2 series de aproximación en el primer ejercicio (50% y 75% del peso de trabajo).</p></section>`;
-  for(const [xi,ex] of SS.ex.entries()){
+  const EXS=sessionExs(d);
+  for(const [xi,ex] of EXS.entries()){
     const lp=lastPerf(ex.id,d),h=hintFor(ex,lp,ph),n=ph.deload?Math.min(2,ex.s):ex.s,cur=(wk.sets&&wk.sets[ex.id])||[],unit=ex.u==='s'?' s':(ex.u||'');
-    const nxt=SS.ex[xi+1],chain=ex.ss&&nxt&&nxt.ss&&nxt.ss[0]===ex.ss[0];   /* hay otro ejercicio de la misma superserie detrás */
+    const nxt=EXS[xi+1],chain=ex.ss&&nxt&&nxt.ss&&nxt.ss[0]===ex.ss[0];   /* hay otro ejercicio de la misma superserie detrás */
     let rows='';
     for(let i=0;i<n;i++){const s=cur[i]||{},pk=lp&&lp.sets[i]?lp.sets[i].kg:'',pr=lp&&lp.sets[i]?lp.sets[i].r:'';
       rows+=`<span class="n">${i+1}</span><input type="number" inputmode="decimal" step="0.5" id="w-${ex.id}-${i}-kg" data-ex="${ex.id}" data-i="${i}" data-k="kg" value="${s.kg??''}" placeholder="${h.kg||pk||ex.kg||'kg'}" aria-label="Kilos serie ${i+1}"><input type="number" inputmode="numeric" id="w-${ex.id}-${i}-r" data-ex="${ex.id}" data-i="${i}" data-k="r" value="${s.r??''}" placeholder="${pr||(ex.u==='s'?'seg':'reps')}" aria-label="${ex.u==='s'?'Segundos':'Repeticiones'} serie ${i+1}">`}
     html+=`<section class="card">
       <div class="ex-top"><div class="grow"><h3>${ex.ss?`<span class="ss">${ex.ss}</span>`:''}${esc(ex.n)}</h3><div class="ex-meta">${n} × ${ex.lo===ex.hi?ex.lo:ex.lo+'-'+ex.hi}${unit} · ${chain?`sin descanso, pasa a ${nxt.ss}`:'descanso 2:00'}</div></div>
-      <button type="button" class="restbtn" data-act="rest" data-sec="120" data-name="${esc(ex.n)}">⏱ 2:00</button></div>
-      <p class="note ${ex.e?'elbow':''}">${ex.e?'<b style="color:var(--band)">CODO · </b>':''}${esc(ex.note)}</p>
+      <div class="ex-btns"><button type="button" class="restbtn" data-act="rest" data-sec="120" data-name="${esc(ex.n)}">⏱ 2:00</button><button type="button" class="swapbtn" data-act="swap" data-orig="${ex.orig||ex.id}" aria-label="Cambiar ${esc(ex.n)} por otro ejercicio">⇄ Cambiar</button></div></div>
+      ${ex.orig?`<p class="small swap-note">⇄ Hoy en lugar de: ${esc(ex.origN)}</p>`:''}
+      ${ex.note?`<p class="note ${ex.e?'elbow':''}">${ex.e?'<b style="color:var(--band)">CODO · </b>':''}${esc(ex.note)}</p>`:''}
       ${(()=>{const pb=bestBefore(ex.id,d),nowM=Math.max(0,...cur.filter(x=>x&&+x.r>0).map(x=>+x.kg||0)),isPr=pb&&nowM>pb;
         return `<div class="row small"><span class="pr-badge" data-pr="${ex.id}" ${isPr?'':'hidden'}>${isPr?`🏆 Récord nuevo: ${fmt(nowM,nowM%1?1:0)} kg`:''}</span>${pb?`<span class="muted mono">Tu récord: ${fmt(pb,pb%1?1:0)} kg</span>`:''}</div>`})()}
       <div class="row small"><span class="pill ${h.k}">${esc(h.t)}</span>${lp?`<span class="muted mono">${shortDate(lp.date)}: ${lp.sets.map(s=>`${s.kg||'–'}×${s.r}`).join(' · ')}</span>`:''}</div>
@@ -1614,7 +1645,7 @@ function viewEntreno(){
     </section>`;
   }
   /* series guardadas ese día de ejercicios que ya no están en la sesión (p. ej. tras cambiar la rutina): se ven, no se pierden */
-  {const inS=new Set(SS.ex.map(e=>e.id)),extra=Object.entries(wk.sets||{}).filter(([id,arr])=>!inS.has(id)&&(arr||[]).some(x=>x&&+x.r>0));
+  {const inS=new Set(EXS.map(e=>e.id)),extra=Object.entries(wk.sets||{}).filter(([id,arr])=>!inS.has(id)&&(arr||[]).some(x=>x&&+x.r>0));
    if(extra.length)html+=`<section class="card"><h2>También apuntaste</h2><div class="fz-log">${extra.map(([id,arr])=>{const e=ALL_EX.find(x=>x.id===id);
      return `<div class="fz-row"><span class="grow">${esc(e?e.n:id)}</span><span class="mono small">${arr.filter(x=>x&&+x.r>0).map(x=>`${x.kg?fmt(+x.kg,x.kg%1?1:0)+'×':''}${x.r}`).join(' · ')}</span></div>`}).join('')}</div>
      <p class="small muted">Ejercicios que ya no están en esta sesión. Siguen contando en tu historial y en las gráficas.</p></section>`}
@@ -2083,6 +2114,7 @@ $('#view').addEventListener('click',e=>{
   else if(a==='watch-settings')openWatchSettings();
   else if(a==='rest'){askNotif();startTimer(+b.dataset.sec,b.dataset.name);playRestAudio()}
   else if(a==='fz-mode'){const p=lsGet(FZK,{});p.mode=b.dataset.mode;lsSet(FZK,p);render()}
+  else if(a==='swap')openSwap(d,b.dataset.orig);
   else if(a==='wo-save'){const w=clone(S.workouts[d]||{});w.session=w.session||sessionFor(d);const sm=woSummary(w);
     if(!sm.n){toast('No hay ninguna serie apuntada todavía','err');return}
     w.done=true;w.doneAt=new Date().toISOString();saveDoc('workouts',d,w);if(typeof stopTimer==='function'&&T)stopTimer();

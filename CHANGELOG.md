@@ -1,5 +1,9 @@
 # Novedades
 
+## v1.28.0 · 2026-11-27
+- Entreno › «⇄ Cambiar» en cada ejercicio: si un día no puedes hacer uno, eliges otro de tu lista (primero los del mismo grupo muscular) solo para ese día
+- El cambiado mantiene su sitio en la superserie, y sus series cuentan en el historial, la gráfica de fuerza y los récords del ejercicio que haces de verdad
+
 ## v1.27.1 · 2026-11-27
 - Viernes: las dominadas pasan a jalón al pecho con agarre supino (carga menos el codo), y el jalón neutro del final pasa a remo en polea con agarre cerrado
 - Tus dominadas apuntadas se conservan en el historial
