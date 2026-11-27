@@ -1,5 +1,8 @@
 # Novedades
 
+## v1.30.1 · 2026-11-27
+- Nuevos alimentos: patata hervida o cocida, patata asada y puré de patata
+
 ## v1.30.0 · 2026-11-27
 - Unos 160 alimentos nuevos para buscar al cambiar lo que has comido: vísceras (hígado de cerdo, ternera y pollo…), carnes, embutidos, pescados y mariscos, lácteos, legumbres, verduras, frutas, frutos secos, dulces, salsas y bebidas
 - Búsqueda más lista (encuentra también plurales y singulares) y aviso claro cuando algo no está, con la opción de calcularlo con la IA
