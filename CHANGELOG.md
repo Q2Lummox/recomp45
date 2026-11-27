@@ -1,5 +1,9 @@
 # Novedades
 
+## v1.30.0 · 2026-11-27
+- Unos 160 alimentos nuevos para buscar al cambiar lo que has comido: vísceras (hígado de cerdo, ternera y pollo…), carnes, embutidos, pescados y mariscos, lácteos, legumbres, verduras, frutas, frutos secos, dulces, salsas y bebidas
+- Búsqueda más lista (encuentra también plurales y singulares) y aviso claro cuando algo no está, con la opción de calcularlo con la IA
+
 ## v1.29.1 · 2026-11-27
 - «⇄ Cambiar plato» sale también en las comidas cambiadas con «He comido otra cosa»: elegir un plato del menú sustituye a lo apuntado a mano
 
