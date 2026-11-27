@@ -1,5 +1,9 @@
 # Novedades
 
+## v1.28.2 · 2026-11-27
+- La app ya no se recarga sola al volver de otra aplicación cuando hay una versión nueva: solo se actualiza cuando pulsas «Actualizar»
+- Si el iPhone cierra la app en segundo plano, al volver se abre en la misma pestaña, el mismo día y a la misma altura
+
 ## v1.28.1 · 2026-11-27
 - Nuevo ejercicio disponible para «⇄ Cambiar»: jalón al pecho con agarre ancho y barra
 

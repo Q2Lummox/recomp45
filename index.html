@@ -466,7 +466,7 @@ body.kb .tabs,body.kb .timer{visibility:hidden}
 <script type="module" src="fb.js"></script>
 <script>
 /* ================== PARÁMETROS DEL PLAN ================== */
-const APP_VERSION='1.28.1';
+const APP_VERSION='1.28.2';
 const START='2026-11-09';   /* lunes de la semana 1 */
 const BASE={peso:80,cintura:96,grasa:21,tdee:2850,bmr:1700};
 const TARGET={kcal:2400,p:175,c:265,f:70};
@@ -2555,7 +2555,19 @@ async function exportPdf(){
 
 /* ================== ARRANQUE ================== */
 function showGate(msg,{login=false,setup=false}={}){$('#gate').hidden=false;$('#app').hidden=true;$('#gate-msg').textContent=msg;$('#btn-login').hidden=!login;$('#gate-setup').hidden=!setup}
-function showApp(){$('#gate').hidden=true;$('#app').hidden=false;readHash();render();markUpdate();setTimeout(checkUpdateSilent,2500)}
+/* si el iPhone cierra la app en segundo plano, al volver se abre donde estabas: pestaña, día y posición */
+const UIK='recomp45-ui';
+function saveUI(){try{const sc=$('#scroller');localStorage.setItem(UIK,JSON.stringify({tab:st.tab,date:st.date,y:sc?sc.scrollTop:0,at:Date.now(),day:todayISO()}))}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)saveUI()});
+window.addEventListener('pagehide',saveUI);
+function restoreUI(){
+  try{const u=JSON.parse(localStorage.getItem(UIK)||'null');if(!u||Date.now()-u.at>3*36e5||u.day!==todayISO())return 0;
+    if(!(location.hash||'').slice(1)&&TABS.includes(u.tab)){st.tab=u.tab;history.replaceState(null,'','#'+u.tab)}
+    if(u.date)st.date=u.date;return u.y||0}catch(e){return 0}
+}
+function showApp(){$('#gate').hidden=true;$('#app').hidden=false;readHash();const y=restoreUI();render();
+  if(y)requestAnimationFrame(()=>{const sc=$('#scroller');if(sc)sc.scrollTop=y;setTimeout(()=>{if(sc&&sc.scrollTop<y-5)sc.scrollTop=y},600)});
+  markUpdate();setTimeout(checkUpdateSilent,2500)}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&!$('#app').hidden)checkUpdateSilent()});
 $('#btn-login').onclick=async()=>{try{await window.FB.signIn()}catch(e){toast('No se pudo iniciar sesión ('+(e&&e.code||'error')+')','err')}};
 function boot(){
@@ -2574,8 +2586,9 @@ window.addEventListener('fb-user',e=>{
 /* actualizaciones (service worker) */
 let swReg=null;
 /* actualizar: si el service worker nuevo ya está listo, se activa; si no, se vacía la caché de la app y se recarga desde GitHub */
+let wantUpdate=false;   /* solo se recarga la app cuando tú pulsas «Actualizar» */
 async function applyUpdate(){
-  toast('Actualizando…');
+  wantUpdate=true;toast('Actualizando…');
   try{if(swReg){await swReg.update().catch(()=>{});if(swReg.waiting){swReg.waiting.postMessage('SKIP_WAITING');return}}}catch(e){}
   try{for(const k of await caches.keys())if(k.startsWith('recomp-v-'))await caches.delete(k)}catch(e){}
   location.replace(location.pathname+'?v='+encodeURIComponent((latest&&latest.version)||Date.now())+location.hash);
@@ -2590,7 +2603,7 @@ if('serviceWorker' in navigator){
     reg.addEventListener('updatefound',()=>{const nw=reg.installing;nw&&nw.addEventListener('statechange',()=>{if(nw.state==='installed'&&navigator.serviceWorker.controller)offer()})});
     setInterval(()=>reg.update().catch(()=>{}),30*60*1000);
   }).catch(()=>{});
-  let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!reloaded){reloaded=true;location.reload()}});
+  let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(wantUpdate&&!reloaded){reloaded=true;location.reload()}});
 }
 </script>
 </body>
